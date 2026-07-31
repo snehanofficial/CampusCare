@@ -21,7 +21,7 @@ interface FilterToolbarProps {
 }
 
 export function FilterToolbar({
-  searchPlaceholder = "Search...",
+  searchPlaceholder = "Search records...",
   searchQuery,
   onSearchChange,
   filterOptions = [],
@@ -33,29 +33,29 @@ export function FilterToolbar({
     searchQuery || Object.values(activeFilters).some((val) => val !== "");
 
   return (
-    <div className="space-y-3 w-full bg-card p-4 rounded-lg border border-border/60 shadow-sm">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-2.5 w-full bg-card p-3 rounded-sm border border-border shadow-xs">
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-2 size-3.5 text-muted-foreground" />
           <Input
             placeholder={searchPlaceholder}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9 text-xs focus:ring-primary h-9 w-full bg-muted/20"
+            className="pl-8 text-xs h-8 w-full bg-background"
           />
         </div>
 
         {/* Filter Dropdowns */}
         {filterOptions.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             {filterOptions.map((opt) => (
               <DropdownMenu key={opt.key}>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="text-xs h-9 flex items-center gap-1.5 cursor-pointer">
-                    <Filter className="size-3.5 text-muted-foreground" />
+                  <Button variant="outline" size="xs" className="h-8 text-xs flex items-center gap-1.5 cursor-pointer">
+                    <Filter className="size-3 text-muted-foreground" />
                     <span>
-                      {opt.label}: {activeFilters[opt.key] || "All"}
+                      {opt.label}: <span className="font-bold">{activeFilters[opt.key] || "All"}</span>
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
@@ -79,11 +79,11 @@ export function FilterToolbar({
             {hasActiveFilters && (
               <Button
                 variant="ghost"
-                size="sm"
+                size="xs"
                 onClick={onClearFilters}
-                className="text-xs h-9 text-muted-foreground hover:text-foreground font-semibold flex items-center gap-1 cursor-pointer"
+                className="h-8 text-xs text-muted-foreground hover:text-foreground font-semibold flex items-center gap-1"
               >
-                Clear
+                Reset
               </Button>
             )}
           </div>
@@ -92,13 +92,13 @@ export function FilterToolbar({
 
       {/* Active Filter Tags */}
       {hasActiveFilters && (
-        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+        <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-border/40">
           {searchQuery && (
-            <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground border select-none">
+            <span className="inline-flex items-center gap-1 rounded-sm bg-muted/60 px-2 py-0.5 text-[10px] font-bold text-foreground border border-border select-none">
               Query: "{searchQuery}"
               <button
                 onClick={() => onSearchChange("")}
-                className="hover:text-foreground cursor-pointer focus:outline-none"
+                className="hover:text-destructive cursor-pointer focus:outline-none ml-1"
               >
                 <X className="size-3" />
               </button>
@@ -114,12 +114,12 @@ export function FilterToolbar({
             return (
               <span
                 key={key}
-                className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground border select-none"
+                className="inline-flex items-center gap-1 rounded-sm bg-muted/60 px-2 py-0.5 text-[10px] font-bold text-foreground border border-border select-none"
               >
                 {filterLabel}: {itemLabel}
                 <button
                   onClick={() => onFilterChange(key, "")}
-                  className="hover:text-foreground cursor-pointer focus:outline-none"
+                  className="hover:text-destructive cursor-pointer focus:outline-none ml-1"
                 >
                   <X className="size-3" />
                 </button>

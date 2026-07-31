@@ -1,12 +1,12 @@
 import React from "react";
 import { Button } from "../ui/button.js";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, CheckSquare, Layers } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "../ui/dropdown.js";
 
 export interface ActionItem {
   label: string;
   onClick: () => void;
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "destructive";
+  variant?: "default" | "primary" | "secondary" | "outline" | "ghost" | "destructive";
   icon?: React.ComponentType<{ className?: string }>;
 }
 
@@ -22,32 +22,36 @@ export function ActionToolbar({
   actions = [],
 }: ActionToolbarProps) {
   return (
-    <div className="flex h-12 w-full items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 transition-all duration-200">
-      {/* Selection State */}
+    <div className="flex h-10 w-full items-center justify-between rounded-sm border border-border bg-surface-subtle/50 px-3 select-none">
+      {/* Selection Counter State */}
       <div className="flex items-center gap-2">
         {selectedCount > 0 ? (
-          <span className="text-xs font-semibold text-foreground animate-pulse select-none">
-            {selectedCount} item{selectedCount > 1 ? "s" : ""} selected
-          </span>
+          <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+            <CheckSquare className="size-3.5 text-primary" />
+            <span>
+              {selectedCount} item{selectedCount > 1 ? "s" : ""} selected
+            </span>
+          </div>
         ) : (
-          <span className="text-xs text-muted-foreground select-none">
-            No items selected
-          </span>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Layers className="size-3.5 text-muted-foreground/60" />
+            <span>Select items to run bulk operations</span>
+          </div>
         )}
       </div>
 
-      {/* Primary/Secondary Actions and Bulk Actions Dropdowns */}
+      {/* Action Controls */}
       <div className="flex items-center gap-2">
-        {/* Bulk Actions */}
+        {/* Bulk Actions Dropdown */}
         {selectedCount > 0 && bulkActions.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5 cursor-pointer">
-                <span>Bulk Actions</span>
+              <Button variant="outline" size="xs" className="h-7 gap-1.5 font-bold cursor-pointer">
+                <span>Bulk Actions ({selectedCount})</span>
                 <ChevronDown className="size-3 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-48">
               {bulkActions.map((action) => {
                 const Icon = action.icon;
                 return (
@@ -55,7 +59,7 @@ export function ActionToolbar({
                     key={action.label}
                     onClick={action.onClick}
                     className={`text-xs font-semibold ${
-                      action.variant === "destructive" ? "text-destructive hover:bg-destructive/5" : ""
+                      action.variant === "destructive" ? "text-destructive hover:bg-destructive/10" : ""
                     }`}
                   >
                     {Icon && <Icon className="size-3.5 mr-1.5 flex-shrink-0" />}
@@ -67,7 +71,7 @@ export function ActionToolbar({
           </DropdownMenu>
         )}
 
-        {/* Standard Page Actions */}
+        {/* Page Actions */}
         {actions.length > 0 && (
           <div className="flex items-center gap-1.5">
             {actions.map((action) => {
@@ -75,10 +79,10 @@ export function ActionToolbar({
               return (
                 <Button
                   key={action.label}
-                  variant={action.variant || "primary"}
-                  size="sm"
+                  variant={action.variant || "default"}
+                  size="xs"
                   onClick={action.onClick}
-                  className="text-xs h-8 flex items-center gap-1.5 cursor-pointer"
+                  className="h-7 text-xs flex items-center gap-1.5 cursor-pointer"
                 >
                   {Icon && <Icon className="size-3.5" />}
                   <span>{action.label}</span>

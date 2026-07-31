@@ -16,17 +16,14 @@ import { StatCard } from "../common/StatCard.js";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card.js";
 import { Button } from "../ui/button.js";
 import { ActivityTimeline, TimelineItem } from "./ActivityTimeline.js";
+import { StatusBadge } from "../common/StatusBadge.js";
 import {
-  Clock,
-  ShieldAlert,
-  CheckCircle,
-  AlertCircle,
-  Plus,
-  Settings,
-  HelpCircle,
-  Activity,
   ArrowUpRight,
   type LucideIcon,
+  Activity,
+  ShieldCheck,
+  Server,
+  Wrench,
 } from "lucide-react";
 
 export interface DashboardStat {
@@ -68,34 +65,24 @@ export function DashboardTemplate({
   services = [],
   onNavigateToTickets,
 }: DashboardTemplateProps) {
-  const getServiceColor = (status: string) => {
-    switch (status) {
-      case "Outage":
-        return "bg-destructive";
-      case "Degraded Performance":
-        return "bg-warning";
-      default:
-        return "bg-success";
-    }
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <PageHeader
-          title="Dashboard Overview"
-          description="CampusCare IT Service Desk Operations & Infrastructure Health."
-        />
-        {onNavigateToTickets && (
-          <Button onClick={onNavigateToTickets} size="sm" className="text-xs h-9 flex items-center gap-1.5 cursor-pointer">
-            <span>View Ticket Queue</span>
-            <ArrowUpRight className="size-3.5" />
-          </Button>
-        )}
-      </div>
+    <div className="space-y-4">
+      {/* Header */}
+      <PageHeader
+        title="Operations Command Center"
+        description="Real-time IT Infrastructure Health, Ticket Queue Performance, and Incident Monitor."
+        actions={
+          onNavigateToTickets && (
+            <Button onClick={onNavigateToTickets} size="sm" className="h-8 text-xs flex items-center gap-1.5 cursor-pointer">
+              <span>Ticket Queue</span>
+              <ArrowUpRight className="size-3.5" />
+            </Button>
+          )
+        }
+      />
 
-      {/* Stats Cards Section */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Primary KPI Metrics */}
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, idx) => (
           <StatCard
             key={idx}
@@ -107,48 +94,51 @@ export function DashboardTemplate({
         ))}
       </div>
 
-      {/* Main Graphics charts and activity timelines */}
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-        {/* Operations Chart (Recharts Area) */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="border border-border bg-card">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-border/40 py-4 px-6">
+      {/* Main Support Trend & Sidebar Activity */}
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
+        {/* Support Operations Trend */}
+        <div className="lg:col-span-2 space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
               <div>
-                <CardTitle className="text-sm font-bold text-foreground">Support Operations Trend</CardTitle>
-                <span className="text-[10px] text-muted-foreground leading-normal mt-0.5 block">
-                  Weekly overview of support tickets generated vs. resolved.
+                <CardTitle>Support Ticket Throughput</CardTitle>
+                <span className="text-[11px] text-muted-foreground block mt-0.5">
+                  Comparison of opened vs. resolved tickets over the current operational cycle.
                 </span>
               </div>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="h-64 w-full text-xs">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorOpened" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--color-primary, #3b82f6)" stopOpacity={0.2} />
-                        <stop offset="95%" stopColor="var(--color-primary, #3b82f6)" stopOpacity={0} />
+                        <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="colorResolved" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--color-success, #10b981)" stopOpacity={0.2} />
-                        <stop offset="95%" stopColor="var(--color-success, #10b981)" stopOpacity={0} />
+                        <stop offset="5%" stopColor="var(--success)" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="var(--success)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
-                    <XAxis dataKey="name" stroke="currentColor" className="text-muted-foreground" />
-                    <YAxis stroke="currentColor" className="text-muted-foreground" />
+                    <XAxis dataKey="name" stroke="currentColor" className="text-muted-foreground text-[10px]" />
+                    <YAxis stroke="currentColor" className="text-muted-foreground text-[10px]" />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "var(--background-card, #1e293b)",
-                        borderColor: "var(--border, #334155)",
-                        color: "var(--foreground, #f8fafc)",
+                        backgroundColor: "var(--card)",
+                        borderColor: "var(--border)",
+                        color: "var(--foreground)",
+                        borderRadius: "var(--radius-sm)",
+                        fontSize: "11px",
                       }}
                     />
-                    <Legend verticalAlign="top" height={36} />
+                    <Legend verticalAlign="top" height={32} wrapperStyle={{ fontSize: "11px" }} />
                     <Area
                       type="monotone"
                       dataKey="opened"
-                      stroke="var(--color-primary, #3b82f6)"
+                      stroke="var(--primary)"
+                      strokeWidth={2}
                       fillOpacity={1}
                       fill="url(#colorOpened)"
                       name="Tickets Opened"
@@ -156,7 +146,8 @@ export function DashboardTemplate({
                     <Area
                       type="monotone"
                       dataKey="resolved"
-                      stroke="var(--color-success, #10b981)"
+                      stroke="var(--success)"
+                      strokeWidth={2}
                       fillOpacity={1}
                       fill="url(#colorResolved)"
                       name="Tickets Resolved"
@@ -167,25 +158,24 @@ export function DashboardTemplate({
             </CardContent>
           </Card>
 
-          {/* Quick Actions Panel & Service Status */}
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-            {/* Quick Actions */}
+          {/* Quick Actions & Service Health */}
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
             {quickActions.length > 0 && (
-              <Card className="border border-border bg-card">
-                <CardHeader className="border-b border-border/40 py-4 px-6">
-                  <CardTitle className="text-sm font-bold text-foreground">Operational Workflows</CardTitle>
+              <Card>
+                <CardHeader className="py-3 px-4">
+                  <CardTitle>Operational Workflows</CardTitle>
                 </CardHeader>
-                <CardContent className="p-6 grid grid-cols-2 gap-3">
+                <CardContent className="p-3 grid grid-cols-2 gap-2">
                   {quickActions.map((act) => {
                     const Icon = act.icon;
                     return (
                       <button
                         key={act.label}
                         onClick={act.onClick}
-                        className="flex flex-col items-center justify-center p-4 rounded-lg border border-border/60 bg-muted/10 hover:bg-muted/40 transition-colors gap-2 text-center group cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
+                        className="flex flex-col items-center justify-center p-3 rounded-sm border border-border bg-surface-subtle/50 hover:bg-muted transition-colors gap-1.5 text-center group cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
                       >
-                        <div className="size-8 rounded bg-primary/10 text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
-                          <Icon className="size-4" />
+                        <div className="size-7 rounded-sm bg-primary/10 text-primary flex items-center justify-center">
+                          <Icon className="size-3.5" />
                         </div>
                         <span className="text-[11px] font-bold text-foreground truncate w-full">
                           {act.label}
@@ -197,23 +187,26 @@ export function DashboardTemplate({
               </Card>
             )}
 
-            {/* Service Status */}
             {services.length > 0 && (
-              <Card className="border border-border bg-card">
-                <CardHeader className="border-b border-border/40 py-4 px-6">
-                  <CardTitle className="text-sm font-bold text-foreground">Service Health Monitor</CardTitle>
+              <Card>
+                <CardHeader className="py-3 px-4">
+                  <CardTitle>Core Service Health</CardTitle>
                 </CardHeader>
-                <CardContent className="p-6 space-y-3">
+                <CardContent className="p-3 space-y-2">
                   {services.map((srv) => (
                     <div
                       key={srv.name}
-                      className="flex items-center justify-between p-2.5 rounded-md bg-muted/20 border border-border/40"
+                      className="flex items-center justify-between p-2 rounded-sm bg-surface-subtle/40 border border-border/40 text-xs"
                     >
-                      <span className="text-xs font-semibold text-foreground">{srv.name}</span>
                       <div className="flex items-center gap-2">
-                        <span className={`size-2 rounded-full ${getServiceColor(srv.status)}`} />
-                        <span className="text-[10px] text-muted-foreground font-medium">{srv.status}</span>
+                        <Server className="size-3.5 text-muted-foreground" />
+                        <span className="font-semibold text-foreground">{srv.name}</span>
                       </div>
+                      <StatusBadge
+                        type="status"
+                        value={srv.status === "Operational" ? "RESOLVED" : srv.status === "Degraded Performance" ? "ASSIGNED" : "CRITICAL"}
+                        showIcon={false}
+                      />
                     </div>
                   ))}
                 </CardContent>
@@ -222,38 +215,38 @@ export function DashboardTemplate({
           </div>
         </div>
 
-        {/* Sidebar panels: Activity Timeline & Categories Bar Chart */}
-        <div className="space-y-6">
-          {/* Recent Activity Timeline */}
-          <Card className="border border-border bg-card">
-            <CardHeader className="border-b border-border/40 py-4 px-6">
-              <CardTitle className="text-sm font-bold text-foreground">Recent Event Log</CardTitle>
+        {/* Sidebar panels: Activity Timeline & Categories Distribution */}
+        <div className="space-y-4">
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle>System Activity Log</CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
-              <ActivityTimeline items={timeline} maxHeight="220px" />
+            <CardContent className="p-4">
+              <ActivityTimeline items={timeline} maxHeight="240px" />
             </CardContent>
           </Card>
 
-          {/* Ticket Categories Bar Chart */}
-          <Card className="border border-border bg-card">
-            <CardHeader className="border-b border-border/40 py-4 px-6">
-              <CardTitle className="text-sm font-bold text-foreground">Categories Allocation</CardTitle>
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle>Category Distribution</CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="h-44 w-full text-xs">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={categoryChartData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
-                    <XAxis dataKey="name" stroke="currentColor" className="text-muted-foreground" />
-                    <YAxis stroke="currentColor" className="text-muted-foreground" />
+                    <XAxis dataKey="name" stroke="currentColor" className="text-muted-foreground text-[10px]" />
+                    <YAxis stroke="currentColor" className="text-muted-foreground text-[10px]" />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "var(--background-card, #1e293b)",
-                        borderColor: "var(--border, #334155)",
-                        color: "var(--foreground, #f8fafc)",
+                        backgroundColor: "var(--card)",
+                        borderColor: "var(--border)",
+                        color: "var(--foreground)",
+                        borderRadius: "var(--radius-sm)",
+                        fontSize: "11px",
                       }}
                     />
-                    <Bar dataKey="value" fill="var(--color-primary, #3b82f6)" radius={[4, 4, 0, 0]} name="Allocated Tickets" />
+                    <Bar dataKey="value" fill="var(--primary)" radius={[2, 2, 0, 0]} name="Allocated Tickets" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

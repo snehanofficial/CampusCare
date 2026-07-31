@@ -20,7 +20,7 @@ interface EntityDetailsTemplateProps {
   onBack?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
-  actions?: { label: string; onClick: () => void; variant?: "primary" | "secondary" | "outline" | "ghost" | "destructive" }[];
+  actions?: { label: string; onClick: () => void; variant?: "default" | "primary" | "secondary" | "outline" | "ghost" | "destructive" }[];
 }
 
 export function EntityDetailsTemplate({
@@ -35,41 +35,41 @@ export function EntityDetailsTemplate({
   actions = [],
 }: EntityDetailsTemplateProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header and Back Button */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/40 pb-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-3">
+        <div className="flex items-center gap-2.5">
           {onBack && (
             <Button
               variant="outline"
-              size="sm"
+              size="xs"
               onClick={onBack}
-              className="size-9 p-0 flex items-center justify-center cursor-pointer"
+              className="size-8 p-0 flex items-center justify-center cursor-pointer"
               title="Back"
             >
-              <ArrowLeft className="size-4" />
+              <ArrowLeft className="size-3.5" />
             </Button>
           )}
           <div>
-            <PageHeader title={title} description={subtitle} />
+            <PageHeader title={title} description={subtitle} badge={statusBadge} />
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="flex items-center gap-2">
+        {/* Action Toolbar */}
+        <div className="flex items-center gap-1.5 flex-wrap">
           {actions.map((act) => (
             <Button
               key={act.label}
               variant={act.variant || "outline"}
-              size="sm"
+              size="xs"
               onClick={act.onClick}
-              className="text-xs h-9 cursor-pointer"
+              className="h-8 text-xs cursor-pointer"
             >
               {act.label}
             </Button>
           ))}
           {onEdit && (
-            <Button variant="outline" size="sm" onClick={onEdit} className="text-xs h-9 flex items-center gap-1.5 cursor-pointer">
+            <Button variant="outline" size="xs" onClick={onEdit} className="h-8 text-xs flex items-center gap-1.5 cursor-pointer">
               <Edit className="size-3.5" />
               Edit
             </Button>
@@ -77,9 +77,9 @@ export function EntityDetailsTemplate({
           {onDelete && (
             <Button
               variant="destructive"
-              size="sm"
+              size="xs"
               onClick={onDelete}
-              className="text-xs h-9 flex items-center gap-1.5 cursor-pointer"
+              className="h-8 text-xs flex items-center gap-1.5 cursor-pointer"
             >
               <Trash className="size-3.5" />
               Delete
@@ -88,27 +88,26 @@ export function EntityDetailsTemplate({
         </div>
       </div>
 
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-        {/* Key-Value details table */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="border border-border bg-card">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-border/40 py-4 px-6">
-              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Properties</CardTitle>
-              {statusBadge}
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
+        {/* Properties Grid */}
+        <div className="lg:col-span-2 space-y-4">
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle>Entity Specifications & Attributes</CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid gap-x-6 gap-y-4 grid-cols-1 sm:grid-cols-2">
+            <CardContent className="p-4">
+              <div className="grid gap-x-4 gap-y-3 grid-cols-1 sm:grid-cols-2">
                 {fields.map((f, i) => (
                   <div
                     key={i}
-                    className={`space-y-1 ${
+                    className={`space-y-0.5 ${
                       f.span === 2 ? "sm:col-span-2" : ""
                     }`}
                   >
-                    <span className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+                    <span className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase select-none">
                       {f.label}
                     </span>
-                    <div className="text-xs font-semibold text-foreground break-words leading-relaxed bg-muted/20 p-2.5 rounded border border-border/20">
+                    <div className="text-xs font-semibold text-foreground break-words leading-relaxed bg-surface-subtle/50 p-2 rounded-sm border border-border/40">
                       {f.value || "—"}
                     </div>
                   </div>
@@ -118,13 +117,13 @@ export function EntityDetailsTemplate({
           </Card>
         </div>
 
-        {/* Activity Timeline Column */}
-        <div className="space-y-6">
-          <Card className="border border-border bg-card h-fit">
-            <CardHeader className="border-b border-border/40 py-4 px-6">
-              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">History Log</CardTitle>
+        {/* History Column */}
+        <div className="space-y-4">
+          <Card className="h-fit">
+            <CardHeader className="py-3 px-4">
+              <CardTitle>Audit & Change History</CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <ActivityTimeline items={activities} />
             </CardContent>
           </Card>

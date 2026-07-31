@@ -18,16 +18,21 @@ export function AppLayout() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background">
+      {/* Keyboard Accessibility Skip Link */}
+      <a href="#main-content" className="skip-to-content">
+        Skip to main content
+      </a>
+
       {/* Mobile Drawer Overlay */}
       {isMobileOpen && (
         <div
           onClick={() => setIsMobileOpen(false)}
-          className="fixed inset-0 z-30 bg-background/80 backdrop-blur-sm lg:hidden transition-all duration-200"
+          className="fixed inset-0 z-30 bg-background/80 backdrop-blur-xs lg:hidden transition-all duration-150"
           aria-hidden="true"
         />
       )}
 
-      {/* Persistent Sidebar */}
+      {/* Persistent Navigation Sidebar */}
       <Sidebar
         isCollapsed={isCollapsed}
         onToggle={() => setIsCollapsed((prev) => !prev)}
@@ -35,21 +40,23 @@ export function AppLayout() {
         onMobileClose={() => setIsMobileOpen(false)}
       />
 
-      {/* Main Content Area */}
+      {/* Main Content Viewport */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Top Navbar */}
         <Navbar onMobileMenuToggle={() => setIsMobileOpen((prev) => !prev)} />
 
-        {/* Dynamic Nested Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-muted/20">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex-1 overflow-y-auto p-4 md:p-5 bg-background focus:outline-none"
+        >
           <div className="mx-auto max-w-7xl">
             <Outlet />
           </div>
         </main>
 
-        {/* Global Footer */}
         <Footer />
       </div>
+
       <CommandPalette />
     </div>
   );

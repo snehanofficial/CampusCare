@@ -1,4 +1,5 @@
 import { LucideIcon } from "lucide-react";
+import { Skeleton } from "../ui/skeleton.js";
 
 interface StatCardProps {
   title: string;
@@ -15,44 +16,45 @@ interface StatCardProps {
 export function StatCard({ title, value, delta, description, icon: Icon, loading = false }: StatCardProps) {
   if (loading) {
     return (
-      <div className="rounded-lg border border-border bg-card p-4 shadow-sm animate-pulse">
-        <div className="h-4 w-1/3 rounded bg-muted" />
-        <div className="mt-2 h-8 w-2/3 rounded bg-muted" />
-        <div className="mt-1 h-3 w-1/2 rounded bg-muted" />
+      <div className="rounded-sm border border-border bg-card p-3 shadow-xs animate-pulse">
+        <Skeleton className="h-3 w-1/3" />
+        <Skeleton className="mt-2 h-6 w-2/3" />
+        <Skeleton className="mt-1 h-3 w-1/2" />
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 shadow-sm flex justify-between items-start">
+    <div className="rounded-sm border border-border bg-card p-3.5 shadow-xs flex justify-between items-start transition-colors">
       <div className="space-y-1">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider select-none">
           {title}
         </p>
-        <p className="text-2xl font-bold tracking-tight text-foreground">
+        <p className="text-xl font-extrabold tracking-tight text-foreground font-mono">
           {value}
         </p>
         {description && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground">
             {description}
           </p>
         )}
         {delta && (
-          <p className="text-xs">
+          <p className="text-[11px] font-medium">
             <span
-              className={delta.isPositive ? "text-success font-medium" : "text-destructive font-medium"}
+              className={delta.isPositive ? "text-success font-bold" : "text-destructive font-bold"}
             >
               {delta.isPositive ? "+" : ""}{delta.value}%
             </span>{" "}
-            <span className="text-muted-foreground">vs last week</span>
+            <span className="text-muted-foreground">vs prev period</span>
           </p>
         )}
       </div>
       {Icon && (
-        <div className="rounded-md bg-muted/40 p-2 text-muted-foreground">
-          <Icon className="size-5" />
+        <div className="rounded-sm bg-surface-subtle p-2 text-muted-foreground border border-border/40">
+          <Icon className="size-4" />
         </div>
       )}
     </div>
   );
 }
+export default StatCard;

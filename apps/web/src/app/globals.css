@@ -1,16 +1,28 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────────────────────
+   CampusCare Design Token Architecture
+   Palette: "Warm Paper & Graphite"
+   Inspired by: unbleached paper, graphite ink, warm linen,
+                brushed steel, deep charcoal.
+   Color space: OKLCH — perceptually uniform, not framework-derived.
+   ───────────────────────────────────────────────────────────── */
+
 @theme {
   /* Surface Tokens */
   --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
   /* Primary Brand Action Colors */
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
 
   /* Secondary Neutral Surface Colors */
   --color-secondary: var(--secondary);
@@ -32,89 +44,225 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
 
-  /* Container Cards */
+  /* Container Cards & Surfaces */
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-surface-subtle: var(--surface-subtle);
 
-  /* Semantic Alerts */
+  /* Semantic Alerts & Indicators */
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
 
   /* Font Families */
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: "Geist Mono", "Fira Code", monospace;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", "Fira Code", monospace;
 
-  /* Border Radii (max rounding 8px for enterprise feel) */
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-xl: 0.75rem;
+  /* Enterprise Border Radii (restrained — no oversized radii) */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
 
-  /* Shadows (Subtle, flat design) */
+  /* Shadows (flat enterprise style — elevation through borders, not blur) */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
 
-  /* Transition Durations */
+  /* Transitions */
   --duration-fast: 100ms;
   --duration-normal: 150ms;
-  --duration-slow: 250ms;
 }
 
 @layer base {
+  /* ────────────────────────────────────────────────────────
+     LIGHT THEME — "Warm Paper"
+     Background: off-white with the warmth of unbleached paper
+     (80° hue = yellow-adjacent, very low chroma = imperceptible
+      but prevents clinical pure-white feeling)
+     Primary: Steel Teal — desaturated, professional, not Tailwind blue
+     ──────────────────────────────────────────────────────── */
   :root {
-    --background: hsl(0 0% 100%);
-    --foreground: hsl(222 47% 11%); /* slate-900 */
-    --card: hsl(0 0% 100%);
-    --card-foreground: hsl(222 47% 11%);
-    --popover: hsl(0 0% 100%);
-    --popover-foreground: hsl(222 47% 11%);
-    --primary: hsl(217 91% 60%); /* blue-500 action color */
-    --primary-foreground: hsl(0 0% 98%);
-    --secondary: hsl(210 40% 96%); /* slate-100 */
-    --secondary-foreground: hsl(222 47% 11%);
-    --muted: hsl(210 40% 96%); /* slate-100 */
-    --muted-foreground: hsl(215 16% 47%); /* slate-500 */
-    --accent: hsl(210 40% 94%); /* slate-200 */
-    --accent-foreground: hsl(222 47% 11%);
-    --destructive: hsl(0 84% 60%); /* red-500 */
-    --destructive-foreground: hsl(0 0% 98%);
-    --success: hsl(142 71% 45%); /* green-500 */
-    --success-foreground: hsl(0 0% 98%);
-    --warning: hsl(38 92% 50%); /* amber-500 */
-    --warning-foreground: hsl(0 0% 98%);
-    --border: hsl(214 32% 91%); /* slate-200 */
-    --input: hsl(214 32% 91%);
-    --ring: hsl(217 91% 60%); /* blue-500 focus ring */
-    --radius: 0.5rem; /* 8px */
+    --background:   oklch(97.8% 0.006 80);   /* warm paper — not pure white */
+    --foreground:   oklch(18%   0.014 55);   /* deep warm graphite ink */
+
+    --card:              oklch(99.3% 0.003 80);  /* pristine card on paper desk */
+    --card-foreground:   oklch(18%   0.014 55);
+
+    --surface-subtle:    oklch(95.5% 0.010 78);  /* linen / parchment inset */
+
+    --popover:           oklch(99.3% 0.003 80);
+    --popover-foreground:oklch(18%   0.014 55);
+
+    /* Primary — Steel Teal (oklch gives genuinely different hue/chroma from Tailwind blue) */
+    --primary:           oklch(44%   0.130 224); /* desaturated steel-teal */
+    --primary-hover:     oklch(39%   0.130 224);
+    --primary-foreground:oklch(99%   0.003 80);
+
+    /* Secondary — warm neutral surface */
+    --secondary:         oklch(93%   0.010 76);
+    --secondary-foreground:oklch(18% 0.014 55);
+
+    /* Muted — warm graphite wash */
+    --muted:             oklch(93%   0.010 76);
+    --muted-foreground:  oklch(50%   0.010 60);
+
+    /* Accent — hover wash */
+    --accent:            oklch(91%   0.013 76);
+    --accent-foreground: oklch(18%   0.014 55);
+
+    /* Destructive — warm red (not Tailwind red-600) */
+    --destructive:       oklch(50%   0.210 25);
+    --destructive-foreground:oklch(99% 0.003 80);
+
+    /* Semantic status colors */
+    --success:           oklch(44%   0.130 162); /* forest teal-green */
+    --success-foreground:oklch(99%   0.003 80);
+    --warning:           oklch(56%   0.150 72);  /* warm amber */
+    --warning-foreground:oklch(99%   0.003 80);
+    --info:              oklch(46%   0.120 230);  /* steel blue */
+    --info-foreground:   oklch(99%   0.003 80);
+
+    /* Borders */
+    --border:       oklch(87.5% 0.010 74);  /* warm light border */
+    --border-subtle:oklch(92%   0.008 76);  /* near-invisible hairline */
+    --border-strong:oklch(78%   0.014 70);  /* readable divider */
+    --input:        oklch(87.5% 0.010 74);  /* same as border */
+    --ring:         oklch(44%   0.130 224); /* matches primary */
+
+    --radius: 0.25rem; /* 4px base radius */
+
+    /* ── Status Badge Semantic Tokens (light) ── */
+    /* Open / New — cool steel */
+    --badge-open-bg:     oklch(94%   0.055 224);
+    --badge-open-fg:     oklch(35%   0.120 224);
+    --badge-open-border: oklch(86%   0.080 224);
+
+    /* In Progress — steel cyan (distinct from open) */
+    --badge-progress-bg:     oklch(94%   0.045 202);
+    --badge-progress-fg:     oklch(35%   0.110 202);
+    --badge-progress-border: oklch(86%   0.070 202);
+
+    /* Assigned — warm amber */
+    --badge-assigned-bg:     oklch(96%   0.060 76);
+    --badge-assigned-fg:     oklch(38%   0.140 72);
+    --badge-assigned-border: oklch(89%   0.090 76);
+
+    /* Resolved / Active / Healthy — forest green */
+    --badge-resolved-bg:     oklch(94%   0.055 162);
+    --badge-resolved-fg:     oklch(35%   0.120 162);
+    --badge-resolved-border: oklch(86%   0.080 162);
+
+    /* Closed / Retired / Neutral — inherits muted */
+    --badge-neutral-bg:     oklch(93%   0.010 76);
+    --badge-neutral-fg:     oklch(50%   0.010 60);
+    --badge-neutral-border: oklch(87.5% 0.010 74);
+
+    /* Critical / Breached — deep warm red */
+    --badge-critical-bg:     oklch(96%   0.060 25);
+    --badge-critical-fg:     oklch(38%   0.190 25);
+    --badge-critical-border: oklch(90%   0.100 25);
+
+    /* Warning SLA — amber (same as assigned) */
+    --badge-warning-bg:     oklch(96%   0.060 76);
+    --badge-warning-fg:     oklch(38%   0.140 72);
+    --badge-warning-border: oklch(89%   0.090 76);
+
+    /* Density defaults */
+    --density-padding-y:   0.5rem;
+    --density-padding-x:   0.75rem;
+    --density-row-height:  2.5rem;
+    --density-gap:         1rem;
   }
 
+  /* ────────────────────────────────────────────────────────
+     DARK THEME — "Warm Charcoal"
+     Never blue-black (avoids shadcn hsl(222 47% 7%) pattern)
+     Never pure black.
+     Hue anchor: 50° (orange-adjacent) gives warm graphite,
+     not the cold blue-tinted darks of most frameworks.
+     ──────────────────────────────────────────────────────── */
   .dark {
-    --background: hsl(222 47% 6%); /* Near-black slate */
-    --foreground: hsl(210 40% 98%);
-    --card: hsl(222 47% 8%);
-    --card-foreground: hsl(210 40% 98%);
-    --popover: hsl(222 47% 8%);
-    --popover-foreground: hsl(210 40% 98%);
-    --primary: hsl(213 94% 68%); /* blue-400 for dark mode */
-    --primary-foreground: hsl(222 47% 6%);
-    --secondary: hsl(215 28% 14%);
-    --secondary-foreground: hsl(210 40% 98%);
-    --muted: hsl(215 28% 14%);
-    --muted-foreground: hsl(215 16% 57%);
-    --accent: hsl(215 28% 18%);
-    --accent-foreground: hsl(210 40% 98%);
-    --destructive: hsl(0 72% 51%);
-    --destructive-foreground: hsl(0 0% 98%);
-    --success: hsl(142 60% 40%);
-    --success-foreground: hsl(210 40% 98%);
-    --warning: hsl(38 85% 45%);
-    --warning-foreground: hsl(210 40% 98%);
-    --border: hsl(215 28% 18%);
-    --input: hsl(215 28% 18%);
-    --ring: hsl(213 94% 68%);
+    --background:   oklch(15%   0.008 50);   /* deep warm charcoal */
+    --foreground:   oklch(92%   0.005 76);   /* warm off-white */
+
+    --card:              oklch(18.5% 0.008 50);  /* slightly raised surface */
+    --card-foreground:   oklch(92%   0.005 76);
+
+    --surface-subtle:    oklch(21.5% 0.008 50);  /* inset surface */
+
+    --popover:           oklch(18.5% 0.008 50);
+    --popover-foreground:oklch(92%   0.005 76);
+
+    /* Primary — lighter steel teal for dark surfaces */
+    --primary:           oklch(62%   0.130 224);
+    --primary-hover:     oklch(66%   0.130 224);
+    --primary-foreground:oklch(15%   0.008 50);  /* dark text on light primary */
+
+    --secondary:         oklch(23%   0.009 52);
+    --secondary-foreground:oklch(92% 0.005 76);
+
+    --muted:             oklch(22%   0.009 52);
+    --muted-foreground:  oklch(60%   0.009 60);
+
+    --accent:            oklch(25%   0.009 52);
+    --accent-foreground: oklch(92%   0.005 76);
+
+    --destructive:       oklch(55%   0.210 25);
+    --destructive-foreground:oklch(99% 0.003 80);
+
+    --success:           oklch(58%   0.130 162);
+    --success-foreground:oklch(15%   0.008 50);
+    --warning:           oklch(68%   0.150 72);
+    --warning-foreground:oklch(15%   0.008 50);
+    --info:              oklch(60%   0.120 230);
+    --info-foreground:   oklch(15%   0.008 50);
+
+    --border:       oklch(27%   0.008 52);
+    --border-subtle:oklch(22%   0.008 52);
+    --border-strong:oklch(36%   0.010 52);
+    --input:        oklch(27%   0.008 52);
+    --ring:         oklch(62%   0.130 224);
+
+    /* ── Status Badge Semantic Tokens (dark) ── */
+    --badge-open-bg:     oklch(24%   0.060 224);
+    --badge-open-fg:     oklch(72%   0.100 224);
+    --badge-open-border: oklch(31%   0.080 224);
+
+    --badge-progress-bg:     oklch(23%   0.050 202);
+    --badge-progress-fg:     oklch(70%   0.090 202);
+    --badge-progress-border: oklch(30%   0.070 202);
+
+    --badge-assigned-bg:     oklch(24%   0.055 74);
+    --badge-assigned-fg:     oklch(72%   0.120 72);
+    --badge-assigned-border: oklch(31%   0.080 74);
+
+    --badge-resolved-bg:     oklch(22%   0.060 162);
+    --badge-resolved-fg:     oklch(68%   0.100 162);
+    --badge-resolved-border: oklch(30%   0.080 162);
+
+    --badge-neutral-bg:     oklch(22%   0.009 52);
+    --badge-neutral-fg:     oklch(60%   0.009 60);
+    --badge-neutral-border: oklch(27%   0.008 52);
+
+    --badge-critical-bg:     oklch(24%   0.080 25);
+    --badge-critical-fg:     oklch(68%   0.160 25);
+    --badge-critical-border: oklch(33%   0.120 25);
+
+    --badge-warning-bg:     oklch(24%   0.055 74);
+    --badge-warning-fg:     oklch(72%   0.120 72);
+    --badge-warning-border: oklch(31%   0.080 74);
+  }
+
+  /* Compact Density Overrides */
+  [data-density="compact"] {
+    --density-padding-y:   0.25rem;
+    --density-padding-x:   0.5rem;
+    --density-row-height:  2rem;
+    --density-gap:         0.5rem;
   }
 }
 
@@ -123,43 +271,101 @@
     border-color: var(--border);
     box-sizing: border-box;
   }
+
   body {
     background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Custom minimal scrollbar */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 3px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--muted-foreground);
-  }
-
-  /* Accessibility focus styles */
+  /* Accessible focus ring — warm primary */
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
 
+  /* Skip to main content */
+  .skip-to-content {
+    position: absolute;
+    top: -100px;
+    left: 1rem;
+    z-index: 100;
+    padding: 0.5rem 1rem;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    transition: top 0.15s ease-in-out;
+  }
+  .skip-to-content:focus {
+    top: 1rem;
+  }
+
+  /* Refined enterprise scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+  }
+
   /* Reduced motion */
   @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    *, *::before, *::after {
       animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
+   CampusCare Badge Utilities
+   Fully semantic — no hardcoded framework color names.
+   Every class resolves through CSS variables defined above.
+   ────────────────────────────────────────────────────────── */
+@layer utilities {
+  .cc-badge-open {
+    background-color: var(--badge-open-bg);
+    color: var(--badge-open-fg);
+    border-color: var(--badge-open-border);
+  }
+  .cc-badge-progress {
+    background-color: var(--badge-progress-bg);
+    color: var(--badge-progress-fg);
+    border-color: var(--badge-progress-border);
+  }
+  .cc-badge-assigned {
+    background-color: var(--badge-assigned-bg);
+    color: var(--badge-assigned-fg);
+    border-color: var(--badge-assigned-border);
+  }
+  .cc-badge-resolved {
+    background-color: var(--badge-resolved-bg);
+    color: var(--badge-resolved-fg);
+    border-color: var(--badge-resolved-border);
+  }
+  .cc-badge-neutral {
+    background-color: var(--badge-neutral-bg);
+    color: var(--badge-neutral-fg);
+    border-color: var(--badge-neutral-border);
+  }
+  .cc-badge-critical {
+    background-color: var(--badge-critical-bg);
+    color: var(--badge-critical-fg);
+    border-color: var(--badge-critical-border);
+    font-weight: 700;
+  }
+  .cc-badge-warning {
+    background-color: var(--badge-warning-bg);
+    color: var(--badge-warning-fg);
+    border-color: var(--badge-warning-border);
   }
 }

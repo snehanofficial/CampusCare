@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router";
-import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, LogOut, ShieldCheck } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth.js";
 import { usePermission } from "../../hooks/usePermission.js";
 import { NAVIGATION_REGISTRY } from "../../config/navigation-registry.js";
@@ -43,43 +43,63 @@ export function Sidebar({
     : "";
 
   const sidebarClass = `
-    fixed inset-y-0 left-0 z-40 flex flex-col border-r border-border bg-card transition-all duration-200 lg:static
+    fixed inset-y-0 left-0 z-40 flex flex-col border-r border-border bg-card transition-all duration-150 lg:static
     ${isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-    ${isCollapsed ? "w-16" : "w-60"}
+    ${isCollapsed ? "w-14" : "w-56"}
   `;
 
   return (
     <aside className={sidebarClass}>
       {/* Brand Header */}
-      <div className="flex h-14 items-center justify-between border-b border-border/40 px-4">
+      <div className="flex h-12 items-center justify-between border-b border-border px-3">
         <Link
           to="/dashboard"
           onClick={onMobileClose}
-          className="flex items-center gap-2 font-bold text-primary focus:outline-none select-none"
+          className="flex items-center gap-2.5 font-bold focus:outline-none select-none min-w-0"
         >
-          <span className="flex size-8 items-center justify-center rounded bg-primary text-primary-foreground font-black text-sm">
+          {/* Brand mark — typographic, not a colored square */}
+          <span
+            className="flex h-7 w-7 items-center justify-center rounded-xs border border-primary/40 bg-primary/8 text-primary"
+            style={{ fontSize: "9px", fontWeight: 900, letterSpacing: "0.06em" }}
+          >
             CC
           </span>
-          {!isCollapsed && <span className="text-foreground text-sm tracking-tight font-extrabold">CampusCare</span>}
+          {!isCollapsed && (
+            <div className="flex flex-col leading-none">
+              <span
+                className="text-foreground font-black"
+                style={{ fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase" }}
+              >
+                Campus
+              </span>
+              <span
+                className="text-primary font-black"
+                style={{ fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase" }}
+              >
+                Care
+              </span>
+            </div>
+          )}
         </Link>
         <button
           onClick={onToggle}
-          className="hidden rounded p-1 hover:bg-accent text-muted-foreground hover:text-foreground lg:block focus:outline-none cursor-pointer"
+          className="hidden rounded-sm p-1 hover:bg-muted text-muted-foreground hover:text-foreground lg:block focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
+          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
           {isCollapsed ? (
-            <ChevronRight className="size-4" />
+            <ChevronRight className="size-3.5" />
           ) : (
-            <ChevronLeft className="size-4" />
+            <ChevronLeft className="size-3.5" />
           )}
         </button>
       </div>
 
-      {/* Nav List */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-4">
+      {/* Nav Navigation List */}
+      <div className="flex-1 overflow-y-auto p-2 space-y-3">
         {filteredNav.map((section) => (
-          <div key={section.group} className="space-y-1">
+          <div key={section.group} className="space-y-0.5">
             {!isCollapsed && (
-              <h4 className="px-2.5 text-[9px] font-bold tracking-wider text-muted-foreground uppercase select-none">
+              <h4 className="px-2 py-1 text-[9px] font-extrabold tracking-wider text-muted-foreground/80 uppercase select-none">
                 {section.group}
               </h4>
             )}
@@ -92,15 +112,15 @@ export function Sidebar({
                     <Link
                       to={item.href}
                       onClick={onMobileClose}
-                      className={`flex items-center gap-3 rounded-md px-3 py-2 text-xs font-semibold transition-colors focus:outline-none ${
+                      className={`flex items-center gap-2.5 rounded-sm px-2.5 py-1.5 text-xs font-medium transition-colors focus:outline-none focus:ring-1 focus:ring-ring ${
                         active
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                          ? "bg-primary/10 text-primary font-semibold border-l-2 border-primary -ml-0.5"
+                          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                       }`}
                       title={isCollapsed ? item.label : undefined}
                     >
                       <Icon className="size-4 flex-shrink-0" />
-                      {!isCollapsed && <span>{item.label}</span>}
+                      {!isCollapsed && <span className="truncate">{item.label}</span>}
                     </Link>
                   </li>
                 );
@@ -110,33 +130,36 @@ export function Sidebar({
         ))}
       </div>
 
-      {/* User Brief Footer */}
+      {/* User Footer Card */}
       {user && (
-        <div className="border-t border-border/40 p-3 flex flex-col gap-2 bg-muted/10">
-          <div className="flex items-center gap-3">
-            <Avatar className="size-8 border border-border">
+        <div className="border-t border-border p-2.5 flex flex-col gap-2 bg-surface-subtle/50">
+          <div className="flex items-center gap-2.5">
+            <Avatar className="size-7 border border-border">
               {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={`${user.firstName} ${user.lastName}`} />}
-              <AvatarFallback>{initials}</AvatarFallback>
+              <AvatarFallback className="text-[10px] font-bold">{initials}</AvatarFallback>
             </Avatar>
             {!isCollapsed && (
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-foreground truncate leading-normal">
+                <p className="text-xs font-bold text-foreground truncate leading-none">
                   {user.firstName} {user.lastName}
                 </p>
-                <p className="text-[10px] text-muted-foreground truncate leading-normal">
-                  {user.email}
-                </p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <ShieldCheck className="size-3 text-primary" />
+                  <span className="text-[10px] text-muted-foreground capitalize truncate">
+                    {user.role}
+                  </span>
+                </div>
               </div>
             )}
           </div>
           {!isCollapsed && (
             <Button
               variant="outline"
-              size="sm"
+              size="xs"
               onClick={logout}
-              className="flex w-full items-center gap-2 text-destructive hover:bg-destructive/5 font-semibold text-xs border-destructive/20 hover:border-destructive/40"
+              className="flex w-full items-center justify-center gap-1.5 text-destructive hover:bg-destructive/10 text-[11px] border-destructive/20"
             >
-              <LogOut className="size-3.5" />
+              <LogOut className="size-3" />
               Sign Out
             </Button>
           )}

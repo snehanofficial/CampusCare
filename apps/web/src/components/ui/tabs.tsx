@@ -21,9 +21,19 @@ export function Tabs({ value, onValueChange, children, className }: TabsProps) {
   );
 }
 
+/**
+ * Enterprise underline-style tab bar.
+ * Flat bottom border with indicator underline on active item.
+ * Avoids the shadcn rounded-pill background pattern entirely.
+ */
 export function TabsList({ children, className, value, onValueChange }: any) {
   return (
-    <div className={cn("inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground", className)}>
+    <div
+      className={cn(
+        "flex items-end gap-0 border-b border-border bg-transparent h-auto p-0",
+        className
+      )}
+    >
       {React.Children.map(children, (child) => {
         if (React.isValidElement(child)) {
           return React.cloneElement(child as React.ReactElement<any>, { activeValue: value, onValueChange });
@@ -41,8 +51,11 @@ export function TabsTrigger({ children, className, value, activeValue, onValueCh
       type="button"
       onClick={() => onValueChange(value)}
       className={cn(
-        "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3.5 py-1.5 text-xs font-semibold transition-all focus:outline-none disabled:pointer-events-none disabled:opacity-50 select-none cursor-pointer",
-        active ? "bg-background text-foreground shadow-xs" : "hover:text-foreground/80",
+        "relative inline-flex items-center gap-1.5 px-3 pb-2.5 pt-0.5 text-xs font-semibold transition-colors duration-100 whitespace-nowrap select-none cursor-pointer focus:outline-none disabled:pointer-events-none disabled:opacity-50",
+        "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:transition-colors after:duration-100",
+        active
+          ? "text-foreground after:bg-primary"
+          : "text-muted-foreground hover:text-foreground after:bg-transparent",
         className
       )}
     >

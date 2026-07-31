@@ -61,7 +61,7 @@ export function SettingsTemplate({
                   <TabsTrigger
                     key={tab.id}
                     value={tab.id}
-                    className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-md border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/5 data-[state=active]:text-primary text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none lg:w-full lg:justify-start lg:border-b-0 lg:border-l-2"
+                    className="flex items-center gap-2 px-3 py-2 text-xs font-semibold border-l-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/5 data-[state=active]:text-primary text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none lg:w-full lg:justify-start transition-colors"
                   >
                     <Icon className="size-4 flex-shrink-0" />
                     <span>{tab.label}</span>

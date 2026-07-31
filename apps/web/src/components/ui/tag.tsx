@@ -16,7 +16,7 @@ export function Tag({ className, variant = "secondary", ...props }: TagProps) {
           "bg-success/10 text-success border-success/20": variant === "success",
           "bg-warning/10 text-warning border-warning/20": variant === "warning",
           "bg-destructive/10 text-destructive border-destructive/20": variant === "destructive",
-          "bg-blue-500/10 text-blue-500 border-blue-500/20": variant === "info",
+          "bg-info/10 text-info border-info/20": variant === "info",
           "border-border bg-background text-foreground": variant === "outline",
         },
         className
