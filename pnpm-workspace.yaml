@@ -7,3 +7,5 @@ allowBuilds:
   bcrypt: true
   esbuild: true
   prisma: true
+overrides:
+  brace-expansion@<=5.0.7: ^5.0.8

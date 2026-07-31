@@ -25,7 +25,7 @@ app.use(helmet({
         "img-src": ["'self'", "data:", "https://cdn.jsdelivr.net"], // Scalar may also load assets/images
       },
     },
-  }));
+  }) as any);
 app.use(cors({
   origin: env.NODE_ENV === "production" ? false : true, // Adjust in production
   credentials: true
