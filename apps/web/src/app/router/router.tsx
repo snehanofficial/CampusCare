@@ -23,7 +23,25 @@ const PlaygroundPage = lazy(() => import("../../features/dashboard/pages/Playgro
 const SessionsPage = lazy(() => import("../../features/profile/pages/SessionsPage.js"));
 const UnauthorizedPage = lazy(() => import("../../features/errors/pages/UnauthorizedPage.js"));
 const ServerErrorPage = lazy(() => import("../../features/errors/pages/ServerErrorPage.js"));
-const MaintenancePage = lazy(() => import("../../features/errors/pages/MaintenancePage.js"));
+const ErrorMaintenancePage = lazy(() => import("../../features/errors/pages/MaintenancePage.js"));
+
+// Dynamic feature components
+const TicketsPage = lazy(() => import("../../features/tickets/pages/TicketsPage.js"));
+const IncidentsPage = lazy(() => import("../../features/incidents/pages/IncidentsPage.js"));
+const AssetsPage = lazy(() => import("../../features/assets/pages/AssetsPage.js"));
+const MaintenancePage = lazy(() => import("../../features/maintenance/pages/MaintenancePage.js"));
+const InventoryPage = lazy(() => import("../../features/inventory/pages/InventoryPage.js"));
+const ReportsPage = lazy(() => import("../../features/reports/pages/ReportsPage.js"));
+const AnalyticsPage = lazy(() => import("../../features/analytics/pages/AnalyticsPage.js"));
+const KnowledgeBasePage = lazy(() => import("../../features/knowledge-base/pages/KnowledgeBasePage.js"));
+const UsersPage = lazy(() => import("../../features/users/pages/UsersPage.js"));
+const DepartmentsPage = lazy(() => import("../../features/departments/pages/DepartmentsPage.js"));
+const CategoriesPage = lazy(() => import("../../features/categories/pages/CategoriesPage.js"));
+const AuditPage = lazy(() => import("../../features/audit/pages/AuditPage.js"));
+const SettingsPage = lazy(() => import("../../features/settings/pages/SettingsPage.js"));
+const ProfilePage = lazy(() => import("../../features/profile/pages/ProfilePage.js"));
+const ServiceStatusPage = lazy(() => import("../../features/service-status/pages/ServiceStatusPage.js"));
+const NotificationsPage = lazy(() => import("../../features/notifications/pages/NotificationsPage.js"));
 
 // Skeleton loader
 import { PageSkeleton } from "../../components/feedback/PageSkeleton.js";
@@ -84,7 +102,7 @@ export const router = createBrowserRouter([
     path: "maintenance",
     element: (
       <Suspense fallback={<PageSkeleton />}>
-        <MaintenancePage />
+        <ErrorMaintenancePage />
       </Suspense>
     ),
   },
@@ -105,12 +123,29 @@ export const router = createBrowserRouter([
           </Suspense>
         ),
       },
-      // Placeholders for other routes so menu links compile/work correctly
+      {
+        path: "service-status",
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <ServiceStatusPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "notifications",
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <NotificationsPage />
+          </Suspense>
+        ),
+      },
       {
         path: "tickets/mine",
         element: (
           <PermissionGuard requiredPermissions={["tickets:read_own"]}>
-            <div className="p-6 bg-card border rounded-lg">My Tickets Page Scaffold</div>
+            <Suspense fallback={<PageSkeleton />}>
+              <TicketsPage mineOnly={true} />
+            </Suspense>
           </PermissionGuard>
         ),
       },
@@ -118,7 +153,19 @@ export const router = createBrowserRouter([
         path: "tickets",
         element: (
           <PermissionGuard requiredPermissions={["tickets:read_all"]}>
-            <div className="p-6 bg-card border rounded-lg">All Tickets Page Scaffold</div>
+            <Suspense fallback={<PageSkeleton />}>
+              <TicketsPage mineOnly={false} />
+            </Suspense>
+          </PermissionGuard>
+        ),
+      },
+      {
+        path: "incidents",
+        element: (
+          <PermissionGuard requiredPermissions={["tickets:read_all"]}>
+            <Suspense fallback={<PageSkeleton />}>
+              <IncidentsPage />
+            </Suspense>
           </PermissionGuard>
         ),
       },
@@ -126,7 +173,19 @@ export const router = createBrowserRouter([
         path: "assets",
         element: (
           <PermissionGuard requiredPermissions={["assets:read"]}>
-            <div className="p-6 bg-card border rounded-lg">Assets Management Page Scaffold</div>
+            <Suspense fallback={<PageSkeleton />}>
+              <AssetsPage />
+            </Suspense>
+          </PermissionGuard>
+        ),
+      },
+      {
+        path: "maintenance",
+        element: (
+          <PermissionGuard requiredPermissions={["assets:read"]}>
+            <Suspense fallback={<PageSkeleton />}>
+              <MaintenancePage />
+            </Suspense>
           </PermissionGuard>
         ),
       },
@@ -134,7 +193,9 @@ export const router = createBrowserRouter([
         path: "inventory",
         element: (
           <PermissionGuard requiredPermissions={["inventory:read"]}>
-            <div className="p-6 bg-card border rounded-lg">Inventory Tracking Page Scaffold</div>
+            <Suspense fallback={<PageSkeleton />}>
+              <InventoryPage />
+            </Suspense>
           </PermissionGuard>
         ),
       },
@@ -142,19 +203,37 @@ export const router = createBrowserRouter([
         path: "reports",
         element: (
           <PermissionGuard requiredPermissions={["reports:view"]}>
-            <div className="p-6 bg-card border rounded-lg">Reports & Analytics Page Scaffold</div>
+            <Suspense fallback={<PageSkeleton />}>
+              <ReportsPage />
+            </Suspense>
+          </PermissionGuard>
+        ),
+      },
+      {
+        path: "analytics",
+        element: (
+          <PermissionGuard requiredPermissions={["reports:view"]}>
+            <Suspense fallback={<PageSkeleton />}>
+              <AnalyticsPage />
+            </Suspense>
           </PermissionGuard>
         ),
       },
       {
         path: "knowledge-base",
-        element: <div className="p-6 bg-card border rounded-lg">Knowledge Base Catalog Page Scaffold</div>,
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <KnowledgeBasePage />
+          </Suspense>
+        ),
       },
       {
         path: "users",
         element: (
           <PermissionGuard requiredPermissions={["users:read"]}>
-            <div className="p-6 bg-card border rounded-lg">Users Administration Page Scaffold</div>
+            <Suspense fallback={<PageSkeleton />}>
+              <UsersPage />
+            </Suspense>
           </PermissionGuard>
         ),
       },
@@ -162,7 +241,19 @@ export const router = createBrowserRouter([
         path: "departments",
         element: (
           <PermissionGuard requiredPermissions={["departments:manage"]}>
-            <div className="p-6 bg-card border rounded-lg">Departments Configuration Page Scaffold</div>
+            <Suspense fallback={<PageSkeleton />}>
+              <DepartmentsPage />
+            </Suspense>
+          </PermissionGuard>
+        ),
+      },
+      {
+        path: "categories",
+        element: (
+          <PermissionGuard requiredPermissions={["categories:manage"]}>
+            <Suspense fallback={<PageSkeleton />}>
+              <CategoriesPage />
+            </Suspense>
           </PermissionGuard>
         ),
       },
@@ -170,7 +261,9 @@ export const router = createBrowserRouter([
         path: "audit",
         element: (
           <PermissionGuard requiredPermissions={["audit:read"]}>
-            <div className="p-6 bg-card border rounded-lg">Security Audit Logs Page Scaffold</div>
+            <Suspense fallback={<PageSkeleton />}>
+              <AuditPage />
+            </Suspense>
           </PermissionGuard>
         ),
       },
@@ -178,13 +271,19 @@ export const router = createBrowserRouter([
         path: "settings",
         element: (
           <PermissionGuard requiredPermissions={["settings:manage"]}>
-            <div className="p-6 bg-card border rounded-lg">Global Settings Configuration Page Scaffold</div>
+            <Suspense fallback={<PageSkeleton />}>
+              <SettingsPage />
+            </Suspense>
           </PermissionGuard>
         ),
       },
       {
         path: "profile",
-        element: <div className="p-6 bg-card border rounded-lg">User Profile Information Page Scaffold</div>,
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <ProfilePage />
+          </Suspense>
+        ),
       },
       {
         path: "profile/sessions",

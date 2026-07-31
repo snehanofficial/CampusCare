@@ -1,2 +1,1 @@
-// Placeholder for feature audit subfolder pages
-export {};
+export * from "./AuditPage.js";

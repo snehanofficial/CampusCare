@@ -1,2 +1,1 @@
-// Placeholder for feature categories subfolder pages
-export {};
+export * from "./CategoriesPage.js";

@@ -12,6 +12,12 @@ import {
   FlaskConical,
   User,
   KeyRound,
+  Activity,
+  Bell,
+  AlertCircle,
+  Wrench,
+  FolderTree,
+  TrendingUp,
   type LucideIcon,
 } from "lucide-react";
 import type { PermissionCode } from "@campuscare/constants";
@@ -34,6 +40,8 @@ export const NAVIGATION_REGISTRY: readonly NavigationSection[] = [
     group: "Overview",
     items: [
       { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { label: "Service Status", href: "/service-status", icon: Activity },
+      { label: "Notifications", href: "/notifications", icon: Bell },
       { label: "UI Lab / Playground", href: "/playground", icon: FlaskConical },
     ],
   },
@@ -52,6 +60,12 @@ export const NAVIGATION_REGISTRY: readonly NavigationSection[] = [
         icon: Ticket,
         permission: "tickets:read_all",
       },
+      {
+        label: "Incidents",
+        href: "/incidents",
+        icon: AlertCircle,
+        permission: "tickets:read_all",
+      },
     ],
   },
   {
@@ -61,6 +75,12 @@ export const NAVIGATION_REGISTRY: readonly NavigationSection[] = [
         label: "Assets",
         href: "/assets",
         icon: Monitor,
+        permission: "assets:read",
+      },
+      {
+        label: "Maintenance",
+        href: "/maintenance",
+        icon: Wrench,
         permission: "assets:read",
       },
       {
@@ -78,6 +98,12 @@ export const NAVIGATION_REGISTRY: readonly NavigationSection[] = [
         label: "Reports",
         href: "/reports",
         icon: BarChart2,
+        permission: "reports:view",
+      },
+      {
+        label: "Analytics",
+        href: "/analytics",
+        icon: TrendingUp,
         permission: "reports:view",
       },
       {
@@ -101,6 +127,12 @@ export const NAVIGATION_REGISTRY: readonly NavigationSection[] = [
         href: "/departments",
         icon: Building2,
         permission: "departments:manage",
+      },
+      {
+        label: "Categories",
+        href: "/categories",
+        icon: FolderTree,
+        permission: "categories:manage",
       },
       {
         label: "Audit Logs",

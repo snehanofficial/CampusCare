@@ -1,2 +1,1 @@
-// Placeholder for feature service-status subfolder pages
-export {};
+export * from "./ServiceStatusPage.js";

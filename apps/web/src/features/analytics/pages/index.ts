@@ -1,2 +1,1 @@
-// Placeholder for feature analytics subfolder pages
-export {};
+export * from "./AnalyticsPage.js";

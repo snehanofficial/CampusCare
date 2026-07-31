@@ -1,2 +1,1 @@
-// Placeholder for feature inventory subfolder pages
-export {};
+export * from "./InventoryPage.js";

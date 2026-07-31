@@ -1,2 +1,1 @@
-// Placeholder for feature incidents subfolder pages
-export {};
+export * from "./IncidentsPage.js";

@@ -1,2 +1,1 @@
-// Placeholder for feature settings subfolder pages
-export {};
+export * from "./SettingsPage.js";

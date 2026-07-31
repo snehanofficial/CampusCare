@@ -1,2 +1,1 @@
-// Placeholder for feature tickets subfolder pages
-export {};
+export * from "./TicketsPage.js";

@@ -1,2 +1,1 @@
-// Placeholder for feature users subfolder pages
-export {};
+export * from "./UsersPage.js";

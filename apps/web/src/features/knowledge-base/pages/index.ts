@@ -1,2 +1,1 @@
-// Placeholder for feature knowledge-base subfolder pages
-export {};
+export * from "./KnowledgeBasePage.js";

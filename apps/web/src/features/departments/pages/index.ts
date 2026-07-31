@@ -1,2 +1,1 @@
-// Placeholder for feature departments subfolder pages
-export {};
+export * from "./DepartmentsPage.js";

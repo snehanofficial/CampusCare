@@ -7,11 +7,12 @@ interface StatCardProps {
     value: number;
     isPositive: boolean;
   };
+  description?: string;
   icon?: LucideIcon;
   loading?: boolean;
 }
 
-export function StatCard({ title, value, delta, icon: Icon, loading = false }: StatCardProps) {
+export function StatCard({ title, value, delta, description, icon: Icon, loading = false }: StatCardProps) {
   if (loading) {
     return (
       <div className="rounded-lg border border-border bg-card p-4 shadow-sm animate-pulse">
@@ -31,6 +32,11 @@ export function StatCard({ title, value, delta, icon: Icon, loading = false }: S
         <p className="text-2xl font-bold tracking-tight text-foreground">
           {value}
         </p>
+        {description && (
+          <p className="text-xs text-muted-foreground">
+            {description}
+          </p>
+        )}
         {delta && (
           <p className="text-xs">
             <span

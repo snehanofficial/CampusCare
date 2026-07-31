@@ -1,2 +1,2 @@
-// Placeholder for feature profile subfolder pages
-export {};
+export * from "./ProfilePage.js";
+export * from "./SessionsPage.js";

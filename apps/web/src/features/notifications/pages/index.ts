@@ -1,2 +1,1 @@
-// Placeholder for feature notifications subfolder pages
-export {};
+export * from "./NotificationsPage.js";

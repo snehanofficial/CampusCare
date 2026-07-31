@@ -1,2 +1,1 @@
-// Placeholder for feature maintenance subfolder pages
-export {};
+export * from "./MaintenancePage.js";

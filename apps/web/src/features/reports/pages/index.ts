@@ -1,2 +1,1 @@
-// Placeholder for feature reports subfolder pages
-export {};
+export * from "./ReportsPage.js";
