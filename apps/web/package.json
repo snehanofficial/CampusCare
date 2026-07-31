@@ -13,7 +13,9 @@
     "@campuscare/shared-schemas": "workspace:*",
     "@campuscare/shared-types": "workspace:*",
     "@campuscare/shared-utils": "workspace:*",
+    "@hookform/resolvers": "^5.5.7",
     "@tanstack/react-query": "^5.101.4",
+    "axios": "^1.19.0",
     "clsx": "^2.1.1",
     "html5-qrcode": "^2.3.8",
     "lucide-react": "^1.28.0",
@@ -28,6 +30,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "@tanstack/react-query-devtools": "^5.101.4",
     "@types/node": "^26.1.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",

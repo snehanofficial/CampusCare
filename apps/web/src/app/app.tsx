@@ -1,41 +1,31 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router";
+import { RouterProvider } from "react-router";
 import { Toaster } from "sonner";
+import { QueryProvider } from "./providers/QueryProvider.js";
+import { ThemeProvider, useTheme } from "./providers/ThemeProvider.js";
+import { AuthProvider } from "../features/auth/store/AuthProvider.js";
+import { router } from "./router/router.js";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1
-    }
-  }
-});
+// Inner App to read the active resolvedTheme from ThemeProvider to pass to Toaster
+function AppContent() {
+  const { resolvedTheme } = useTheme();
+
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Toaster position="top-right" richColors theme={resolvedTheme} />
+    </>
+  );
+}
 
 export function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <div className="flex h-screen flex-col items-center justify-center bg-background text-foreground">
-                <h1 className="text-3xl font-bold text-primary">CampusCare Help Desk & ITSM</h1>
-                <p className="mt-2 text-muted-foreground">Mobile-First Progressive Web Application</p>
-              </div>
-            }
-          />
-          <Route
-            path="*"
-            element={
-              <div className="flex h-screen items-center justify-center bg-background text-foreground">
-                <h1 className="text-2xl font-bold">404 - Page Not Found</h1>
-              </div>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
-      <Toaster position="top-right" richColors />
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </QueryProvider>
+    </ThemeProvider>
   );
 }
+export default App;

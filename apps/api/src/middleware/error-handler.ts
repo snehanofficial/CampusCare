@@ -2,9 +2,10 @@ import { Request, Response, NextFunction } from "express";
 import { AppError } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 
 export function errorHandler(
-  err: Error,
+  err: any,
   req: Request,
   res: Response,
   next: NextFunction
@@ -14,7 +15,8 @@ export function errorHandler(
     msg: err.message,
     stack: err.stack,
     path: req.path,
-    method: req.method
+    method: req.method,
+    userId: req.user?.id
   });
 
   // Handle custom AppError
@@ -32,15 +34,39 @@ export function errorHandler(
 
   // Handle Zod schemas validation errors
   if (err instanceof z.ZodError) {
-    res.status(422).json({
+    res.status(400).json({
       success: false,
       error: {
-        code: "VALIDATION_FAILED",
+        code: "VALIDATION_ERROR",
         message: "Request validation failed",
         details: err.flatten().fieldErrors
       }
     });
     return;
+  }
+
+  // Handle Prisma errors
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    if (err.code === "P2002") {
+      res.status(409).json({
+        success: false,
+        error: {
+          code: "CONFLICT",
+          message: "A record with these details already exists"
+        }
+      });
+      return;
+    }
+    if (err.code === "P2025") {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: "NOT_FOUND",
+          message: "The requested record was not found"
+        }
+      });
+      return;
+    }
   }
 
   // Fallback to internal server error

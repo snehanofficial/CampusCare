@@ -44,7 +44,13 @@ export class ConflictError extends AppError {
 }
 
 export class ValidationError extends AppError {
-  constructor(message = "Validation Failed", details: any = null) {
-    super(message, 422, "VALIDATION_FAILED", details);
+  constructor(details: any = null, message = "Validation Failed") {
+    super(message, 400, "VALIDATION_ERROR", details);
+  }
+}
+
+export class RateLimitError extends AppError {
+  constructor(message = "Too many requests. Please try again later.") {
+    super(message, 429, "RATE_LIMIT_EXCEEDED");
   }
 }

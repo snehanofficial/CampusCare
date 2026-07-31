@@ -11,18 +11,24 @@ generator client {
 // ---------------------------------------------------------
 
 model User {
-  id           String           @id @default(uuid()) @map("id")
-  email        String           @unique @map("email")
-  passwordHash String           @map("password_hash")
-  firstName    String           @map("first_name")
-  lastName     String           @map("last_name")
-  roleId       String           @map("role_id")
-  isActive     Boolean          @default(true) @map("is_active")
-  createdAt    DateTime         @default(now()) @map("created_at")
-  updatedAt    DateTime         @updatedAt @map("updated_at")
+  id           String    @id @default(uuid()) @map("id")
+  email        String    @unique @map("email")
+  passwordHash String    @map("password_hash")
+  firstName    String    @map("first_name")
+  lastName     String    @map("last_name")
+  avatarUrl    String?   @map("avatar_url")
+  phone        String?   @map("phone")
+  roleId       String    @map("role_id")
+  departmentId String?   @map("department_id")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   role                  Role                   @relation(fields: [roleId], references: [id])
+  department            Department?            @relation("UserDepartment", fields: [departmentId], references: [id])
   permissions           UserPermission[]
+  sessions              Session[]
   createdTickets        Ticket[]               @relation("CreatedTickets")
   assignedTickets       Ticket[]               @relation("AssignedTickets")
   comments              TicketComment[]
@@ -34,13 +40,16 @@ model User {
 
   @@index([email])
   @@index([roleId])
+  @@index([departmentId])
   @@map("users")
 }
 
 model Role {
   id          String   @id @default(uuid()) @map("id")
-  name        String   @unique @map("name")
+  name        String   @unique @map("name")      // e.g. STUDENT, TECHNICIAN
+  displayName String   @map("display_name")       // e.g. "Student", "IT Technician"
   description String?  @map("description")
+  isSystem    Boolean  @default(true) @map("is_system") // System roles cannot be deleted
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -52,14 +61,18 @@ model Role {
 
 model Permission {
   id          String   @id @default(uuid()) @map("id")
-  name        String   @unique @map("name")
+  code        String   @unique @map("code")         // e.g. "tickets:create"
+  displayName String   @map("display_name")          // e.g. "Create Tickets"
   description String?  @map("description")
+  category    String   @map("category")              // e.g. "Tickets", "Assets"
+  groupLabel  String   @map("group_label")           // e.g. "Support Operations"
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  roles            RolePermission[]
-  userPermissions  UserPermission[]
+  roles           RolePermission[]
+  userPermissions UserPermission[]
 
+  @@index([category])
   @@map("permissions")
 }
 
@@ -79,6 +92,8 @@ model UserPermission {
   userId       String    @map("user_id")
   permissionId String    @map("permission_id")
   isGranted    Boolean   @default(true) @map("is_granted")
+  reason       String?   @map("reason")
+  grantedById  String?   @map("granted_by_id")
   expiresAt    DateTime? @map("expires_at")
   createdAt    DateTime  @default(now()) @map("created_at")
 
@@ -90,6 +105,32 @@ model UserPermission {
   @@map("user_permissions")
 }
 
+// Session model: replaces simple RefreshToken — tracks device info for session management
+model Session {
+  id            String    @id @default(uuid()) @map("id")
+  userId        String    @map("user_id")
+  tokenHash     String    @unique @map("token_hash")   // SHA-256 of opaque refresh token
+  deviceName    String?   @map("device_name")          // "iPhone 15", "Chrome on Windows"
+  deviceType    String?   @map("device_type")          // "mobile" | "tablet" | "desktop"
+  browser       String?   @map("browser")              // "Chrome 120"
+  os            String?   @map("os")                   // "Windows 11"
+  ipAddress     String?   @map("ip_address")
+  userAgent     String?   @map("user_agent")
+  lastActivity  DateTime  @default(now()) @map("last_activity")
+  expiresAt     DateTime  @map("expires_at")
+  revoked       Boolean   @default(false) @map("revoked")
+  revokedAt     DateTime? @map("revoked_at")
+  revokedReason String?   @map("revoked_reason")       // "LOGOUT" | "SECURITY" | "REUSE_DETECTED"
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@index([revoked])
+  @@map("sessions")
+}
+
 // ---------------------------------------------------------
 // Support Hierarchy & Ticket Categorization
 // ---------------------------------------------------------
@@ -97,10 +138,13 @@ model UserPermission {
 model Department {
   id          String   @id @default(uuid()) @map("id")
   name        String   @unique @map("name")
+  code        String   @unique @map("code")          // Short code e.g. "CS", "IT"
   description String?  @map("description")
+  isActive    Boolean  @default(true) @map("is_active")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  users   User[]    @relation("UserDepartment")
   tickets Ticket[]
   assets  Asset[]
 
@@ -111,6 +155,10 @@ model Category {
   id          String   @id @default(uuid()) @map("id")
   name        String   @unique @map("name")
   description String?  @map("description")
+  icon        String?  @map("icon")             // Lucide icon name e.g. "Monitor"
+  color       String?  @map("color")            // Hex color for UI badge
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -125,18 +173,21 @@ model Category {
 
 model Ticket {
   id           String    @id @default(uuid()) @map("id")
+  ticketNumber String    @unique @map("ticket_number")  // e.g. "INC-1029"
   title        String    @map("title")
   description  String    @map("description")
-  status       String    @map("status") // e.g. OPEN, ASSIGNED, IN_PROGRESS, RESOLVED, CLOSED
-  priority     String    @map("priority") // e.g. LOW, MEDIUM, HIGH, CRITICAL
+  status       String    @map("status")       // OPEN | ASSIGNED | IN_PROGRESS | PENDING | RESOLVED | CLOSED
+  priority     String    @map("priority")     // LOW | MEDIUM | HIGH | CRITICAL
   creatorId    String    @map("creator_id")
   assigneeId   String?   @map("assignee_id")
   categoryId   String    @map("category_id")
   departmentId String    @map("department_id")
   assetId      String?   @map("asset_id")
+  closedAt     DateTime? @map("closed_at")
+  resolvedAt   DateTime? @map("resolved_at")
+  dueAt        DateTime? @map("due_at")       // SLA deadline
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
-  resolvedAt   DateTime? @map("resolved_at")
 
   creator     User               @relation("CreatedTickets", fields: [creatorId], references: [id])
   assignee    User?              @relation("AssignedTickets", fields: [assigneeId], references: [id])
@@ -154,6 +205,7 @@ model Ticket {
   @@index([categoryId])
   @@index([departmentId])
   @@index([assetId])
+  @@index([ticketNumber])
   @@map("tickets")
 }
 
@@ -164,6 +216,7 @@ model TicketComment {
   content    String   @map("content")
   isInternal Boolean  @default(false) @map("is_internal")
   createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   author User   @relation(fields: [authorId], references: [id])
@@ -195,6 +248,7 @@ model Incident {
   description String    @map("description")
   rootCause   String?   @map("root_cause")
   status      String    @map("status")
+  severity    String    @default("MEDIUM") @map("severity")
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
   resolvedAt  DateTime? @map("resolved_at")
@@ -222,13 +276,15 @@ model IncidentTicket {
 model Asset {
   id             String    @id @default(uuid()) @map("id")
   name           String    @map("name")
-  tag            String    @unique @map("tag") // QR Code identifier
-  serialNumber   String?   @map("serial_number")
+  tag            String    @unique @map("tag")         // QR Code identifier
+  serialNumber   String?   @unique @map("serial_number")
   model          String    @map("model")
-  status         String    @map("status") // OPERATIONAL, MAINTENANCE, BROKEN, etc.
+  manufacturer   String?   @map("manufacturer")
+  status         String    @map("status")              // OPERATIONAL | MAINTENANCE | BROKEN | RETIRED | LOST
   location       String    @map("location")
   purchaseDate   DateTime? @map("purchase_date")
   warrantyExpiry DateTime? @map("warranty_expiry")
+  purchasePrice  Decimal?  @map("purchase_price")
   departmentId   String    @map("department_id")
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
@@ -239,13 +295,14 @@ model Asset {
 
   @@index([tag])
   @@index([departmentId])
+  @@index([status])
   @@map("assets")
 }
 
 model AssetHistory {
   id            String   @id @default(uuid()) @map("id")
   assetId       String   @map("asset_id")
-  actionType    String   @map("action_type") // MAINTENANCE, STATUS_CHANGE, etc.
+  actionType    String   @map("action_type")  // CREATED | MAINTENANCE | STATUS_CHANGE | ASSIGNED | RETIRED
   notes         String   @map("notes")
   performedById String   @map("performed_by_id")
   createdAt     DateTime @default(now()) @map("created_at")
@@ -276,9 +333,9 @@ model InventoryItem {
 model InventoryTransaction {
   id              String   @id @default(uuid()) @map("id")
   itemId          String   @map("item_id")
-  transactionType String   @map("transaction_type") // ADD or DEDUCT
+  transactionType String   @map("transaction_type")  // ADD | DEDUCT
   quantity        Int      @map("quantity")
-  referenceId     String?  @map("reference_id") // ticket_id or asset_history_id
+  referenceId     String?  @map("reference_id")      // ticket_id or asset_history_id
   notes           String?  @map("notes")
   performedById   String   @map("performed_by_id")
   createdAt       DateTime @default(now()) @map("created_at")
@@ -300,8 +357,10 @@ model Notification {
   title       String   @map("title")
   message     String   @map("message")
   isRead      Boolean  @default(false) @map("is_read")
-  type        String   @map("type")
-  referenceId String?  @map("reference_id")
+  type        String   @map("type")          // INFO | SUCCESS | WARNING | ERROR
+  category    String   @map("category")      // TICKET | ASSET | SYSTEM | MAINTENANCE
+  referenceId String?  @map("reference_id")  // Optional link to related entity
+  actionUrl   String?  @map("action_url")
   createdAt   DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -317,14 +376,36 @@ model Notification {
 
 model SlaPolicy {
   id                 String   @id @default(uuid()) @map("id")
-  priority           String   @unique @map("priority") // LOW, MEDIUM, HIGH, CRITICAL
-  responseTimeLimit  Int      @map("response_time_limit") // In minutes
-  resolveTimeLimit   Int      @map("resolve_time_limit") // In minutes
+  priority           String   @unique @map("priority")          // LOW | MEDIUM | HIGH | CRITICAL
+  displayName        String   @map("display_name")               // "Low Priority", etc.
+  responseTimeLimit  Int      @map("response_time_limit")        // Minutes to first response
+  resolveTimeLimit   Int      @map("resolve_time_limit")         // Minutes to resolution
   escalationRoleName String   @default("DEPT_ADMIN") @map("escalation_role_name")
+  warningThreshold   Int      @default(80) @map("warning_threshold") // % of time elapsed before warning
+  color              String?  @map("color")                      // UI color for SLA badge
+  isActive           Boolean  @default(true) @map("is_active")
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 
   @@map("sla_policies")
+}
+
+// ---------------------------------------------------------
+// Service Status Model (Status Page)
+// ---------------------------------------------------------
+
+model ServiceStatus {
+  id          String   @id @default(uuid()) @map("id")
+  name        String   @unique @map("name")     // e.g. "Email System"
+  description String?  @map("description")
+  status      String   @map("status")           // OPERATIONAL | DEGRADED | PARTIAL_OUTAGE | MAJOR_OUTAGE | MAINTENANCE
+  category    String   @map("category")         // e.g. "Infrastructure", "Applications"
+  statusNote  String?  @map("status_note")      // Optional incident note
+  sortOrder   Int      @default(0) @map("sort_order")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("service_statuses")
 }
 
 // ---------------------------------------------------------
@@ -333,19 +414,21 @@ model SlaPolicy {
 
 model AuditLog {
   id            String   @id @default(uuid()) @map("id")
-  action        String   @map("action") // e.g. AUTH_LOGIN, TICKET_UPDATE
+  action        String   @map("action")        // AUTH_LOGIN | TICKET_UPDATE | ASSET_CREATE etc.
   targetTable   String   @map("target_table")
   targetId      String   @map("target_id")
   oldValue      Json?    @map("old_value")
   newValue      Json?    @map("new_value")
   performedById String   @map("performed_by_id")
   ipAddress     String?  @map("ip_address")
+  userAgent     String?  @map("user_agent")
   createdAt     DateTime @default(now()) @map("created_at")
 
   performedBy User @relation("PerformedBy", fields: [performedById], references: [id])
 
   @@index([performedById])
   @@index([action])
+  @@index([targetTable, targetId])
   @@map("audit_logs")
 }
 
@@ -354,13 +437,16 @@ model AuditLog {
 // ---------------------------------------------------------
 
 model KnowledgeBase {
-  id        String   @id @default(uuid()) @map("id")
-  title     String   @map("title")
-  content   String   @map("content")
-  category  String   @map("category")
-  views     Int      @default(0) @map("views")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id         String   @id @default(uuid()) @map("id")
+  title      String   @map("title")
+  content    String   @map("content")
+  category   String   @map("category")
+  tags       String[] @map("tags")
+  views      Int      @default(0) @map("views")
+  isPublished Boolean  @default(false) @map("is_published")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
+  @@index([category])
   @@map("knowledge_base")
 }

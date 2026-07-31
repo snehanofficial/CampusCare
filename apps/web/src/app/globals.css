@@ -1,92 +1,165 @@
 @import "tailwindcss";
 
 @theme {
+  /* Surface Tokens */
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
+  /* Primary Brand Action Colors */
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
 
+  /* Secondary Neutral Surface Colors */
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
 
+  /* Destructive Action Colors */
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
 
+  /* Muted Text / Accents */
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
 
+  /* Interactive Hover Accent */
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
 
+  /* Overlays / Popups */
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
 
+  /* Container Cards */
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
 
+  /* Semantic Alerts */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+
+  /* Font Families */
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono", "Fira Code", monospace;
+
+  /* Border Radii (max rounding 8px for enterprise feel) */
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+  --radius-xl: 0.75rem;
+
+  /* Shadows (Subtle, flat design) */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+
+  /* Transition Durations */
+  --duration-fast: 100ms;
+  --duration-normal: 150ms;
+  --duration-slow: 250ms;
 }
 
 @layer base {
   :root {
     --background: hsl(0 0% 100%);
-    --foreground: hsl(240 10% 3.9%);
+    --foreground: hsl(222 47% 11%); /* slate-900 */
     --card: hsl(0 0% 100%);
-    --card-foreground: hsl(240 10% 3.9%);
+    --card-foreground: hsl(222 47% 11%);
     --popover: hsl(0 0% 100%);
-    --popover-foreground: hsl(240 10% 3.9%);
-    --primary: hsl(262.1 83.3% 57.8%);
-    --primary-foreground: hsl(210 20% 98%);
-    --secondary: hsl(240 4.8% 95.9%);
-    --secondary-foreground: hsl(240 5.9% 10%);
-    --muted: hsl(240 4.8% 95.9%);
-    --muted-foreground: hsl(240 3.8% 46.1%);
-    --accent: hsl(240 4.8% 95.9%);
-    --accent-foreground: hsl(240 5.9% 10%);
-    --destructive: hsl(0 84.2% 60.2%);
+    --popover-foreground: hsl(222 47% 11%);
+    --primary: hsl(217 91% 60%); /* blue-500 action color */
+    --primary-foreground: hsl(0 0% 98%);
+    --secondary: hsl(210 40% 96%); /* slate-100 */
+    --secondary-foreground: hsl(222 47% 11%);
+    --muted: hsl(210 40% 96%); /* slate-100 */
+    --muted-foreground: hsl(215 16% 47%); /* slate-500 */
+    --accent: hsl(210 40% 94%); /* slate-200 */
+    --accent-foreground: hsl(222 47% 11%);
+    --destructive: hsl(0 84% 60%); /* red-500 */
     --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(240 5.9% 90%);
-    --input: hsl(240 5.9% 90%);
-    --ring: hsl(262.1 83.3% 57.8%);
-    --radius: 0.5rem;
+    --success: hsl(142 71% 45%); /* green-500 */
+    --success-foreground: hsl(0 0% 98%);
+    --warning: hsl(38 92% 50%); /* amber-500 */
+    --warning-foreground: hsl(0 0% 98%);
+    --border: hsl(214 32% 91%); /* slate-200 */
+    --input: hsl(214 32% 91%);
+    --ring: hsl(217 91% 60%); /* blue-500 focus ring */
+    --radius: 0.5rem; /* 8px */
   }
 
   .dark {
-    --background: hsl(240 10% 3.9%);
-    --foreground: hsl(0 0% 98%);
-    --card: hsl(240 10% 3.9%);
-    --card-foreground: hsl(0 0% 98%);
-    --popover: hsl(240 10% 3.9%);
-    --popover-foreground: hsl(0 0% 98%);
-    --primary: hsl(263.4 90% 70.2%);
-    --primary-foreground: hsl(210 20% 98%);
-    --secondary: hsl(240 3.7% 15.9%);
-    --secondary-foreground: hsl(0 0% 98%);
-    --muted: hsl(240 3.7% 15.9%);
-    --muted-foreground: hsl(240 5% 64.9%);
-    --accent: hsl(240 3.7% 15.9%);
-    --accent-foreground: hsl(0 0% 98%);
-    --destructive: hsl(0 62.8% 30.6%);
+    --background: hsl(222 47% 6%); /* Near-black slate */
+    --foreground: hsl(210 40% 98%);
+    --card: hsl(222 47% 8%);
+    --card-foreground: hsl(210 40% 98%);
+    --popover: hsl(222 47% 8%);
+    --popover-foreground: hsl(210 40% 98%);
+    --primary: hsl(213 94% 68%); /* blue-400 for dark mode */
+    --primary-foreground: hsl(222 47% 6%);
+    --secondary: hsl(215 28% 14%);
+    --secondary-foreground: hsl(210 40% 98%);
+    --muted: hsl(215 28% 14%);
+    --muted-foreground: hsl(215 16% 57%);
+    --accent: hsl(215 28% 18%);
+    --accent-foreground: hsl(210 40% 98%);
+    --destructive: hsl(0 72% 51%);
     --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(240 3.7% 15.9%);
-    --input: hsl(240 3.7% 15.9%);
-    --ring: hsl(263.4 90% 70.2%);
+    --success: hsl(142 60% 40%);
+    --success-foreground: hsl(210 40% 98%);
+    --warning: hsl(38 85% 45%);
+    --warning-foreground: hsl(210 40% 98%);
+    --border: hsl(215 28% 18%);
+    --input: hsl(215 28% 18%);
+    --ring: hsl(213 94% 68%);
   }
 }
 
 @layer base {
   * {
     border-color: var(--border);
+    box-sizing: border-box;
   }
   body {
     background-color: var(--background);
     color: var(--foreground);
+    font-family: var(--font-sans);
     font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Custom minimal scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+  }
+
+  /* Accessibility focus styles */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
