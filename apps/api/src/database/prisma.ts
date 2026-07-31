@@ -20,18 +20,19 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 // Log queries and updates through our centralized Pino logger
-prisma.$on("query" as any, (e: any) => {
+const prismaAny = prisma as any;
+prismaAny.$on("query", (e: any) => {
   logger.debug({ query: e.query, params: e.params, duration: `${e.duration}ms` }, "Prisma Query executed");
 });
 
-prisma.$on("info" as any, (e: any) => {
+prismaAny.$on("info", (e: any) => {
   logger.info(e.message);
 });
 
-prisma.$on("warn" as any, (e: any) => {
+prismaAny.$on("warn", (e: any) => {
   logger.warn(e.message);
 });
 
-prisma.$on("error" as any, (e: any) => {
+prismaAny.$on("error", (e: any) => {
   logger.error(e.message);
 });

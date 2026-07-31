@@ -17,7 +17,15 @@ export const app = express();
 app.use(pinoHttp({ logger }));
 
 // 2. Global Security & Performance Middlewares
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "script-src": ["'self'", "https://cdn.jsdelivr.net"],
+        "img-src": ["'self'", "data:", "https://cdn.jsdelivr.net"], // Scalar may also load assets/images
+      },
+    },
+  }));
 app.use(cors({
   origin: env.NODE_ENV === "production" ? false : true, // Adjust in production
   credentials: true
@@ -38,7 +46,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://${env.HOST}:${env.PORT}/api/v1`,
+        url: `http://${env.HOST}:${env.PORT}`,
         description: "Development Server"
       }
     ]

@@ -17,7 +17,7 @@ const gracefulShutdown = () => {
       logger.info("Database client disconnected.");
       process.exit(0);
     } catch (err) {
-      logger.error("Error disconnecting database client:", err);
+      logger.error(err instanceof Error ? err : { err }, "Error disconnecting database client:");
       process.exit(1);
     }
   });
