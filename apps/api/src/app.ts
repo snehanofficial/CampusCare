@@ -9,12 +9,19 @@ import { apiReference } from "@scalar/express-api-reference";
 import { env } from "./config/env.js";
 import { logger } from "./utils/logger.js";
 import { apiRouter } from "./modules/index.js";
+import { requestId } from "./middleware/request-id.js";
 import { errorHandler } from "./middleware/error-handler.js";
 
 export const app = express();
 
-// 1. Logger middleware
-app.use(pinoHttp({ logger }));
+// 1. Request ID & Logger middleware
+app.use(requestId);
+app.use(
+  pinoHttp({
+    logger,
+    genReqId: (req: any) => req.id,
+  })
+);
 
 // 2. Global Security & Performance Middlewares
 app.use(helmet({

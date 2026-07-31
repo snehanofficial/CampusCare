@@ -27,16 +27,14 @@ export function Navbar({ onMobileMenuToggle }: NavbarProps) {
 
       {/* Right side: Global Search (scaffold), Notifications, Theme, User Menu */}
       <div className="flex items-center gap-4">
-        {/* Search Input Scaffold */}
-        <div className="relative hidden max-w-xs md:block">
+        {/* Search Input Trigger */}
+        <button
+          onClick={() => window.dispatchEvent(new Event("palette:open"))}
+          className="relative hidden max-w-xs md:flex items-center text-left text-muted-foreground hover:text-foreground h-9 w-48 rounded-md border border-input bg-muted/30 pl-9 pr-3 text-xs focus:bg-background focus:outline-none transition-colors select-none cursor-pointer"
+        >
           <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-          <input
-            type="search"
-            placeholder="Search... (Cmd+K)"
-            className="h-9 w-48 rounded-md border border-input bg-muted/30 pl-9 pr-3 text-xs focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-            disabled
-          />
-        </div>
+          <span>Search... (Cmd+K)</span>
+        </button>
 
         <div className="flex items-center gap-2">
           <NotificationBell />

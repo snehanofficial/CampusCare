@@ -19,6 +19,11 @@ import { ForbiddenPage } from "../../features/errors/pages/ForbiddenPage.js";
 
 // Lazy Loaded Lazy Pages for optimization
 const DashboardPage = lazy(() => import("../../features/dashboard/pages/DashboardPage.js"));
+const PlaygroundPage = lazy(() => import("../../features/dashboard/pages/Playground.js"));
+const SessionsPage = lazy(() => import("../../features/profile/pages/SessionsPage.js"));
+const UnauthorizedPage = lazy(() => import("../../features/errors/pages/UnauthorizedPage.js"));
+const ServerErrorPage = lazy(() => import("../../features/errors/pages/ServerErrorPage.js"));
+const MaintenancePage = lazy(() => import("../../features/errors/pages/MaintenancePage.js"));
 
 // Skeleton loader
 import { PageSkeleton } from "../../components/feedback/PageSkeleton.js";
@@ -52,12 +57,36 @@ export const router = createBrowserRouter([
   },
   // Static Error Boundary Fallback pages
   {
+    path: "401",
+    element: (
+      <Suspense fallback={<PageSkeleton />}>
+        <UnauthorizedPage />
+      </Suspense>
+    ),
+  },
+  {
     path: "403",
     element: <ForbiddenPage />,
   },
   {
     path: "404",
     element: <NotFoundPage />,
+  },
+  {
+    path: "500",
+    element: (
+      <Suspense fallback={<PageSkeleton />}>
+        <ServerErrorPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: "maintenance",
+    element: (
+      <Suspense fallback={<PageSkeleton />}>
+        <MaintenancePage />
+      </Suspense>
+    ),
   },
   // Protected Application Shell Context
   {
@@ -156,6 +185,22 @@ export const router = createBrowserRouter([
       {
         path: "profile",
         element: <div className="p-6 bg-card border rounded-lg">User Profile Information Page Scaffold</div>,
+      },
+      {
+        path: "profile/sessions",
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <SessionsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "playground",
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <PlaygroundPage />
+          </Suspense>
+        ),
       },
     ],
   },

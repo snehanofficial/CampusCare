@@ -1,9 +1,17 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from "axios";
 import { authStore } from "./auth-store.js";
 import { normalizeError } from "./errors.js";
+import { setLatestRequestId, logger } from "./logger.js";
 
 const BASE_URL = (import.meta.env.VITE_API_URL as string) ?? "http://localhost:3000/api/v1";
 const TIMEOUT_MS = 15_000;
+
+const generateRequestId = (): string => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+};
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -15,16 +23,23 @@ export const apiClient: AxiosInstance = axios.create({
   },
 });
 
-// Request Interceptor: Attach Access Token
+// Request Interceptor: Attach Access Token & Request ID
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = authStore.getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    const requestId = generateRequestId();
+    config.headers["X-Request-Id"] = requestId;
+    setLatestRequestId(requestId);
+    logger.debug("api-client", `Sending request: ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    logger.error("api-client", "Request configuration error", error);
+    return Promise.reject(error);
+  }
 );
 
 // Response Interceptor: Handle Refresh Token Rotation and Queuing
@@ -35,8 +50,15 @@ let pendingRequests: Array<{
 }> = [];
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    logger.debug("api-client", `Response received: ${response.status} ${response.config.url}`);
+    return response;
+  },
   async (error: AxiosError) => {
+    logger.error("api-client", `Response error: ${error.message}`, {
+      status: error.response?.status,
+      url: error.config?.url,
+    });
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };

@@ -3,6 +3,7 @@ import { Outlet, useLocation } from "react-router";
 import { Sidebar } from "../../components/navigation/Sidebar.js";
 import { Navbar } from "../../components/navigation/Navbar.js";
 import { Footer } from "../../components/navigation/Footer.js";
+import { CommandPalette } from "../../components/navigation/CommandPalette.js";
 import { useLocalStorage } from "../../hooks/useLocalStorage.js";
 
 export function AppLayout() {
@@ -49,6 +50,7 @@ export function AppLayout() {
         {/* Global Footer */}
         <Footer />
       </div>
+      <CommandPalette />
     </div>
   );
 }
