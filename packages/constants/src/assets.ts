@@ -1,0 +1,8 @@
+export const ASSET_STATUS = {
+  OPERATIONAL: "OPERATIONAL",
+  MAINTENANCE: "MAINTENANCE",
+  DECOMMISSIONED: "DECOMMISSIONED",
+  BROKEN: "BROKEN"
+} as const;
+
+export type AssetStatus = typeof ASSET_STATUS[keyof typeof ASSET_STATUS];
