@@ -5,12 +5,13 @@ import { CRUDDialogTemplate } from "../../../components/templates/CRUDDialogTemp
 import { Input } from "../../../components/ui/input.js";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Building, Plus, Trash } from "lucide-react";
+import { Plus, Trash } from "lucide-react";
 import { toast } from "sonner";
 
 export function DepartmentsPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
@@ -18,10 +19,12 @@ export function DepartmentsPage() {
   const [desc, setDesc] = useState("");
 
   const { data: response, isLoading, error, refetch } = useQuery({
-    queryKey: ["departments", search],
+    queryKey: ["departments", search, page],
     queryFn: () =>
       departmentRepository.list({
         search,
+        page,
+        pageSize: 10,
       }),
   });
 
@@ -35,13 +38,19 @@ export function DepartmentsPage() {
       setCode("");
       setDesc("");
     },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to create department.");
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => departmentRepository.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["departments"] });
-      toast.success("Department record deleted.");
+      toast.success("Department record deleted or deactivated.");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to delete department.");
     },
   });
 
@@ -76,7 +85,11 @@ export function DepartmentsPage() {
       header: "Actions",
       cell: ({ row }) => (
         <button
-          onClick={() => deleteMutation.mutate(row.original.id)}
+          onClick={() => {
+            if (window.confirm(`Are you sure you want to delete department: ${row.original.name}?`)) {
+              deleteMutation.mutate(row.original.id);
+            }
+          }}
           className="p-1 hover:bg-destructive/5 rounded text-muted-foreground hover:text-destructive cursor-pointer focus:outline-none"
           title="Delete Department"
         >
@@ -96,10 +109,16 @@ export function DepartmentsPage() {
         loading={isLoading}
         error={error ? error.message : null}
         searchQuery={search}
-        onSearchChange={setSearch}
+        onSearchChange={(val) => {
+          setSearch(val);
+          setPage(1);
+        }}
         activeFilters={{}}
         onFilterChange={() => {}}
-        onClearFilters={() => setSearch("")}
+        onClearFilters={() => {
+          setSearch("");
+          setPage(1);
+        }}
         actions={[
           {
             label: "Create Department",
@@ -107,9 +126,9 @@ export function DepartmentsPage() {
             icon: Plus,
           },
         ]}
-        pageIndex={response?.page || 1}
+        pageIndex={page}
         pageCount={response?.pageCount || 1}
-        onPageChange={() => {}}
+        onPageChange={(p) => setPage(p)}
         onRetry={refetch}
       />
 

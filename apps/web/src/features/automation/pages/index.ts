@@ -1,2 +1,2 @@
-// Placeholder for feature automation subfolder pages
-export {};
+export { AutomationPage } from "./AutomationPage.js";
+export { default } from "./AutomationPage.js";

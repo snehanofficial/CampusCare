@@ -11,7 +11,7 @@ rolesRouter.use(authenticate);
  * @swagger
  * /api/v1/roles:
  *   get:
- *     summary: Retrieve summary for roles
+ *     summary: Retrieve list of roles
  *     tags: [Roles]
  *     security:
  *       - bearerAuth: []
@@ -19,4 +19,5 @@ rolesRouter.use(authenticate);
  *       200:
  *         description: Operation successful
  */
-rolesRouter.get("/", RolesController.getSummary);
+rolesRouter.get("/", authenticate, RolesController.list);
+

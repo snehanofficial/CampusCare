@@ -67,6 +67,28 @@ export const PERMISSION_REGISTRY: readonly PermissionEntry[] = [
     category: "Tickets",
     groupLabel: "Support Operations",
   },
+  // ─── Technician Operations ──────────────────────────────────────────────────
+  {
+    code: "technician:assigned:view",
+    displayName: "View Assigned Queue",
+    description: "List only the tickets assigned to this technician",
+    category: "Tickets",
+    groupLabel: "Support Operations",
+  },
+  {
+    code: "technician:ticket:view",
+    displayName: "View Assigned Ticket",
+    description: "Open the detail view of a ticket assigned to this technician",
+    category: "Tickets",
+    groupLabel: "Support Operations",
+  },
+  {
+    code: "technician:ticket:update-status",
+    displayName: "Update Assigned Ticket Status",
+    description: "Move an assigned ticket to In Progress or Resolved",
+    category: "Tickets",
+    groupLabel: "Support Operations",
+  },
   // ─── Assets ─────────────────────────────────────────────────────────────────
   {
     code: "assets:create",
@@ -150,6 +172,20 @@ export const PERMISSION_REGISTRY: readonly PermissionEntry[] = [
     category: "Reports",
     groupLabel: "Intelligence",
   },
+  {
+    code: "reports:export",
+    displayName: "Export Reports",
+    description: "Export reports to PDF, Excel, and CSV formats",
+    category: "Reports",
+    groupLabel: "Intelligence",
+  },
+  {
+    code: "reports:admin",
+    displayName: "Administer Reports",
+    description: "Schedule and administer report generation",
+    category: "Reports",
+    groupLabel: "Intelligence",
+  },
   // ─── SLA ────────────────────────────────────────────────────────────────────
   {
     code: "sla:manage",
@@ -190,6 +226,14 @@ export const PERMISSION_REGISTRY: readonly PermissionEntry[] = [
     category: "Knowledge Base",
     groupLabel: "Communication",
   },
+  // ─── Service Status ─────────────────────────────────────────────────────────
+  {
+    code: "service_status.manage",
+    displayName: "Manage Service Status",
+    description: "Update campus service health status and schedule maintenance windows",
+    category: "Service Status",
+    groupLabel: "Administration",
+  },
 ] as const;
 
 // Convenience lookup: code → entry
@@ -207,6 +251,9 @@ export const PERMISSIONS = {
   TICKETS_ASSIGN: "tickets:assign",
   TICKETS_RESOLVE: "tickets:resolve",
   TICKETS_DELETE: "tickets:delete",
+  TECHNICIAN_ASSIGNED_VIEW: "technician:assigned:view",
+  TECHNICIAN_TICKET_VIEW: "technician:ticket:view",
+  TECHNICIAN_TICKET_UPDATE_STATUS: "technician:ticket:update-status",
   ASSETS_CREATE: "assets:create",
   ASSETS_READ: "assets:read",
   ASSETS_UPDATE: "assets:update",
@@ -218,11 +265,14 @@ export const PERMISSIONS = {
   DEPARTMENTS_MANAGE: "departments:manage",
   CATEGORIES_MANAGE: "categories:manage",
   REPORTS_VIEW: "reports:view",
+  REPORTS_EXPORT: "reports:export",
+  REPORTS_ADMIN: "reports:admin",
   SLA_MANAGE: "sla:manage",
   AUDIT_READ: "audit:read",
   SETTINGS_MANAGE: "settings:manage",
   NOTIFICATIONS_SEND: "notifications:send",
   KNOWLEDGE_BASE_MANAGE: "knowledge-base:manage",
+  SERVICE_STATUS_MANAGE: "service_status.manage",
 } as const;
 
 export type PermissionCode = typeof PERMISSIONS[keyof typeof PERMISSIONS];

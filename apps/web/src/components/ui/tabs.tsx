@@ -13,6 +13,13 @@ interface TabsProps {
   className?: string;
 }
 
+interface TabsContextType {
+  value: string;
+  onValueChange: (value: string) => void;
+}
+
+const TabsContext = createContext<TabsContextType | undefined>(undefined);
+
 export function Tabs({ value, onValueChange, children, className }: TabsProps) {
   return (
     <TabsContext.Provider value={{ value, onValueChange }}>
@@ -29,9 +36,8 @@ interface TabsListProps {
 /**
  * Enterprise underline-style tab bar.
  * Flat bottom border with indicator underline on active item.
- * Avoids the shadcn rounded-pill background pattern entirely.
  */
-export function TabsList({ children, className }: TabsListProps) {
+export function TabsList({ children, className }: any) {
   return (
     <div
       className={cn(
@@ -88,10 +94,11 @@ export function TabsContent({ children, className, value }: TabsContentProps) {
   }
   const active = value === context.value;
   if (!active) return null;
+  
   return (
     <div className={cn("outline-none animate-in fade-in duration-100", className)}>
       {children}
     </div>
   );
 }
-
+export default Tabs;

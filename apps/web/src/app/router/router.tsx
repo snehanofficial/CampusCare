@@ -27,14 +27,18 @@ const ErrorMaintenancePage = lazy(() => import("../../features/errors/pages/Main
 
 // Dynamic feature components
 const TicketsPage = lazy(() => import("../../features/tickets/pages/TicketsPage.js"));
+const TicketDetailsPage = lazy(() => import("../../features/tickets/pages/TicketDetailsPage.js"));
 const IncidentsPage = lazy(() => import("../../features/incidents/pages/IncidentsPage.js"));
+const IncidentDetailsPage = lazy(() => import("../../features/incidents/pages/IncidentDetailsPage.js"));
 const AssetsPage = lazy(() => import("../../features/assets/pages/AssetsPage.js"));
 const AssetDetailPage = lazy(() => import("../../features/assets/pages/AssetDetailPage.js"));
 const MaintenancePage = lazy(() => import("../../features/maintenance/pages/MaintenancePage.js"));
 const InventoryPage = lazy(() => import("../../features/inventory/pages/InventoryPage.js"));
 const ReportsPage = lazy(() => import("../../features/reports/pages/ReportsPage.js"));
 const AnalyticsPage = lazy(() => import("../../features/analytics/pages/AnalyticsPage.js"));
+const SlaPage = lazy(() => import("../../features/sla/pages/SlaPage.js"));
 const KnowledgeBasePage = lazy(() => import("../../features/knowledge-base/pages/KnowledgeBasePage.js"));
+const ArticlePage = lazy(() => import("../../features/knowledge-base/pages/ArticlePage.js"));
 const UsersPage = lazy(() => import("../../features/users/pages/UsersPage.js"));
 const DepartmentsPage = lazy(() => import("../../features/departments/pages/DepartmentsPage.js"));
 const CategoriesPage = lazy(() => import("../../features/categories/pages/CategoriesPage.js"));
@@ -165,11 +169,31 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "tickets/:ticketId",
+        element: (
+          <PermissionGuard requiredPermissions={["tickets:read_all", "tickets:read_own"]} requireAll={false}>
+            <Suspense fallback={<PageSkeleton />}>
+              <TicketDetailsPage />
+            </Suspense>
+          </PermissionGuard>
+        ),
+      },
+      {
         path: "incidents",
         element: (
           <PermissionGuard requiredPermissions={["tickets:read_all"]}>
             <Suspense fallback={<PageSkeleton />}>
               <IncidentsPage />
+            </Suspense>
+          </PermissionGuard>
+        ),
+      },
+      {
+        path: "incidents/:incidentId",
+        element: (
+          <PermissionGuard requiredPermissions={["tickets:read_all"]}>
+            <Suspense fallback={<PageSkeleton />}>
+              <IncidentDetailsPage />
             </Suspense>
           </PermissionGuard>
         ),
@@ -275,10 +299,28 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "sla",
+        element: (
+          <PermissionGuard requiredPermissions={["reports:view"]}>
+            <Suspense fallback={<PageSkeleton />}>
+              <SlaPage />
+            </Suspense>
+          </PermissionGuard>
+        ),
+      },
+      {
         path: "knowledge-base",
         element: (
           <Suspense fallback={<PageSkeleton />}>
             <KnowledgeBasePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "knowledge-base/:slug",
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <ArticlePage />
           </Suspense>
         ),
       },

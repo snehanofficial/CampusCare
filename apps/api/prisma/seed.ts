@@ -161,36 +161,52 @@ async function main() {
   }
   console.log(`✓ Seeded ${slaPolicies.length} SLA Policies.`);
 
-  // 6. Seed Service Statuses
-  console.log("Seeding Service Statuses...");
-  const serviceStatuses = [
-    { name: "Campus Wi-Fi", category: "Infrastructure", status: "OPERATIONAL", description: "Campus-wide wireless connectivity", sortOrder: 1 },
-    { name: "Active Directory Identity Service", category: "Infrastructure", status: "OPERATIONAL", description: "Authentication and single sign-on", sortOrder: 2 },
-    { name: "LMS Canvas", category: "Applications", status: "OPERATIONAL", description: "Learning Management System portal", sortOrder: 3 },
-    { name: "Student Info System SIS", category: "Applications", status: "OPERATIONAL", description: "Grades, registry, and courses portal", sortOrder: 4 },
-    { name: "Campus Email System", category: "Applications", status: "OPERATIONAL", description: "Microsoft 365 / Gmail exchange server", sortOrder: 5 },
-    { name: "Library Workstations", category: "Infrastructure", status: "OPERATIONAL", description: "Public computers and printing services", sortOrder: 6 },
+  // 6. Seed Services
+  console.log("Seeding Campus Services...");
+  const services = [
+    { name: "Campus Wi-Fi", category: "Infrastructure", status: "OPERATIONAL", description: "Campus-wide wireless connectivity", icon: "Wifi" },
+    { name: "Active Directory Identity Service", category: "Infrastructure", status: "OPERATIONAL", description: "Authentication and single sign-on", icon: "Shield" },
+    { name: "LMS Canvas", category: "Applications", status: "OPERATIONAL", description: "Learning Management System portal", icon: "BookOpen" },
+    { name: "Student Info System SIS", category: "Applications", status: "OPERATIONAL", description: "Grades, registry, and courses portal", icon: "GraduationCap" },
+    { name: "Campus Email System", category: "Applications", status: "OPERATIONAL", description: "Microsoft 365 / Gmail exchange server", icon: "Mail" },
+    { name: "Library Workstations", category: "Infrastructure", status: "OPERATIONAL", description: "Public computers and printing services", icon: "Monitor" },
   ];
 
-  for (const service of serviceStatuses) {
-    await prisma.serviceStatus.upsert({
-      where: { name: service.name },
+  for (const srv of services) {
+    const service = await prisma.service.upsert({
+      where: { name: srv.name },
       update: {
-        category: service.category,
-        status: service.status,
-        description: service.description,
-        sortOrder: service.sortOrder,
+        category: srv.category,
+        status: srv.status,
+        description: srv.description,
+        icon: srv.icon,
       },
       create: {
-        name: service.name,
-        category: service.category,
-        status: service.status,
-        description: service.description,
-        sortOrder: service.sortOrder,
+        name: srv.name,
+        category: srv.category,
+        status: srv.status,
+        description: srv.description,
+        icon: srv.icon,
       },
     });
+
+    // Create an initial status history log if it doesn't exist
+    const historyCount = await prisma.serviceStatusHistory.count({
+      where: { serviceId: service.id },
+    });
+    if (historyCount === 0) {
+      await prisma.serviceStatusHistory.create({
+        data: {
+          serviceId: service.id,
+          previousStatus: "OPERATIONAL",
+          newStatus: "OPERATIONAL",
+          reason: "Initial system registration during seeding",
+          changedBy: "SYSTEM",
+        },
+      });
+    }
   }
-  console.log(`✓ Seeded ${serviceStatuses.length} Service Statuses.`);
+  console.log(`✓ Seeded ${services.length} Campus Services and histories.`);
 
   // 7. Seed Default System Admin User
   console.log("Seeding Default System Admin User...");

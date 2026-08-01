@@ -11,4 +11,14 @@ export class RolesController {
       next(err);
     }
   }
+
+  static async list(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const roles = await RolesService.listRoles();
+      sendSuccess(res, roles);
+    } catch (err) {
+      next(err);
+    }
+  }
 }
+

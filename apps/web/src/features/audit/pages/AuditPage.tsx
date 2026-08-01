@@ -1,24 +1,23 @@
 import React, { useState } from "react";
 import { EntityListTemplate } from "../../../components/templates/EntityListTemplate.js";
-import { mockAuditLogs } from "../../../mocks/index.js";
+import { auditRepository, SystemAuditLog } from "../../../lib/repositories/audit.repository.js";
 import { Tag } from "../../../components/ui/tag.js";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ShieldAlert, RefreshCw } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-
-interface MockAuditLog {
-  id: string;
-  timestamp: string;
-  action: string;
-  details: string;
-  performedBy: string;
-  severity: string;
-}
 
 export function AuditPage() {
   const [search, setSearch] = useState("");
 
-  const filtered = mockAuditLogs.filter(
+  const { data: response, isLoading, refetch } = useQuery({
+    queryKey: ["audit-logs"],
+    queryFn: () => auditRepository.list(),
+  });
+
+  const data = response ?? [];
+
+  const filtered = data.filter(
     (log) =>
       log.action.toLowerCase().includes(search.toLowerCase()) ||
       log.details.toLowerCase().includes(search.toLowerCase()) ||
@@ -37,7 +36,7 @@ export function AuditPage() {
     }
   };
 
-  const columns: ColumnDef<MockAuditLog>[] = [
+  const columns: ColumnDef<SystemAuditLog>[] = [
     {
       accessorKey: "timestamp",
       header: "Timestamp",
@@ -90,7 +89,7 @@ export function AuditPage() {
       description="Secure immutable logs tracking global system operations and credential access details."
       columns={columns}
       data={filtered}
-      loading={false}
+      loading={isLoading}
       error={null}
       searchQuery={search}
       onSearchChange={setSearch}
@@ -107,6 +106,7 @@ export function AuditPage() {
       pageIndex={1}
       pageCount={1}
       onPageChange={() => {}}
+      onRetry={refetch}
     />
   );
 }
