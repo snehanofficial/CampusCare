@@ -1,2 +1,1 @@
-// Placeholder for feature maintenance subfolder types
-export {};
+export * from "@campuscare/shared-types";

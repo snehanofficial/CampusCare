@@ -100,7 +100,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: "maintenance",
+    path: "503",
     element: (
       <Suspense fallback={<PageSkeleton />}>
         <ErrorMaintenancePage />

@@ -17,11 +17,18 @@ import {
   Heart,
   CheckSquare,
   Undo,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Wrench,
+  UserCheck,
+  Play,
+  CheckCircle,
+  XCircle,
+  AlertTriangle
 } from "lucide-react";
 import { assetRepository } from "@/lib/repositories/asset.repository.js";
 import { departmentRepository } from "@/lib/repositories/department.repository.js";
 import { userRepository } from "@/lib/repositories/user.repository.js";
+import { maintenanceRepository } from "@/lib/repositories/maintenance.repository.js";
 import { Tag } from "@/components/ui/tag.js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.js";
 import { PageSkeleton } from "@/components/feedback/PageSkeleton.js";
@@ -36,7 +43,7 @@ export function AssetDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"overview" | "timeline" | "relations" | "documents" | "activity">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "timeline" | "maintenance" | "relations" | "documents" | "activity">("overview");
 
   // Dialog States
   const [isAssignOpen, setIsAssignOpen] = useState(false);
@@ -64,6 +71,28 @@ export function AssetDetailPage() {
 
   const [targetStage, setTargetStage] = useState<LifecycleStage>(LifecycleStage.AVAILABLE);
   const [lifecycleNotes, setLifecycleNotes] = useState("");
+
+  // Maintenance Dialog States
+  const [isSchedMaintOpen, setIsSchedMaintOpen] = useState(false);
+  const [isAssignMaintOpen, setIsAssignMaintOpen] = useState(false);
+  const [isCompleteMaintOpen, setIsCompleteMaintOpen] = useState(false);
+  const [isCancelMaintOpen, setIsCancelMaintOpen] = useState(false);
+  const [selectedMaintRecord, setSelectedMaintRecord] = useState<any>(null);
+
+  // Maintenance Form States
+  const [maintType, setMaintType] = useState("PREVENTIVE");
+  const [maintTechId, setMaintTechId] = useState("");
+  const [maintPriority, setMaintPriority] = useState("MEDIUM");
+  const [maintRecurrence, setMaintRecurrence] = useState("ONE_TIME");
+  const [maintDate, setMaintDate] = useState("");
+  const [maintDuration, setMaintDuration] = useState("60");
+  const [maintNotes, setMaintNotes] = useState("");
+
+  const [maintAssignTechId, setMaintAssignTechId] = useState("");
+  const [maintCompleteDuration, setMaintCompleteDuration] = useState("60");
+  const [maintCompleteOutcome, setMaintCompleteOutcome] = useState("SUCCESSFUL");
+  const [maintCompleteNotes, setMaintCompleteNotes] = useState("");
+  const [maintCancelReason, setMaintCancelReason] = useState("");
 
   // Queries
   const { data: asset, isLoading, error, refetch } = useQuery({
@@ -137,6 +166,155 @@ export function AssetDetailPage() {
       toast.error(err.message || "Failed to change lifecycle stage.");
     }
   });
+
+  // Maintenance queries
+  const { data: maintenanceRes } = useQuery({
+    queryKey: ["asset-maintenance", id],
+    queryFn: () => maintenanceRepository.list({ filters: { assetId: id } }),
+    enabled: !!id,
+  });
+
+  const { data: technicians } = useQuery({
+    queryKey: ["maintenance-technicians"],
+    queryFn: () => maintenanceRepository.getTechnicians(),
+  });
+
+  const maintenanceRecords = maintenanceRes?.data || [];
+  const techList = technicians || [];
+
+  // Maintenance Mutations
+  const scheduleMaintMutation = useMutation({
+    mutationFn: (payload: any) => maintenanceRepository.createSchedule(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["asset", id] });
+      queryClient.invalidateQueries({ queryKey: ["asset-maintenance", id] });
+      toast.success("Maintenance schedule created.");
+      setIsSchedMaintOpen(false);
+      resetScheduleMaintForm();
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to schedule maintenance.");
+    }
+  });
+
+  const assignMaintMutation = useMutation({
+    mutationFn: (payload: any) => maintenanceRepository.assignTechnician(payload.id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["asset", id] });
+      queryClient.invalidateQueries({ queryKey: ["asset-maintenance", id] });
+      toast.success("Technician assigned.");
+      setIsAssignMaintOpen(false);
+      setSelectedMaintRecord(null);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to assign technician.");
+    }
+  });
+
+  const startMaintMutation = useMutation({
+    mutationFn: (payload: { id: string; clientUpdatedAt?: string | null }) =>
+      maintenanceRepository.startMaintenance(payload.id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["asset", id] });
+      queryClient.invalidateQueries({ queryKey: ["asset-maintenance", id] });
+      toast.success("Maintenance started.");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to start maintenance.");
+    }
+  });
+
+  const completeMaintMutation = useMutation({
+    mutationFn: (payload: any) => maintenanceRepository.completeMaintenance(payload.id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["asset", id] });
+      queryClient.invalidateQueries({ queryKey: ["asset-maintenance", id] });
+      toast.success("Maintenance completed.");
+      setIsCompleteMaintOpen(false);
+      setSelectedMaintRecord(null);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to complete maintenance.");
+    }
+  });
+
+  const cancelMaintMutation = useMutation({
+    mutationFn: (payload: any) => maintenanceRepository.cancelMaintenance(payload.id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["asset", id] });
+      queryClient.invalidateQueries({ queryKey: ["asset-maintenance", id] });
+      toast.success("Maintenance cancelled.");
+      setIsCancelMaintOpen(false);
+      setSelectedMaintRecord(null);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to cancel maintenance.");
+    }
+  });
+
+  const resetScheduleMaintForm = () => {
+    setMaintType("PREVENTIVE");
+    setMaintTechId("");
+    setMaintPriority("MEDIUM");
+    setMaintRecurrence("ONE_TIME");
+    setMaintDate("");
+    setMaintDuration("60");
+    setMaintNotes("");
+  };
+
+  const handleScheduleMaintSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!maintDate) {
+      toast.error("Scheduled date is required.");
+      return;
+    }
+    scheduleMaintMutation.mutate({
+      assetId: id!,
+      type: maintType,
+      technicianId: maintTechId || null,
+      priority: maintPriority,
+      recurrence: maintRecurrence,
+      scheduledDate: new Date(maintDate).toISOString(),
+      estimatedDuration: parseInt(maintDuration) || 60,
+      notes: maintNotes || null,
+    });
+  };
+
+  const handleAssignMaintSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMaintRecord) return;
+    assignMaintMutation.mutate({
+      id: selectedMaintRecord.id,
+      technicianId: maintAssignTechId || null,
+      clientUpdatedAt: selectedMaintRecord.updatedAt,
+    });
+  };
+
+  const handleCompleteMaintSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMaintRecord) return;
+    completeMaintMutation.mutate({
+      id: selectedMaintRecord.id,
+      actualDuration: parseInt(maintCompleteDuration) || 60,
+      outcome: maintCompleteOutcome,
+      completionNotes: maintCompleteNotes || null,
+      clientUpdatedAt: selectedMaintRecord.updatedAt,
+    });
+  };
+
+  const handleCancelMaintSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMaintRecord) return;
+    if (!maintCancelReason.trim()) {
+      toast.error("Cancellation reason is required.");
+      return;
+    }
+    cancelMaintMutation.mutate({
+      id: selectedMaintRecord.id,
+      cancellationReason: maintCancelReason,
+      clientUpdatedAt: selectedMaintRecord.updatedAt,
+    });
+  };
 
   const resetAssignForm = () => {
     setAssigneeType("USER");
@@ -305,6 +483,7 @@ export function AssetDetailPage() {
   const tabs = [
     { id: "overview", label: "Overview", icon: Server },
     { id: "timeline", label: "Timeline", icon: Clock },
+    { id: "maintenance", label: "Maintenance", icon: Wrench },
     { id: "relations", label: "Relations", icon: Heart },
     { id: "documents", label: "Documents", icon: FileText },
     { id: "activity", label: "Activity", icon: Clipboard },
@@ -519,6 +698,213 @@ export function AssetDetailPage() {
               )}
             </CardContent>
           </Card>
+        )}
+
+        {activeTab === "maintenance" && (
+          <div className="space-y-4">
+            {/* Quick Actions & Ongoing status */}
+            <Card className="rounded-sm border border-border bg-card">
+              <CardHeader className="p-4 pb-2 border-b border-border flex flex-row justify-between items-center">
+                <CardTitle className="text-xs font-extrabold uppercase text-primary">Ongoing Maintenance status</CardTitle>
+                {!isTerminal && (
+                  <button
+                    onClick={() => {
+                      resetScheduleMaintForm();
+                      setIsSchedMaintOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-sm cursor-pointer hover:bg-primary/95 focus:outline-none"
+                  >
+                    <Wrench className="size-3.5" />
+                    Schedule Service
+                  </button>
+                )}
+              </CardHeader>
+              <CardContent className="p-4">
+                {(() => {
+                  const activeMaint = maintenanceRecords.find(
+                    (r: any) =>
+                      r.status === "SCHEDULED" ||
+                      r.status === "ASSIGNED" ||
+                      r.status === "IN_PROGRESS"
+                  );
+                  if (activeMaint) {
+                    return (
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-3 bg-surface-subtle/50 border border-border/40 rounded-sm">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-foreground uppercase">
+                              {activeMaint.type}
+                            </span>
+                            <Tag variant={
+                              activeMaint.status === "IN_PROGRESS" ? "warning" : activeMaint.status === "ASSIGNED" ? "info" : "primary"
+                            }>
+                              {activeMaint.status}
+                            </Tag>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Scheduled for: {formatDate(activeMaint.scheduledDate)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Assigned Tech: {(activeMaint as any).technician ? `${(activeMaint as any).technician.firstName} ${(activeMaint as any).technician.lastName}` : "Unassigned"}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(activeMaint.status === "SCHEDULED" || activeMaint.status === "ASSIGNED") && (
+                            <>
+                              <button
+                                onClick={() => {
+                                  setSelectedMaintRecord(activeMaint);
+                                  setMaintAssignTechId(activeMaint.technicianId || "");
+                                  setIsAssignMaintOpen(true);
+                                }}
+                                className="flex items-center gap-1 px-2.5 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 text-xs font-bold rounded-sm cursor-pointer focus:outline-none"
+                              >
+                                <UserCheck className="size-3.5" />
+                                Assign Tech
+                              </button>
+                              <button
+                                onClick={() =>
+                                  startMaintMutation.mutate({
+                                    id: activeMaint.id,
+                                    clientUpdatedAt: activeMaint.updatedAt ? new Date(activeMaint.updatedAt).toISOString() : null,
+                                  })
+                                }
+                                className="flex items-center gap-1 px-2.5 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-600 border border-green-500/20 text-xs font-bold rounded-sm cursor-pointer focus:outline-none"
+                              >
+                                <Play className="size-3.5" />
+                                Start Service
+                              </button>
+                            </>
+                          )}
+                          {activeMaint.status === "IN_PROGRESS" && (
+                            <button
+                              onClick={() => {
+                                setSelectedMaintRecord(activeMaint);
+                                setMaintCompleteDuration(String(activeMaint.estimatedDuration));
+                                setIsCompleteMaintOpen(true);
+                              }}
+                              className="flex items-center gap-1 px-2.5 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-600 border border-green-500/20 text-xs font-bold rounded-sm cursor-pointer focus:outline-none"
+                            >
+                              <CheckCircle className="size-3.5" />
+                              Complete Service
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              setSelectedMaintRecord(activeMaint);
+                              setIsCancelMaintOpen(true);
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/20 text-xs font-bold rounded-sm cursor-pointer focus:outline-none"
+                          >
+                            <XCircle className="size-3.5" />
+                            Cancel Service
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <p className="text-xs text-muted-foreground text-center py-2">
+                      No active maintenance dispatches scheduled or running.
+                    </p>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+
+            {/* Upcoming Maintenance List */}
+            <Card className="rounded-sm border border-border bg-card">
+              <CardHeader className="p-4 pb-2 border-b border-border">
+                <CardTitle className="text-xs font-extrabold uppercase text-primary">Upcoming Maintenance runs</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                {(() => {
+                  const upcomingRuns = maintenanceRecords.filter(
+                    (r: any) => r.status === "SCHEDULED" || r.status === "ASSIGNED"
+                  );
+                  if (upcomingRuns.length > 0) {
+                    return (
+                      <div className="space-y-2">
+                        {upcomingRuns.map((r: any) => (
+                          <div key={r.id} className="flex justify-between items-center border-b border-muted pb-2 last:border-b-0 last:pb-0">
+                            <div>
+                              <p className="text-xs font-bold text-foreground uppercase">{r.type}</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                Scheduled: {formatDate(r.scheduledDate)}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Tag variant="primary">{r.priority}</Tag>
+                              <Tag variant="info">{r.status}</Tag>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }
+                  return (
+                    <p className="text-xs text-muted-foreground text-center py-2">
+                      No upcoming maintenance runs.
+                    </p>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+
+            {/* Maintenance History */}
+            <Card className="rounded-sm border border-border bg-card">
+              <CardHeader className="p-4 pb-2 border-b border-border">
+                <CardTitle className="text-xs font-extrabold uppercase text-primary">Maintenance Service History</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                {(() => {
+                  const historyRuns = maintenanceRecords.filter(
+                    (r: any) => r.status === "COMPLETED" || r.status === "CANCELLED"
+                  );
+                  if (historyRuns.length > 0) {
+                    return (
+                      <div className="space-y-3.5">
+                        {historyRuns.map((r: any) => (
+                          <div key={r.id} className="border-b border-muted pb-3 last:border-b-0 last:pb-0 text-xs">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <span className="font-bold text-foreground uppercase">{r.type}</span>
+                                <span className="text-[10px] text-muted-foreground ml-2 font-semibold">
+                                  {formatDate(r.endTime || r.scheduledDate)}
+                                </span>
+                              </div>
+                              <div className="flex gap-1.5">
+                                <Tag variant={r.status === "COMPLETED" ? "success" : "destructive"}>{r.status}</Tag>
+                                {r.outcome && <Tag variant={r.outcome === "SUCCESSFUL" ? "success" : r.outcome === "FAILED" ? "destructive" : "warning"}>{r.outcome}</Tag>}
+                              </div>
+                            </div>
+                            {r.status === "COMPLETED" ? (
+                              <div className="mt-1.5 space-y-1 text-muted-foreground">
+                                <p><strong>Duration:</strong> {r.actualDuration} minutes (Est: {r.estimatedDuration}m)</p>
+                                <p><strong>Completion Notes:</strong> {r.completionNotes || "No notes logged."}</p>
+                              </div>
+                            ) : (
+                              <p className="mt-1.5 text-destructive font-semibold">
+                                <strong>Cancellation Reason:</strong> {r.cancellationReason}
+                              </p>
+                            )}
+                            <div className="text-[10px] text-muted-foreground font-bold mt-1">
+                              Tech: {(r as any).technician ? `${(r as any).technician.firstName} ${(r as any).technician.lastName}` : "System"}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }
+                  return (
+                    <p className="text-xs text-muted-foreground text-center py-4">
+                      No historical maintenance logs for this asset.
+                    </p>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          </div>
         )}
 
         {activeTab === "relations" && (
@@ -843,6 +1229,215 @@ export function AssetDetailPage() {
               value={lifecycleNotes}
               onChange={(e) => setLifecycleNotes(e.target.value)}
               placeholder="Notes on why stage is changing..."
+              className="text-xs bg-card"
+            />
+          </div>
+        </div>
+      </CRUDDialogTemplate>
+
+      {/* ==========================================
+          MODALS / DIALOGS FOR MAINTENANCE OPERATIONS
+          ========================================== */}
+
+      {/* SCHEDULE SERVICE DIALOG */}
+      <CRUDDialogTemplate
+        isOpen={isSchedMaintOpen}
+        onClose={() => setIsSchedMaintOpen(false)}
+        title="Schedule Service Maintenance"
+        description={`Schedule recurring preventive or corrective repair service on "${asset.name}".`}
+        onSubmit={handleScheduleMaintSubmit}
+        submitLabel="Create Schedule"
+        isSubmitting={scheduleMaintMutation.isPending}
+      >
+        <div className="space-y-3.5 max-h-[70vh] overflow-y-auto px-1 py-1">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Service Type</label>
+              <Select value={maintType} onValueChange={setMaintType}>
+                <SelectTrigger className="text-xs h-9 bg-card"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PREVENTIVE">Preventive Maintenance</SelectItem>
+                  <SelectItem value="CORRECTIVE">Corrective Repair</SelectItem>
+                  <SelectItem value="INSPECTION">Inspection check</SelectItem>
+                  <SelectItem value="CALIBRATION">Calibration testing</SelectItem>
+                  <SelectItem value="SOFTWARE_UPDATE">Software Patch/Update</SelectItem>
+                  <SelectItem value="HARDWARE_REPAIR">Hardware Repair</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Priority</label>
+              <Select value={maintPriority} onValueChange={setMaintPriority}>
+                <SelectTrigger className="text-xs h-9 bg-card"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="LOW">Low</SelectItem>
+                  <SelectItem value="MEDIUM">Medium</SelectItem>
+                  <SelectItem value="HIGH">High</SelectItem>
+                  <SelectItem value="CRITICAL">Critical</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Technician</label>
+              <Select value={maintTechId} onValueChange={setMaintTechId}>
+                <SelectTrigger className="text-xs h-9 bg-card">
+                  <SelectValue placeholder="Assign tech (Optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Unassigned</SelectItem>
+                  {techList.map((t: any) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.firstName} {t.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Recurrence Frequency</label>
+              <Select value={maintRecurrence} onValueChange={setMaintRecurrence}>
+                <SelectTrigger className="text-xs h-9 bg-card"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ONE_TIME">One-Time Run</SelectItem>
+                  <SelectItem value="WEEKLY">Weekly recurrence</SelectItem>
+                  <SelectItem value="MONTHLY">Monthly recurrence</SelectItem>
+                  <SelectItem value="QUARTERLY">Quarterly recurrence</SelectItem>
+                  <SelectItem value="HALF_YEARLY">Half-Yearly recurrence</SelectItem>
+                  <SelectItem value="ANNUAL">Annual recurrence</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Schedule Date *</label>
+              <Input
+                type="date"
+                value={maintDate}
+                onChange={(e) => setMaintDate(e.target.value)}
+                className="text-xs h-9 bg-card"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Estimated Duration (mins)</label>
+              <Input
+                type="number"
+                value={maintDuration}
+                onChange={(e) => setMaintDuration(e.target.value)}
+                className="text-xs h-9 bg-card"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">Pre-service Notes</label>
+            <Textarea
+              value={maintNotes}
+              onChange={(e) => setMaintNotes(e.target.value)}
+              placeholder="Specify initial details of issues or checklist goals..."
+              className="text-xs bg-card"
+            />
+          </div>
+        </div>
+      </CRUDDialogTemplate>
+
+      {/* ASSIGN TECHNICIAN DIALOG */}
+      <CRUDDialogTemplate
+        isOpen={isAssignMaintOpen}
+        onClose={() => setIsAssignMaintOpen(false)}
+        title="Assign Dispatch Technician"
+        description="Allocate this maintenance dispatch ticket to an active technician."
+        onSubmit={handleAssignMaintSubmit}
+        submitLabel="Assign Technician"
+        isSubmitting={assignMaintMutation.isPending}
+      >
+        <div className="space-y-3.5 px-1 py-1">
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">Choose Technician *</label>
+            <Select value={maintAssignTechId} onValueChange={setMaintAssignTechId}>
+              <SelectTrigger className="text-xs h-9 bg-card">
+                <SelectValue placeholder="Select Technician" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Unassigned</SelectItem>
+                {techList.map((t: any) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.firstName} {t.lastName} ({t.email})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </CRUDDialogTemplate>
+
+      {/* COMPLETE MAINTENANCE DIALOG */}
+      <CRUDDialogTemplate
+        isOpen={isCompleteMaintOpen}
+        onClose={() => setIsCompleteMaintOpen(false)}
+        title="Resolve Maintenance Dispatch"
+        description="Input actual service performance metrics and notes to close the record."
+        onSubmit={handleCompleteMaintSubmit}
+        submitLabel="Resolve & Complete"
+        isSubmitting={completeMaintMutation.isPending}
+      >
+        <div className="space-y-3.5 px-1 py-1">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Actual Duration (mins) *</label>
+              <Input
+                type="number"
+                value={maintCompleteDuration}
+                onChange={(e) => setMaintCompleteDuration(e.target.value)}
+                className="text-xs h-9 bg-card"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Service Outcome *</label>
+              <Select value={maintCompleteOutcome} onValueChange={setMaintCompleteOutcome}>
+                <SelectTrigger className="text-xs h-9 bg-card"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SUCCESSFUL">Successful resolution</SelectItem>
+                  <SelectItem value="PARTIALLY_COMPLETED">Partially completed checks</SelectItem>
+                  <SelectItem value="FAILED">Unsuccessful / Failed run</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">Resolution Notes</label>
+            <Textarea
+              value={maintCompleteNotes}
+              onChange={(e) => setMaintCompleteNotes(e.target.value)}
+              placeholder="Record any actions taken, part changes, or recommendations..."
+              className="text-xs bg-card"
+            />
+          </div>
+        </div>
+      </CRUDDialogTemplate>
+
+      {/* CANCEL MAINTENANCE DIALOG */}
+      <CRUDDialogTemplate
+        isOpen={isCancelMaintOpen}
+        onClose={() => setIsCancelMaintOpen(false)}
+        title="Cancel Maintenance Schedule"
+        description="Cancel this service record. A valid reason must be logged."
+        onSubmit={handleCancelMaintSubmit}
+        submitLabel="Cancel Record"
+        isSubmitting={cancelMaintMutation.isPending}
+      >
+        <div className="space-y-3.5 px-1 py-1">
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">Cancellation Reason *</label>
+            <Textarea
+              value={maintCancelReason}
+              onChange={(e) => setMaintCancelReason(e.target.value)}
+              placeholder="Explain why this maintenance cannot be performed..."
               className="text-xs bg-card"
             />
           </div>

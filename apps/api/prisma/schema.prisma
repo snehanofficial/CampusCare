@@ -39,6 +39,9 @@ model User {
   ticketAttachments     TicketAttachment[]
   assignmentsReceived   AssetAssignment[]      @relation("AssignedToUser")
   assignmentsCreated    AssetAssignment[]      @relation("AssignedByStaff")
+  maintenanceSchedules  MaintenanceSchedule[]  @relation("ScheduleTechnician")
+  maintenanceRecords    MaintenanceRecord[]    @relation("RecordTechnician")
+  maintenanceHistory    MaintenanceHistory[]   @relation("HistoryPerformedBy")
 
   @@index([email])
   @@index([roleId])
@@ -315,11 +318,13 @@ model Asset {
   createdAt           DateTime        @default(now()) @map("created_at")
   updatedAt           DateTime        @updatedAt @map("updated_at")
 
-  department          Department      @relation(fields: [departmentId], references: [id])
-  category            AssetCategory?  @relation(fields: [categoryId], references: [id])
-  tickets             Ticket[]
-  history             AssetHistory[]
-  assignments         AssetAssignment[]
+  department           Department            @relation(fields: [departmentId], references: [id])
+  category             AssetCategory?        @relation(fields: [categoryId], references: [id])
+  tickets              Ticket[]
+  history              AssetHistory[]
+  assignments          AssetAssignment[]
+  maintenanceSchedules MaintenanceSchedule[]
+  maintenanceRecords   MaintenanceRecord[]
 
   @@index([tag])
   @@index([assetCode])
@@ -594,4 +599,119 @@ model AssetAssignment {
   @@index([departmentId])
   @@index([status])
   @@map("asset_assignments")
+}
+
+// ---------------------------------------------------------
+// Phase 3 Maintenance Management Models
+// ---------------------------------------------------------
+
+enum MaintenanceType {
+  PREVENTIVE
+  CORRECTIVE
+  INSPECTION
+  CALIBRATION
+  SOFTWARE_UPDATE
+  HARDWARE_REPAIR
+}
+
+enum MaintenanceStatus {
+  SCHEDULED
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
+enum MaintenancePriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum MaintenanceRecurrence {
+  ONE_TIME
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  HALF_YEARLY
+  ANNUAL
+}
+
+enum MaintenanceOutcome {
+  SUCCESSFUL
+  PARTIALLY_COMPLETED
+  FAILED
+}
+
+model MaintenanceSchedule {
+  id                String                @id @default(uuid()) @map("id")
+  assetId           String                @map("asset_id")
+  type              MaintenanceType       @map("type")
+  technicianId      String?               @map("technician_id")
+  priority          MaintenancePriority   @map("priority")
+  recurrence        MaintenanceRecurrence @map("recurrence")
+  scheduledDate     DateTime              @map("scheduled_date")
+  estimatedDuration Int                   @map("estimated_duration") // in minutes
+  notes             String?               @map("notes")
+  isActive          Boolean               @default(true) @map("is_active")
+  createdAt         DateTime              @default(now()) @map("created_at")
+  updatedAt         DateTime              @updatedAt @map("updated_at")
+
+  asset             Asset                 @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  technician        User?                 @relation("ScheduleTechnician", fields: [technicianId], references: [id])
+  records           MaintenanceRecord[]
+
+  @@index([assetId])
+  @@index([technicianId])
+  @@map("maintenance_schedules")
+}
+
+model MaintenanceRecord {
+  id                 String              @id @default(uuid()) @map("id")
+  assetId            String              @map("asset_id")
+  scheduleId         String?             @map("schedule_id")
+  type               MaintenanceType     @map("type")
+  status             MaintenanceStatus   @default(SCHEDULED) @map("status")
+  priority           MaintenancePriority @map("priority")
+  technicianId       String?             @map("technician_id")
+  scheduledDate      DateTime            @map("scheduled_date")
+  estimatedDuration  Int                 @map("estimated_duration") // in minutes
+  actualDuration     Int?                @map("actual_duration")    // in minutes
+  startTime          DateTime?           @map("start_time")
+  endTime            DateTime?           @map("end_time")
+  notes              String?             @map("notes")
+  completionNotes    String?             @map("completion_notes")
+  cancellationReason String?             @map("cancellation_reason")
+  outcome            MaintenanceOutcome? @map("outcome")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+
+  asset              Asset               @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  technician         User?               @relation("RecordTechnician", fields: [technicianId], references: [id])
+  schedule           MaintenanceSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  history            MaintenanceHistory[]
+
+  @@index([assetId])
+  @@index([technicianId])
+  @@index([scheduleId])
+  @@index([status])
+  @@map("maintenance_records")
+}
+
+model MaintenanceHistory {
+  id            String            @id @default(uuid()) @map("id")
+  recordId      String            @map("record_id")
+  status        MaintenanceStatus @map("status")
+  notes         String?           @map("notes")
+  performedById String            @map("performed_by_id")
+  createdAt     DateTime          @default(now()) @map("created_at")
+
+  record        MaintenanceRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  performedBy   User              @relation("HistoryPerformedBy", fields: [performedById], references: [id])
+
+  @@index([recordId])
+  @@index([performedById])
+  @@map("maintenance_history")
 }
