@@ -5,8 +5,11 @@ import { Switch } from "../../../components/ui/switch.js";
 import { Input } from "../../../components/ui/input.js";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../../../components/ui/select.js";
 import { isMockEnabled, setMockEnabled } from "../../../mocks/index.js";
-import { Settings, Sliders, Server, Shield } from "lucide-react";
+import { Settings, Sliders, Server, Shield, Bell, RefreshCw, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { NotificationPreferencesSettings } from "../components/NotificationPreferencesSettings.js";
+import { OfflineSyncSettings } from "../components/OfflineSyncSettings.js";
+import { EmailPreferencesSettings } from "../components/EmailPreferencesSettings.js";
 
 export function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
@@ -118,6 +121,24 @@ export function SettingsPage() {
           </CardContent>
         </Card>
       ),
+    },
+    {
+      id: "notifications",
+      label: "Notification Channels",
+      icon: Bell,
+      content: <NotificationPreferencesSettings />,
+    },
+    {
+      id: "emailPreferences",
+      label: "Email Delivery Preferences",
+      icon: Mail,
+      content: <EmailPreferencesSettings />,
+    },
+    {
+      id: "sync",
+      label: "Offline Sync",
+      icon: RefreshCw,
+      content: <OfflineSyncSettings />,
     },
     {
       id: "mocks",

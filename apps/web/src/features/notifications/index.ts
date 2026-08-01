@@ -1,2 +1,2 @@
 // Main entry point for feature notifications
-export {};
+export * from "./pages/NotificationsPage.js";

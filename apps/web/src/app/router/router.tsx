@@ -34,6 +34,7 @@ const InventoryPage = lazy(() => import("../../features/inventory/pages/Inventor
 const ReportsPage = lazy(() => import("../../features/reports/pages/ReportsPage.js"));
 const AnalyticsPage = lazy(() => import("../../features/analytics/pages/AnalyticsPage.js"));
 const KnowledgeBasePage = lazy(() => import("../../features/knowledge-base/pages/KnowledgeBasePage.js"));
+const ArticlePage = lazy(() => import("../../features/knowledge-base/pages/ArticlePage.js"));
 const UsersPage = lazy(() => import("../../features/users/pages/UsersPage.js"));
 const DepartmentsPage = lazy(() => import("../../features/departments/pages/DepartmentsPage.js"));
 const CategoriesPage = lazy(() => import("../../features/categories/pages/CategoriesPage.js"));
@@ -224,6 +225,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageSkeleton />}>
             <KnowledgeBasePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "knowledge-base/:slug",
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <ArticlePage />
           </Suspense>
         ),
       },

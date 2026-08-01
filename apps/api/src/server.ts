@@ -2,11 +2,24 @@ import { app } from "./app.js";
 import { env } from "./config/env.js";
 import { logger } from "./utils/logger.js";
 import { prisma } from "./database/prisma.js";
+import { initNotificationListeners } from "./modules/notifications/notifications.events.js";
+import { initServiceStatusListeners } from "./modules/service-status/service-status.events.js";
+import { registerKnowledgeBaseEvents } from "./modules/knowledge-base/knowledge-base.events.js";
+
+import { initSocketServer } from "./sockets/socket.server.js";
+
+// Initialize domain event subscribers
+initNotificationListeners();
+initServiceStatusListeners();
+registerKnowledgeBaseEvents();
 
 const server = app.listen(env.PORT, env.HOST, () => {
   logger.info(`🚀 CampusCare API running on http://${env.HOST}:${env.PORT}`);
   logger.info(`📖 Interactive API reference on http://${env.HOST}:${env.PORT}/reference`);
 });
+
+// Start real-time Socket.IO server
+initSocketServer(server);
 
 const gracefulShutdown = () => {
   logger.info("Shutting down API server gracefully...");

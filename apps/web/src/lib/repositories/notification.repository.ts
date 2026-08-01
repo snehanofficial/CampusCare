@@ -2,11 +2,27 @@ import { IRepository } from "./base.repository.js";
 import { RepositoryQueryParams, RepositoryListResponse } from "./types.js";
 import { isMockEnabled, simulateDelay, mockNotifications } from "../../mocks/index.js";
 import type { MockNotification } from "../../mocks/notifications.js";
+import { apiClient } from "../api-client.js";
+import type { NotificationPreference } from "@campuscare/shared-types";
 
 export interface INotificationRepository extends IRepository<MockNotification> {
   list(params?: RepositoryQueryParams): Promise<RepositoryListResponse<MockNotification>>;
   markAllAsRead(): Promise<boolean>;
+  markAsRead(id: string): Promise<boolean>;
+  getPreferences(): Promise<NotificationPreference[]>;
+  updatePreferences(preferences: Array<{ category: string; email: boolean; inApp: boolean; push: boolean }>): Promise<NotificationPreference[]>;
 }
+
+// Local mock state for preferences in sandbox mode
+let mockPrefs: NotificationPreference[] = [
+  { id: "p-1", userId: "u-1", category: "TICKET", email: true, inApp: true, push: true, createdAt: new Date(), updatedAt: new Date() },
+  { id: "p-2", userId: "u-1", category: "INCIDENT", email: true, inApp: true, push: true, createdAt: new Date(), updatedAt: new Date() },
+  { id: "p-3", userId: "u-1", category: "ASSET", email: true, inApp: true, push: false, createdAt: new Date(), updatedAt: new Date() },
+  { id: "p-4", userId: "u-1", category: "MAINTENANCE", email: false, inApp: true, push: false, createdAt: new Date(), updatedAt: new Date() },
+  { id: "p-5", userId: "u-1", category: "INVENTORY", email: true, inApp: true, push: true, createdAt: new Date(), updatedAt: new Date() },
+  { id: "p-6", userId: "u-1", category: "SLA", email: true, inApp: true, push: true, createdAt: new Date(), updatedAt: new Date() },
+  { id: "p-7", userId: "u-1", category: "SYSTEM", email: true, inApp: true, push: true, createdAt: new Date(), updatedAt: new Date() },
+];
 
 class MockNotificationRepository implements INotificationRepository {
   async list(params?: RepositoryQueryParams): Promise<RepositoryListResponse<MockNotification>> {
@@ -93,26 +109,89 @@ class MockNotificationRepository implements INotificationRepository {
     });
     return simulateDelay(true);
   }
+
+  async markAsRead(id: string): Promise<boolean> {
+    const item = mockNotifications.find((n) => n.id === id);
+    if (item) {
+      item.isRead = true;
+      return simulateDelay(true);
+    }
+    return simulateDelay(false);
+  }
+
+  async getPreferences(): Promise<NotificationPreference[]> {
+    return simulateDelay([...mockPrefs]);
+  }
+
+  async updatePreferences(
+    preferences: Array<{ category: string; email: boolean; inApp: boolean; push: boolean }>
+  ): Promise<NotificationPreference[]> {
+    preferences.forEach((pref) => {
+      const match = mockPrefs.find((p) => p.category === pref.category);
+      if (match) {
+        match.email = pref.email;
+        match.inApp = pref.inApp;
+        match.push = pref.push;
+        match.updatedAt = new Date();
+      }
+    });
+    return simulateDelay([...mockPrefs]);
+  }
 }
 
 class HttpNotificationRepository implements INotificationRepository {
   async list(params?: RepositoryQueryParams): Promise<RepositoryListResponse<MockNotification>> {
-    throw new Error("HTTP Repository not connected yet.");
+    const response = await apiClient.get("/notifications", {
+      params: {
+        page: params?.page,
+        limit: params?.pageSize,
+        search: params?.search,
+        ...params?.filters,
+      },
+    });
+    return response.data.data;
   }
+
   async get(id: string): Promise<MockNotification> {
-    throw new Error("HTTP Repository not connected yet.");
+    const response = await apiClient.get(`/notifications/${id}`);
+    return response.data.data;
   }
+
   async create(data: Partial<MockNotification>): Promise<MockNotification> {
-    throw new Error("HTTP Repository not connected yet.");
+    const response = await apiClient.post("/notifications/broadcast", data);
+    return response.data.data;
   }
+
   async update(id: string, data: Partial<MockNotification>): Promise<MockNotification> {
-    throw new Error("HTTP Repository not connected yet.");
+    const response = await apiClient.patch(`/notifications/${id}`, data);
+    return response.data.data;
   }
+
   async delete(id: string): Promise<boolean> {
-    throw new Error("HTTP Repository not connected yet.");
+    const response = await apiClient.delete(`/notifications/${id}`);
+    return response.data.success || response.data.data?.success || true;
   }
+
   async markAllAsRead(): Promise<boolean> {
-    throw new Error("HTTP Repository not connected yet.");
+    const response = await apiClient.post("/notifications/read-all");
+    return response.data.success || response.data.data?.success || true;
+  }
+
+  async markAsRead(id: string): Promise<boolean> {
+    const response = await apiClient.patch(`/notifications/${id}/read`);
+    return response.data.success || response.data.data?.success || true;
+  }
+
+  async getPreferences(): Promise<NotificationPreference[]> {
+    const response = await apiClient.get("/notifications/preferences");
+    return response.data.data;
+  }
+
+  async updatePreferences(
+    preferences: Array<{ category: string; email: boolean; inApp: boolean; push: boolean }>
+  ): Promise<NotificationPreference[]> {
+    const response = await apiClient.put("/notifications/preferences", { preferences });
+    return response.data.data;
   }
 }
 

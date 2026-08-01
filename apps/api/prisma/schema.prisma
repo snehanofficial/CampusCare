@@ -37,6 +37,9 @@ model User {
   notifications         Notification[]
   assetHistory          AssetHistory[]
   ticketAttachments     TicketAttachment[]
+  kbArticlesCreated     KnowledgeArticle[]    @relation("KBCreatedBy")
+  kbArticlesUpdated     KnowledgeArticle[]    @relation("KBUpdatedBy")
+  articleFeedbacks      ArticleFeedback[]
 
   @@index([email])
   @@index([roleId])
@@ -252,9 +255,12 @@ model Incident {
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
   resolvedAt  DateTime? @map("resolved_at")
+  serviceId   String?   @map("service_id")
 
-  tickets IncidentTicket[]
+  tickets  IncidentTicket[]
+  service  Service?        @relation(fields: [serviceId], references: [id], onDelete: SetNull)
 
+  @@index([serviceId])
   @@map("incidents")
 }
 
@@ -370,6 +376,20 @@ model Notification {
   @@map("notifications")
 }
 
+model NotificationPreference {
+  id        String   @id @default(uuid()) @map("id")
+  userId    String   @map("user_id")
+  category  String   @map("category") // TICKET | INCIDENT | ASSET | MAINTENANCE | INVENTORY | SLA | SYSTEM
+  email     Boolean  @default(true) @map("email")
+  inApp     Boolean  @default(true) @map("in_app")
+  push      Boolean  @default(true) @map("push")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, category])
+  @@map("notification_preferences")
+}
+
 // ---------------------------------------------------------
 // SLA & Business Policy Models
 // ---------------------------------------------------------
@@ -394,18 +414,52 @@ model SlaPolicy {
 // Service Status Model (Status Page)
 // ---------------------------------------------------------
 
-model ServiceStatus {
+model Service {
   id          String   @id @default(uuid()) @map("id")
-  name        String   @unique @map("name")     // e.g. "Email System"
+  name        String   @unique @map("name")
   description String?  @map("description")
-  status      String   @map("status")           // OPERATIONAL | DEGRADED | PARTIAL_OUTAGE | MAJOR_OUTAGE | MAINTENANCE
-  category    String   @map("category")         // e.g. "Infrastructure", "Applications"
-  statusNote  String?  @map("status_note")      // Optional incident note
-  sortOrder   Int      @default(0) @map("sort_order")
+  category    String   @map("category")
+  status      String   @map("status")
+  icon        String?  @map("icon")
+  createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
+
+  histories    ServiceStatusHistory[]
+  maintenances MaintenanceWindow[]
+  incidents    Incident[]
+
+  @@map("services")
+}
+
+model ServiceStatusHistory {
+  id             String   @id @default(uuid()) @map("id")
+  serviceId      String   @map("service_id")
+  previousStatus String   @map("previous_status")
+  newStatus      String   @map("new_status")
+  reason         String?  @map("reason")
+  changedBy      String?  @map("changed_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  service        Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId])
+  @@map("service_status_history")
+}
+
+model MaintenanceWindow {
+  id          String   @id @default(uuid()) @map("id")
+  serviceId   String   @map("service_id")
+  title       String   @map("title")
+  description String?  @map("description")
+  startTime   DateTime @map("start_time")
+  endTime     DateTime @map("end_time")
+  status      String   @map("status")
   createdAt   DateTime @default(now()) @map("created_at")
 
-  @@map("service_statuses")
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId])
+  @@map("maintenance_windows")
 }
 
 // ---------------------------------------------------------
@@ -436,17 +490,106 @@ model AuditLog {
 // Knowledge Base Models
 // ---------------------------------------------------------
 
-model KnowledgeBase {
-  id         String   @id @default(uuid()) @map("id")
-  title      String   @map("title")
-  content    String   @map("content")
-  category   String   @map("category")
-  tags       String[] @map("tags")
-  views      Int      @default(0) @map("views")
-  isPublished Boolean  @default(false) @map("is_published")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+model KnowledgeCategory {
+  id          String   @id @default(uuid()) @map("id")
+  name        String   @unique @map("name")
+  description String?  @map("description")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  @@index([category])
-  @@map("knowledge_base")
+  articles KnowledgeArticle[]
+
+  @@map("knowledge_categories")
+}
+
+model KnowledgeArticle {
+  id          String   @id @default(uuid()) @map("id")
+  title       String   @map("title")
+  slug        String   @unique @map("slug")
+  content     String   @map("content")
+  summary     String   @map("summary")
+  categoryId  String   @map("category_id")
+  tags        String[] @map("tags")
+  status      String   @default("DRAFT") @map("status")   // DRAFT | PUBLISHED
+  createdById String   @map("created_by_id")
+  updatedById String?  @map("updated_by_id")
+  viewCount   Int      @default(0) @map("view_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  category  KnowledgeCategory @relation(fields: [categoryId], references: [id])
+  createdBy User              @relation("KBCreatedBy", fields: [createdById], references: [id])
+  updatedBy User?             @relation("KBUpdatedBy", fields: [updatedById], references: [id])
+  feedbacks ArticleFeedback[]
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([slug])
+  @@map("knowledge_articles")
+}
+
+model ArticleFeedback {
+  id        String   @id @default(uuid()) @map("id")
+  articleId String   @map("article_id")
+  userId    String   @map("user_id")
+  helpful   Boolean  @map("helpful")
+  comment   String?  @map("comment")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  article KnowledgeArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, userId])
+  @@index([articleId])
+  @@map("article_feedbacks")
+}
+
+model EmailLog {
+  id            String   @id @default(uuid()) @map("id")
+  recipient     String   @map("recipient")
+  template      String   @map("template")
+  status        String   @map("status") // SENT | FAILED | PENDING
+  retryCount    Int      @default(0) @map("retry_count")
+  error         String?  @map("error")
+  recipientType String?  @map("recipient_type")
+  eventType     String?  @map("event_type")
+  userId        String?  @map("user_id")
+  timestamp     DateTime @default(now()) @map("timestamp")
+
+  @@map("email_logs")
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid()) @map("id")
+  userId    String   @map("user_id")
+  endpoint  String   @unique @map("endpoint")
+  p256dh    String   @map("p256dh")
+  auth      String   @map("auth")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("push_subscriptions")
+}
+
+model EmailPreference {
+  id        String   @id @default(uuid()) @map("id")
+  userId    String   @map("user_id")
+  eventType String   @map("event_type")
+  enabled   Boolean  @default(true) @map("enabled")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, eventType])
+  @@map("email_preferences")
+}
+
+model SystemNotification {
+  id        String   @id @default(uuid()) @map("id")
+  title     String   @map("title")
+  message   String   @map("message")
+  sendEmail Boolean  @default(false) @map("send_email")
+  createdBy String   @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("system_notifications")
 }

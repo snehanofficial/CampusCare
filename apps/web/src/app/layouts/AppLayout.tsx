@@ -5,8 +5,30 @@ import { Navbar } from "../../components/navigation/Navbar.js";
 import { Footer } from "../../components/navigation/Footer.js";
 import { CommandPalette } from "../../components/navigation/CommandPalette.js";
 import { useLocalStorage } from "../../hooks/useLocalStorage.js";
+import { useRealtimeNotifications } from "../../hooks/useRealtimeNotifications.js";
+import { usePushNotification } from "../../hooks/usePushNotification.js";
+import { useOfflineStatus } from "../../hooks/useOfflineStatus.js";
+import { SyncManager } from "../../offline/sync/sync.manager.js";
 
 export function AppLayout() {
+  // Mount real-time websocket and push subscriptions
+  useRealtimeNotifications();
+  usePushNotification();
+  const { isOffline } = useOfflineStatus();
+
+  // Register listeners for service worker TRIGGER_SYNC messages
+  useEffect(() => {
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      if (event.data?.type === "TRIGGER_SYNC") {
+        SyncManager.triggerSync().catch(console.error);
+      }
+    };
+    navigator.serviceWorker?.addEventListener("message", handleServiceWorkerMessage);
+    return () => {
+      navigator.serviceWorker?.removeEventListener("message", handleServiceWorkerMessage);
+    };
+  }, []);
+
   const [isCollapsed, setIsCollapsed] = useLocalStorage<boolean>("sidebar-collapsed", false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
@@ -22,6 +44,14 @@ export function AppLayout() {
       <a href="#main-content" className="skip-to-content">
         Skip to main content
       </a>
+
+      {/* Floating Offline Alert Banner */}
+      {isOffline && (
+        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2.5 rounded-lg border border-destructive bg-destructive/10 backdrop-blur-md px-4 py-2.5 text-xs font-bold text-destructive shadow-lg animate-pulse">
+          <span className="h-2 w-2 rounded-full bg-destructive animate-ping" />
+          Offline Mode Active (Actions Queued)
+        </div>
+      )}
 
       {/* Mobile Drawer Overlay */}
       {isMobileOpen && (

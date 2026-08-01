@@ -1,0 +1,27 @@
+<span class="badge badge-success">Ticket Resolved</span>
+<h1>Support Ticket Resolved</h1>
+<p>Hello {{recipientName}},</p>
+<p>Your support ticket has been marked as resolved by our IT technician. Please verify that the solution resolved the problem to your satisfaction.</p>
+
+<div class="meta-box">
+  <table>
+    <tr>
+      <td class="meta-label">Ticket ID:</td>
+      <td class="meta-value"><strong>{{ticketNumber}}</strong></td>
+    </tr>
+    <tr>
+      <td class="meta-label">Subject:</td>
+      <td class="meta-value">{{title}}</td>
+    </tr>
+    <tr>
+      <td class="meta-label">Resolution:</td>
+      <td class="meta-value">{{resolution}}</td>
+    </tr>
+  </table>
+</div>
+
+<p>You can view the full resolution summary, add comments, or reopen the ticket if the problem persists by clicking the button below:</p>
+
+{{button "Review Resolution" actionUrl}}
+
+<p style="margin-top: 24px;">Thank you for using CampusCare support,<br/>CampusCare IT Service Desk Team</p>

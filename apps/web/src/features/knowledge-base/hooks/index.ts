@@ -1,2 +1,1 @@
-// Placeholder for feature knowledge-base subfolder hooks
-export {};
+export * from "./useKnowledgeBase.js";
