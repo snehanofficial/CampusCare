@@ -89,6 +89,12 @@ export const NAVIGATION_REGISTRY: readonly NavigationSection[] = [
         icon: Package,
         permission: "inventory:read",
       },
+      {
+        label: "Campus Heatmap",
+        href: "/heatmap",
+        icon: FolderTree,
+        permission: "assets:read",
+      },
     ],
   },
   {

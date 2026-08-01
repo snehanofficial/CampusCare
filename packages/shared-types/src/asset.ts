@@ -59,6 +59,8 @@ export interface Asset {
   status: AssetStatus;
   lifecycleStage: LifecycleStage;
   healthStatus: HealthStatus;
+  healthScore?: number;
+  prevHealthScore?: number | null;
   location: string;
   building?: string | null;
   floor?: string | null;

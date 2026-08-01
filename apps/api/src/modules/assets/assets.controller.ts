@@ -14,6 +14,7 @@ import { ProcurementService } from "./services/procurement.service.js";
 import { AssetAssignmentService } from "./services/asset-assignment.service.js";
 import { AssetLifecycleService } from "./services/asset-lifecycle.service.js";
 import { ProcurementStatus } from "@campuscare/shared-types";
+import { HealthService } from "./services/health.service.js";
 
 export class AssetsController {
   static async list(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -292,6 +293,69 @@ export class AssetsController {
       const userId = (req as any).user?.id;
       const result = await AssetLifecycleService.changeLifecycle(req.params.id as string, validated as any, userId);
       sendSuccess(res, result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static getHealthFilters(req: Request) {
+    return {
+      healthStatus: req.query.healthStatus as string | undefined,
+      lifecycleStage: req.query.lifecycleStage as string | undefined,
+      status: req.query.status as string | undefined,
+      departmentId: req.query.departmentId as string | undefined,
+      categoryId: req.query.categoryId as string | undefined,
+      building: req.query.building as string | undefined,
+    };
+  }
+
+  static async getHealthDashboard(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const filters = AssetsController.getHealthFilters(req);
+      const result = await HealthService.getHealthDashboard(filters);
+      sendSuccess(res, result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getHeatmap(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const filters = AssetsController.getHealthFilters(req);
+      const result = await HealthService.getHeatmap(filters);
+      sendSuccess(res, result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getHealthConfig(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await HealthService.getConfig();
+      sendSuccess(res, result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async updateHealthConfig(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await HealthService.updateConfig(req.body);
+      sendSuccess(res, result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async recalculateAllHealth(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const filters = {
+        building: req.body.building as string | undefined,
+        departmentId: req.body.departmentId as string | undefined,
+        categoryId: req.body.categoryId as string | undefined,
+      };
+      const result = await HealthService.recalculateHealth(filters);
+      sendSuccess(res, { updatedCount: result });
     } catch (err) {
       next(err);
     }

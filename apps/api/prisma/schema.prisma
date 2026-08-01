@@ -321,6 +321,8 @@ model Asset {
   updatedBy           String?         @map("updated_by")
   createdAt           DateTime        @default(now()) @map("created_at")
   updatedAt           DateTime        @updatedAt @map("updated_at")
+  healthScore         Int             @default(100) @map("health_score")
+  prevHealthScore     Int?            @map("prev_health_score")
 
   department           Department            @relation(fields: [departmentId], references: [id])
   category             AssetCategory?        @relation(fields: [categoryId], references: [id])
@@ -843,4 +845,14 @@ model MaintenanceHistory {
   @@index([recordId])
   @@index([performedById])
   @@map("maintenance_history")
+}
+
+model HealthConfiguration {
+  id        String   @id @default(uuid()) @map("id")
+  key       String   @unique @map("key")
+  value     Json     @map("value")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("health_configurations")
 }

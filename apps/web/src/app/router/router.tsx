@@ -43,6 +43,10 @@ const SettingsPage = lazy(() => import("../../features/settings/pages/SettingsPa
 const ProfilePage = lazy(() => import("../../features/profile/pages/ProfilePage.js"));
 const ServiceStatusPage = lazy(() => import("../../features/service-status/pages/ServiceStatusPage.js"));
 const NotificationsPage = lazy(() => import("../../features/notifications/pages/NotificationsPage.js"));
+const HeatmapPage = lazy(() => import("../../features/heatmap/pages/HeatmapPage.js"));
+const BuildingDetailPage = lazy(() => import("../../features/heatmap/pages/BuildingDetailPage.js"));
+const FloorDetailPage = lazy(() => import("../../features/heatmap/pages/FloorDetailPage.js"));
+const RoomDetailPage = lazy(() => import("../../features/heatmap/pages/RoomDetailPage.js"));
 
 // Skeleton loader
 import { PageSkeleton } from "../../components/feedback/PageSkeleton.js";
@@ -206,6 +210,46 @@ export const router = createBrowserRouter([
           <PermissionGuard requiredPermissions={["inventory:read"]}>
             <Suspense fallback={<PageSkeleton />}>
               <InventoryPage />
+            </Suspense>
+          </PermissionGuard>
+        ),
+      },
+      {
+        path: "heatmap",
+        element: (
+          <PermissionGuard requiredPermissions={["assets:read"]}>
+            <Suspense fallback={<PageSkeleton />}>
+              <HeatmapPage />
+            </Suspense>
+          </PermissionGuard>
+        ),
+      },
+      {
+        path: "heatmap/building/:buildingName",
+        element: (
+          <PermissionGuard requiredPermissions={["assets:read"]}>
+            <Suspense fallback={<PageSkeleton />}>
+              <BuildingDetailPage />
+            </Suspense>
+          </PermissionGuard>
+        ),
+      },
+      {
+        path: "heatmap/building/:buildingName/floor/:floorName",
+        element: (
+          <PermissionGuard requiredPermissions={["assets:read"]}>
+            <Suspense fallback={<PageSkeleton />}>
+              <FloorDetailPage />
+            </Suspense>
+          </PermissionGuard>
+        ),
+      },
+      {
+        path: "heatmap/building/:buildingName/floor/:floorName/room/:roomName",
+        element: (
+          <PermissionGuard requiredPermissions={["assets:read"]}>
+            <Suspense fallback={<PageSkeleton />}>
+              <RoomDetailPage />
             </Suspense>
           </PermissionGuard>
         ),

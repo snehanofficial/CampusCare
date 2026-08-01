@@ -2,6 +2,10 @@ import { Router } from "express";
 import { AssetsController } from "./assets.controller.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { authorize } from "../../middleware/authorize.js";
+import { initHealthEventListeners } from "./events/health-listener.js";
+
+// Initialize health engine event listeners
+initHealthEventListeners();
 
 export const assetsRouter = Router();
 
@@ -83,6 +87,42 @@ assetsRouter.post(
   authenticate,
   authorize("assets:update"),
   AssetsController.bulkAction
+);
+
+// Health & Heatmap operations
+assetsRouter.get(
+  "/health/dashboard",
+  authenticate,
+  authorize("assets:read"),
+  AssetsController.getHealthDashboard
+);
+
+assetsRouter.get(
+  "/health/heatmap",
+  authenticate,
+  authorize("assets:read"),
+  AssetsController.getHeatmap
+);
+
+assetsRouter.get(
+  "/health/config",
+  authenticate,
+  authorize("assets:read"),
+  AssetsController.getHealthConfig
+);
+
+assetsRouter.post(
+  "/health/config",
+  authenticate,
+  authorize("assets:update"),
+  AssetsController.updateHealthConfig
+);
+
+assetsRouter.post(
+  "/health/recalculate",
+  authenticate,
+  authorize("assets:update"),
+  AssetsController.recalculateAllHealth
 );
 
 // Asset CRUD
