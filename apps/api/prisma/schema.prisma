@@ -33,7 +33,6 @@ model User {
   assignedTickets       Ticket[]               @relation("AssignedTickets")
   comments              TicketComment[]
   performedAuditLogs    AuditLog[]             @relation("PerformedBy")
-  performedTransactions InventoryTransaction[] @relation("PerformedBy")
   notifications         Notification[]
   assetHistory          AssetHistory[]
   ticketAttachments     TicketAttachment[]
@@ -42,12 +41,17 @@ model User {
   maintenanceSchedules  MaintenanceSchedule[]  @relation("ScheduleTechnician")
   maintenanceRecords    MaintenanceRecord[]    @relation("RecordTechnician")
   maintenanceHistory    MaintenanceHistory[]   @relation("HistoryPerformedBy")
+  // Phase 4 Inventory relations
+  performedTransactions InventoryTransaction[] @relation("PerformedBy")
+  inventoryAllocations  InventoryAllocation[]  @relation("AllocationAllocatedBy")
+  inventoryReservations InventoryReservation[] @relation("ReservationRequestedBy")
 
   @@index([email])
   @@index([roleId])
   @@index([departmentId])
   @@map("users")
 }
+
 
 model Role {
   id          String   @id @default(uuid()) @map("id")
@@ -350,37 +354,151 @@ model AssetHistory {
   @@map("asset_history")
 }
 
+enum InventoryCategory {
+  SPARE_PART
+  CONSUMABLE
+  TOOL
+  CABLE
+  PERIPHERAL
+  NETWORKING
+  STORAGE
+  POWER
+  OTHER
+}
+
+enum InventoryStatus {
+  ACTIVE
+  INACTIVE
+  DISCONTINUED
+}
+
+enum InventoryTransactionType {
+  STOCK_IN
+  STOCK_OUT
+  ADJUSTMENT
+  TRANSFER
+  MAINTENANCE_CONSUMPTION
+  RESERVATION
+  RESERVATION_RELEASE
+  SCRAP
+}
+
+enum AllocationStatus {
+  PENDING
+  CONSUMED
+  RETURNED
+  CANCELLED
+}
+
+enum ReservationStatus {
+  ACTIVE
+  RELEASED
+  CONSUMED
+  EXPIRED
+  CANCELLED
+}
+
 model InventoryItem {
-  id          String   @id @default(uuid()) @map("id")
-  name        String   @map("name")
-  sku         String   @unique @map("sku")
-  quantity    Int      @map("quantity")
-  minQuantity Int      @default(5) @map("min_quantity")
-  unitPrice   Decimal  @map("unit_price")
-  location    String?  @map("location")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id            String            @id @default(uuid()) @map("id")
+  itemCode      String            @unique @map("item_code")       // INV-YYYY-XXXX, immutable
+  name          String            @map("name")
+  description   String?           @map("description")
+  category      InventoryCategory @map("category")
+  status        InventoryStatus   @default(ACTIVE) @map("status")
+  unit          String            @map("unit")                    // "pcs", "metres", etc.
+  manufacturer  String?           @map("manufacturer")
+  model         String?           @map("model")
+  barcodeQr     String?           @map("barcode_qr")              // optional scanner support
+  currentStock  Int               @default(0) @map("current_stock")
+  reservedStock Int               @default(0) @map("reserved_stock")
+  minimumStock  Int               @default(0) @map("minimum_stock")
+  maximumStock  Int               @map("maximum_stock")
+  reorderLevel  Int               @map("reorder_level")
+  unitCost      Decimal?          @map("unit_cost")
+  location      String?           @map("location")
+  notes         String?           @map("notes")
+  isActive      Boolean           @default(true) @map("is_active") // soft-delete flag
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
 
-  transactions InventoryTransaction[]
+  transactions  InventoryTransaction[]
+  allocations   InventoryAllocation[]
+  reservations  InventoryReservation[]
 
+  @@index([itemCode])
+  @@index([category])
+  @@index([status])
+  @@index([reorderLevel])
+  @@index([location])
+  @@index([barcodeQr])
   @@map("inventory_items")
 }
 
 model InventoryTransaction {
-  id              String   @id @default(uuid()) @map("id")
-  itemId          String   @map("item_id")
-  transactionType String   @map("transaction_type")  // ADD | DEDUCT
-  quantity        Int      @map("quantity")
-  referenceId     String?  @map("reference_id")      // ticket_id or asset_history_id
-  notes           String?  @map("notes")
-  performedById   String   @map("performed_by_id")
-  createdAt       DateTime @default(now()) @map("created_at")
+  id              String                   @id @default(uuid()) @map("id")
+  itemId          String                   @map("item_id")
+  transactionType InventoryTransactionType @map("transaction_type")
+  quantity        Int                      @map("quantity")
+  previousStock   Int                      @map("previous_stock")
+  newStock        Int                      @map("new_stock")
+  referenceId     String?                  @map("reference_id")   // e.g. maintenanceRecordId
+  referenceType   String?                  @map("reference_type") // e.g. "MaintenanceRecord"
+  reason          String?                  @map("reason")
+  notes           String?                  @map("notes")
+  performedById   String                   @map("performed_by_id")
+  createdAt       DateTime                 @default(now()) @map("created_at")
 
   item        InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
   performedBy User          @relation("PerformedBy", fields: [performedById], references: [id])
 
   @@index([itemId])
+  @@index([transactionType])
+  @@index([createdAt])
   @@map("inventory_transactions")
+}
+
+model InventoryAllocation {
+  id                  String           @id @default(uuid()) @map("id")
+  itemId              String           @map("item_id")
+  maintenanceRecordId String           @map("maintenance_record_id")
+  quantityRequested   Int              @map("quantity_requested")
+  quantityConsumed    Int              @default(0) @map("quantity_consumed")
+  status              AllocationStatus @default(PENDING) @map("status")
+  notes               String?          @map("notes")
+  allocatedById       String           @map("allocated_by_id")
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+
+  item              InventoryItem     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  maintenanceRecord MaintenanceRecord @relation(fields: [maintenanceRecordId], references: [id], onDelete: Cascade)
+  allocatedBy       User              @relation("AllocationAllocatedBy", fields: [allocatedById], references: [id])
+
+  @@index([itemId])
+  @@index([maintenanceRecordId])
+  @@index([status])
+  @@map("inventory_allocations")
+}
+
+model InventoryReservation {
+  id          String            @id @default(uuid()) @map("id")
+  itemId      String            @map("item_id")
+  quantity    Int               @map("quantity")
+  status      ReservationStatus @default(ACTIVE) @map("status")
+  requestedBy String            @map("requested_by")
+  moduleRef   String?           @map("module_ref")    // "Maintenance" | "Procurement"
+  referenceId String?           @map("reference_id")
+  expiresAt   DateTime?         @map("expires_at")
+  notes       String?           @map("notes")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  item        InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  reservedBy  User          @relation("ReservationRequestedBy", fields: [requestedBy], references: [id])
+
+  @@index([itemId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("inventory_reservations")
 }
 
 // ---------------------------------------------------------
@@ -605,6 +723,16 @@ model AssetAssignment {
 // Phase 3 Maintenance Management Models
 // ---------------------------------------------------------
 
+// ---------------------------------------------------------
+// Phase 4 Inventory Enums
+// ---------------------------------------------------------
+
+// (The enums above were moved up to accommodate the models)
+
+// ---------------------------------------------------------
+// Phase 3 Maintenance Management Enums
+// ---------------------------------------------------------
+
 enum MaintenanceType {
   PREVENTIVE
   CORRECTIVE
@@ -688,10 +816,11 @@ model MaintenanceRecord {
   createdAt          DateTime            @default(now()) @map("created_at")
   updatedAt          DateTime            @updatedAt @map("updated_at")
 
-  asset              Asset               @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  technician         User?               @relation("RecordTechnician", fields: [technicianId], references: [id])
-  schedule           MaintenanceSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
-  history            MaintenanceHistory[]
+  asset                Asset                 @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  technician           User?                 @relation("RecordTechnician", fields: [technicianId], references: [id])
+  schedule             MaintenanceSchedule?  @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  history              MaintenanceHistory[]
+  inventoryAllocations InventoryAllocation[]
 
   @@index([assetId])
   @@index([technicianId])

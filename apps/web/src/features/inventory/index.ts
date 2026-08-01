@@ -1,2 +1,2 @@
-// Main entry point for feature inventory
-export {};
+export * from "./pages/InventoryPage.js";
+
