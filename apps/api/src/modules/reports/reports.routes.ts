@@ -7,6 +7,9 @@ import { exportReportSchema } from "./reports.validator.js";
 
 export const reportsRouter = Router();
 
+// Apply authentication to all routes
+reportsRouter.use(authenticate);
+
 /**
  * @swagger
  * /api/v1/reports:

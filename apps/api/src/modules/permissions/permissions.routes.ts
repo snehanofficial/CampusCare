@@ -1,7 +1,11 @@
 import { Router } from "express";
 import { PermissionsController } from "./permissions.controller.js";
+import { authenticate } from "../../middleware/authenticate.js";
 
 export const permissionsRouter = Router();
+
+// Apply authentication to all routes
+permissionsRouter.use(authenticate);
 
 /**
  * @swagger
@@ -9,6 +13,8 @@ export const permissionsRouter = Router();
  *   get:
  *     summary: Retrieve summary for permissions
  *     tags: [Permissions]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Operation successful

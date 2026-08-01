@@ -5,12 +5,17 @@ import { authorize } from "../../middleware/authorize.js";
 
 export const usersRouter = Router();
 
+// Apply authentication to all routes
+usersRouter.use(authenticate);
+
 /**
  * @swagger
  * /api/v1/users:
  *   get:
  *     summary: List user accounts
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Operation successful

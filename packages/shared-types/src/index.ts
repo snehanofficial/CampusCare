@@ -5,3 +5,4 @@ export * from './inventory.js';
 export * from './notification.js';
 export * from './report.js';
 export * from './api.js';
+export * from './maintenance.js';

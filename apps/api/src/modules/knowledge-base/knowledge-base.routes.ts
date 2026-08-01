@@ -12,14 +12,20 @@ import {
 
 export const knowledgeBaseRouter = Router();
 
+// Apply authentication to all routes
+knowledgeBaseRouter.use(authenticate);
+
 /**
  * @swagger
  * /api/v1/knowledge-base:
  *   get:
- *     summary: List published knowledge base articles
- *     tags: [Knowledge Base]
+ *     summary: Retrieve summary for knowledge-base
+ *     tags: [KnowledgeBase]
  *     security:
  *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Operation successful
  */
 knowledgeBaseRouter.get("/", authenticate, KnowledgeBaseController.listArticles);
 
