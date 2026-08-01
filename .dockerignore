@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+**/dev-dist
+**/.env
+**/.env.*
+!**/.env.example
+**/uploads
+.git
+.claude
+docs
+hackathon_submission_docs
+*.md

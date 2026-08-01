@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../../components/ui/dialog.js";
-import { TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs.js";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs.js";
 import { PendingRequestsTab } from "./PendingRequestsTab.js";
 import { ActivePermissionsTab } from "./ActivePermissionsTab.js";
 import { GrantAccessTab } from "./GrantAccessTab.js";
@@ -59,12 +59,12 @@ export function TemporaryAccessWorkspace({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-1 min-h-0 flex-col">
-          <TabsList
-            activeValue={tab}
-            onValueChange={(value: string) => setTab(value as WorkspaceTab)}
-            className="shrink-0"
-          >
+        <Tabs
+          value={tab}
+          onValueChange={(value) => setTab(value as WorkspaceTab)}
+          className="flex flex-1 min-h-0 flex-col"
+        >
+          <TabsList className="shrink-0">
             {TABS.map(({ value, label, icon: Icon }) => (
               <TabsTrigger key={value} value={value}>
                 <Icon className="size-3.5" />
@@ -74,23 +74,23 @@ export function TemporaryAccessWorkspace({
           </TabsList>
 
           <div className="flex-1 min-h-0 overflow-y-auto pt-4 pr-1 -mr-1">
-            <TabsContent value="pending" activeValue={tab}>
+            <TabsContent value="pending">
               <PendingRequestsTab active={isOpen && tab === "pending"} />
             </TabsContent>
-            <TabsContent value="active" activeValue={tab}>
+            <TabsContent value="active">
               <ActivePermissionsTab active={isOpen && tab === "active"} />
             </TabsContent>
-            <TabsContent value="grant" activeValue={tab}>
+            <TabsContent value="grant">
               <GrantAccessTab active={isOpen && tab === "grant"} isSystemAdmin={isSystemAdmin} />
             </TabsContent>
-            <TabsContent value="history" activeValue={tab}>
+            <TabsContent value="history">
               <HistoryTab active={isOpen && tab === "history"} />
             </TabsContent>
-            <TabsContent value="policies" activeValue={tab}>
+            <TabsContent value="policies">
               <ApprovalPoliciesTab active={isOpen && tab === "policies"} />
             </TabsContent>
           </div>
-        </div>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

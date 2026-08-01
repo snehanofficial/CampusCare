@@ -7,14 +7,15 @@ import { joinUserRooms } from "./socket.rooms.js";
 import { bindSocketEvents } from "./socket.events.js";
 import { SocketService } from "./socket.service.js";
 import type { AuthenticatedSocket } from "./socket.types.js";
+import { env } from "../config/env.js";
 
 export function initSocketServer(httpServer: HttpServer): Server {
   logger.info("[SocketServer] Bootstrapping Socket.IO server configuration...");
 
-  // 1. Instantiate the Socket.IO Server with permissive CORS configurations
+  // 1. Instantiate the Socket.IO Server, matching the API's CORS allow-list
   const io = new Server(httpServer, {
     cors: {
-      origin: "*", // Matches API CORS requirements
+      origin: env.CORS_ORIGIN.split(",").map((origin) => origin.trim()),
       methods: ["GET", "POST", "PATCH", "DELETE", "PUT"],
       credentials: true,
     },

@@ -86,8 +86,8 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-3 w-full">
-      <div className="rounded-sm border border-border bg-card overflow-x-auto relative">
-        <Table style={{ width: table.getCenterTotalSize() }}>
+      <div className="rounded-sm bg-card">
+        <Table style={{ width: table.getCenterTotalSize(), minWidth: "100%" }}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>

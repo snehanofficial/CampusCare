@@ -4,6 +4,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
 import bcrypt from "bcrypt";
 import { ROLE_SEED_DATA, PERMISSION_REGISTRY } from "@campuscare/constants";
+import { seedDemoData } from "./seed.demo-data";
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -435,6 +436,9 @@ async function main() {
     });
     console.log(`  ✓ Template "${created.name}": ${perms.length} permissions.`);
   }
+
+  // 13. Seed connected demo/dummy data across all modules for workflow testing
+  await seedDemoData(prisma);
 
   console.log("🌱 Database seed complete!");
 }
