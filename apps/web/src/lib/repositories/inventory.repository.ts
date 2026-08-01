@@ -61,8 +61,9 @@ export interface IInventoryRepository extends IRepository<InventoryItemWithAvail
   getStockMovementHistory(params?: any): Promise<RepositoryListResponse<InventoryTransaction>>;
   getLowStockReport(): Promise<any[]>;
   exportCSV(params?: any): Promise<Blob>;
-  downloadCSVTemplate(): Promise<Blob>;
-  validateCSVImport(file: File): Promise<InventoryBulkImportResult>;
+  downloadCSVTemplate(format?: "csv" | "xlsx"): Promise<Blob>;
+  validateCSVImport(file: File, mapping?: any): Promise<any>;
+  importCommit(items: any[]): Promise<any>;
 }
 
 // In-Memory Mock Data
@@ -846,18 +847,53 @@ class MockInventoryRepository implements IInventoryRepository {
     return simulateDelay(new Blob([headers + dataRows], { type: "text/csv" }));
   }
 
-  async downloadCSVTemplate(): Promise<Blob> {
+  async downloadCSVTemplate(format?: "csv" | "xlsx"): Promise<Blob> {
     const headers = "name,category,unit,manufacturer,model,barcodeQr,currentStock,minimumStock,maximumStock,reorderLevel,unitCost,location,notes\n";
     return simulateDelay(new Blob([headers], { type: "text/csv" }));
   }
 
-  async validateCSVImport(file: File): Promise<InventoryBulkImportResult> {
+  async validateCSVImport(file: File, mapping?: any): Promise<any> {
     return simulateDelay({
-      totalRows: 0,
-      successCount: 0,
-      failureCount: 0,
-      errors: [],
+      totalRows: 5,
+      successCount: 4,
+      failureCount: 1,
+      errors: [
+        { row: 2, field: "name", value: "", message: "Name is required" }
+      ],
+      validData: [
+        { name: "Mock Imported Cable", category: "CABLE", unit: "METERS", currentStock: 100, minimumStock: 10, maximumStock: 500, reorderLevel: 20, unitCost: 1.5, location: "Bin A1" }
+      ]
     });
+  }
+
+  async importCommit(items: any[]): Promise<any> {
+    items.forEach(i => {
+      mockItemsList.push({
+        id: `mock-inv-${Math.floor(Math.random() * 10000)}`,
+        itemCode: `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+        name: i.name,
+        description: i.description || null,
+        category: i.category,
+        status: i.status || "ACTIVE",
+        unit: i.unit,
+        manufacturer: i.manufacturer || null,
+        model: i.model || null,
+        barcodeQr: i.barcodeQr || null,
+        currentStock: i.currentStock || 0,
+        reservedStock: 0,
+        availableStock: i.currentStock || 0,
+        minimumStock: i.minimumStock || 0,
+        maximumStock: i.maximumStock || 0,
+        reorderLevel: i.reorderLevel || 0,
+        unitCost: i.unitCost || null,
+        location: i.location || null,
+        notes: i.notes || null,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+    });
+    return simulateDelay({ success: true, count: items.length });
   }
 }
 
@@ -1057,34 +1093,51 @@ class ApiInventoryRepository implements IInventoryRepository {
   }
 
   async exportCSV(params?: any): Promise<Blob> {
-    const response = await apiClient.get<Blob>("/inventory/export/csv", {
+    const response = await apiClient.get<Blob>("/inventory/export", {
       params,
       responseType: "blob",
     });
     return response.data;
   }
 
-  async downloadCSVTemplate(): Promise<Blob> {
-    const response = await apiClient.get<Blob>("/inventory/export/csv-template", {
+  async downloadCSVTemplate(format: "csv" | "xlsx" = "csv"): Promise<Blob> {
+    const response = await apiClient.get<Blob>("/inventory/import/template", {
+      params: { format },
       responseType: "blob",
     });
     return response.data;
   }
 
-  async validateCSVImport(file: File): Promise<InventoryBulkImportResult> {
+  async validateCSVImport(file: File, mapping?: any): Promise<any> {
     const formData = new FormData();
     formData.append("file", file);
-    const response = await apiClient.post<{ data: InventoryBulkImportResult }>("/inventory/import/validate", formData, {
+    if (mapping) {
+      formData.append("mapping", JSON.stringify(mapping));
+    }
+    const response = await apiClient.post<{ data: any }>("/inventory/import/validate", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
     return response.data?.data;
   }
+
+  async importCommit(items: any[]): Promise<any> {
+    const response = await apiClient.post<any>("/inventory/import/commit", { items });
+    return response.data?.data;
+  }
 }
 
-export const inventoryRepository: IInventoryRepository = isMockEnabled()
-  ? new MockInventoryRepository()
-  : new ApiInventoryRepository();
+export const inventoryRepository: IInventoryRepository = new Proxy(
+  {} as IInventoryRepository,
+  {
+    get: (target, prop) => {
+      const activeRepo = isMockEnabled()
+        ? new MockInventoryRepository()
+        : new ApiInventoryRepository();
+      return Reflect.get(activeRepo, prop);
+    },
+  }
+);
 
 export default inventoryRepository;

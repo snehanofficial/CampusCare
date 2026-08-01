@@ -1,9 +1,9 @@
 import { prisma } from "../../../database/prisma.js";
 
 export class ItemCodeGenerator {
-  static async generateCode(): Promise<string> {
+  static async generateCode(tx: any = prisma): Promise<string> {
     const currentYear = new Date().getFullYear();
-    const lastItem = await prisma.inventoryItem.findFirst({
+    const lastItem = await tx.inventoryItem.findFirst({
       where: { itemCode: { startsWith: `INV-${currentYear}-` } },
       orderBy: { createdAt: "desc" },
       select: { itemCode: true },
@@ -19,3 +19,4 @@ export class ItemCodeGenerator {
     return `INV-${currentYear}-${String(nextNumber).padStart(4, "0")}`;
   }
 }
+

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -19,10 +19,14 @@ import {
   FileSpreadsheet,
   Download,
   Upload,
-  QrCode
+  QrCode,
+  Save,
+  Wifi,
+  WifiOff
 } from "lucide-react";
 import { EntityListTemplate } from "../../../components/templates/EntityListTemplate.js";
 import { CRUDDialogTemplate } from "../../../components/templates/CRUDDialogTemplate.js";
+import { ImportExportWizard } from "../../../components/common/ImportExportWizard.js";
 import { Tag } from "../../../components/ui/tag.js";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card.js";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../../../components/ui/select.js";
@@ -39,7 +43,7 @@ import {
   computeInventoryValue 
 } from "../utils/inventory-calculations.js";
 import { formatDate } from "@campuscare/shared-utils";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, ColumnPinningState, ColumnSizingState, VisibilityState } from "@tanstack/react-table";
 import type { 
   InventoryItemWithAvailable, 
   InventoryTransaction,
@@ -117,6 +121,119 @@ export function InventoryPage() {
     status: "",
     stockLevel: "ALL",
   });
+
+  // React Table Sizing, Pinning & Visibility States
+  const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({ left: [], right: [] });
+  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+
+  // Online / Offline State
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      toast.success("Connection restored. Write operations enabled.");
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast.error("Network connection lost. Switch to read-only mode.");
+    };
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  // Saved Views State
+  const [savedViews, setSavedViews] = useState<Record<string, any>>(() => {
+    try {
+      const saved = localStorage.getItem("campuscare_inventory_views");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [selectedView, setSelectedView] = useState<string>("");
+  const [newViewName, setNewViewName] = useState<string>("");
+
+  const handleSaveView = () => {
+    if (!newViewName.trim()) return;
+    const viewConfig = {
+      search,
+      filters,
+      columnPinning,
+      columnSizing,
+      columnVisibility,
+    };
+    const updated = { ...savedViews, [newViewName]: viewConfig };
+    setSavedViews(updated);
+    localStorage.setItem("campuscare_inventory_views", JSON.stringify(updated));
+    setSelectedView(newViewName);
+    setNewViewName("");
+    toast.success(`View "${newViewName}" saved successfully`);
+  };
+
+  const handleApplyView = (name: string) => {
+    const view = savedViews[name];
+    if (!view) return;
+    setSearch(view.search || "");
+    setFilters(view.filters || {});
+    setColumnPinning(view.columnPinning || { left: [], right: [] });
+    setColumnSizing(view.columnSizing || {});
+    setColumnVisibility(view.columnVisibility || {});
+    setSelectedView(name);
+    toast.success(`Applied view "${name}"`);
+  };
+
+  const handleDeleteView = (name: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = { ...savedViews };
+    delete updated[name];
+    setSavedViews(updated);
+    localStorage.setItem("campuscare_inventory_views", JSON.stringify(updated));
+    if (selectedView === name) {
+      setSelectedView("");
+    }
+    toast.success(`Deleted view "${name}"`);
+  };
+
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Export handlers
+  const handleExport = async (format: "csv" | "xlsx") => {
+    setIsExporting(true);
+    try {
+      const blob = await inventoryRepository.exportCSV({ ...filters, search, format });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `inventory-export-${Date.now()}.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Successfully exported inventory items as ${format.toUpperCase()}`);
+    } catch (err) {
+      toast.error("Export failed. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDownloadTemplate = async (format: "csv" | "xlsx") => {
+    try {
+      const blob = await inventoryRepository.downloadCSVTemplate(format);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `inventory-import-template.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Downloaded template for ${format.toUpperCase()}`);
+    } catch (err) {
+      toast.error("Failed to download template.");
+    }
+  };
 
   // Search & Filter state for Transactions list
   const [txSearch, setTxSearch] = useState("");
@@ -481,34 +598,6 @@ export function InventoryPage() {
     }
   };
 
-  // CSV downloads
-  const handleExportCSV = async () => {
-    try {
-      const blob = await inventoryRepository.exportCSV();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "inventory-items-export.csv";
-      a.click();
-      toast.success("CSV export downloaded");
-    } catch (err) {
-      toast.error("Failed to export CSV");
-    }
-  };
-
-  const handleDownloadTemplate = async () => {
-    try {
-      const blob = await inventoryRepository.downloadCSVTemplate();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "inventory-template.csv";
-      a.click();
-      toast.success("Template CSV downloaded");
-    } catch (err) {
-      toast.error("Failed to download template");
-    }
-  };
 
   // Helper colors
   const getAlertBadgeColor = (level: string) => {
@@ -767,6 +856,17 @@ export function InventoryPage() {
 
   return (
     <div className="space-y-4">
+      {/* Offline Read-Only Banner */}
+      {!isOnline && (
+        <div className="bg-amber-950/40 border border-amber-500/50 p-3 rounded-lg text-amber-400 text-sm font-semibold flex items-center justify-between gap-4 mb-4">
+          <span className="flex items-center gap-2">
+            <WifiOff className="h-4 w-4 text-amber-500" />
+            You are currently offline. CampusCare is running in read-only mode. Database modifications are disabled.
+          </span>
+          <span className="bg-amber-500/20 text-[10px] px-2 py-0.5 rounded font-extrabold uppercase text-amber-300">Offline Mode</span>
+        </div>
+      )}
+
       {/* Premium Tab Navigation Row */}
       <div className="flex border-b border-border bg-surface-subtle/40 p-1.5 rounded-sm gap-1 select-none">
         <button
@@ -960,110 +1060,171 @@ export function InventoryPage() {
           TAB 2: SPARE PARTS LIST VIEW
           ========================================== */}
       {activeTab === "items" && (
-        <EntityListTemplate
-          title="Spare Parts Storage"
-          description="Consumable infrastructure inventory database and reorder tracking."
-          columns={columns}
-          data={itemsResponse?.data || []}
-          loading={isItemsLoading}
-          error={itemsError ? itemsError.message : null}
-          searchQuery={search}
-          onSearchChange={setSearch}
-          filterOptions={[
-            {
-              key: "category",
-              label: "Category Filter",
-              options: Object.values(InventoryCategory).map(v => ({ value: v, label: v })),
-            },
-            {
-              key: "status",
-              label: "Status Filter",
-              options: Object.values(InventoryStatus).map(v => ({ value: v, label: v })),
-            },
-            {
-              key: "stockLevel",
-              label: "Stock Level",
-              options: [
-                { value: "ALL", label: "All Items" },
-                { value: "LOW", label: "Low Stock Alert Only" },
-                { value: "CRITICAL", label: "Critical Safety Stocks" },
-                { value: "OUT", label: "Out of Stock" },
-              ],
-            },
-          ]}
-          activeFilters={filters}
-          onFilterChange={(k, v) => setFilters(prev => ({ ...prev, [k]: v }))}
-          onClearFilters={() => {
-            setSearch("");
-            setFilters({ category: "", status: "", stockLevel: "ALL" });
-          }}
-          actions={[
-            {
-              label: "Import CSV",
-              onClick: () => setIsCSVImportOpen(true),
-              icon: Upload,
-              variant: "outline",
-            },
-            {
-              label: "Export CSV",
-              onClick: handleExportCSV,
-              icon: FileSpreadsheet,
-              variant: "outline",
-            },
-            {
-              label: "Add Item",
-              onClick: () => {
-                resetForm();
-                setIsAddOpen(true);
+        <div className="space-y-3">
+          {/* Saved Views Control Panel */}
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-zinc-900 border border-zinc-800 rounded-lg mb-3">
+            <div className="flex items-center gap-3">
+              <Layers className="h-4 w-4 text-zinc-400" />
+              <span className="text-sm font-semibold text-zinc-300">Saved Views:</span>
+              <div className="flex gap-1.5 flex-wrap">
+                {Object.keys(savedViews).length === 0 ? (
+                  <span className="text-zinc-500 text-xs py-1">No saved views</span>
+                ) : (
+                  Object.keys(savedViews).map((name) => (
+                    <Button
+                      key={name}
+                      variant={selectedView === name ? "default" : "outline"}
+                      size="xs"
+                      onClick={() => handleApplyView(name)}
+                      className="h-7 text-xs flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border-zinc-700 text-zinc-300"
+                    >
+                      {name}
+                      <Trash2
+                        className="h-3 w-3 text-red-400 hover:text-red-600 ml-1 cursor-pointer"
+                        onClick={(e) => handleDeleteView(name, e)}
+                      />
+                    </Button>
+                  ))
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="New view name..."
+                value={newViewName}
+                onChange={(e) => setNewViewName(e.target.value)}
+                className="h-8 max-w-[160px] text-xs bg-zinc-950 border-zinc-800 text-zinc-300"
+              />
+              <Button onClick={handleSaveView} size="xs" variant="outline" className="h-8 gap-1 text-zinc-300 border-zinc-700">
+                <Save className="h-3.5 w-3.5" />
+                Save View
+              </Button>
+            </div>
+          </div>
+
+          <EntityListTemplate
+            title="Spare Parts Storage"
+            description="Consumable infrastructure inventory database and reorder tracking."
+            columns={columns}
+            data={itemsResponse?.data || []}
+            loading={isItemsLoading}
+            error={itemsError ? itemsError.message : null}
+            searchQuery={search}
+            onSearchChange={setSearch}
+            filterOptions={[
+              {
+                key: "category",
+                label: "Category Filter",
+                options: Object.values(InventoryCategory).map(v => ({ value: v, label: v })),
               },
-              icon: Plus,
-              variant: "primary",
-            },
-          ]}
-          selectedCount={selectedCount}
-          bulkActions={[
-            {
-              label: "Bulk Stock In",
-              onClick: () => {
-                setTxQuantity("1");
-                setTxReason("Bulk replenishment");
-                setTxNotes("");
-                setIsBulkStockInOpen(true);
+              {
+                key: "status",
+                label: "Status Filter",
+                options: Object.values(InventoryStatus).map(v => ({ value: v, label: v })),
               },
-              icon: ArrowDownToLine,
-            },
-            {
-              label: "Bulk Stock Out",
-              onClick: () => {
-                setTxQuantity("1");
-                setTxReason("");
-                setTxNotes("");
-                setIsBulkStockOutOpen(true);
+              {
+                key: "stockLevel",
+                label: "Stock Level",
+                options: [
+                  { value: "ALL", label: "All Items" },
+                  { value: "LOW", label: "Low Stock Alert Only" },
+                  { value: "CRITICAL", label: "Critical Safety Stocks" },
+                  { value: "OUT", label: "Out of Stock" },
+                ],
               },
-              icon: ArrowUpFromLine,
-            },
-            {
-              label: "Bulk Adjust Stock",
-              onClick: () => {
-                setTxQuantity("0");
-                setTxReason("");
-                setTxNotes("");
-                setIsBulkAdjustOpen(true);
+            ]}
+            activeFilters={filters}
+            onFilterChange={(k, v) => setFilters(prev => ({ ...prev, [k]: v }))}
+            onClearFilters={() => {
+              setSearch("");
+              setFilters({ category: "", status: "", stockLevel: "ALL" });
+            }}
+            actions={[
+              {
+                label: "Add Item",
+                onClick: () => {
+                  resetForm();
+                  setIsAddOpen(true);
+                },
+                icon: Plus,
+                variant: "primary",
+                disabled: !isOnline,
               },
-              icon: SlidersHorizontal,
-            },
-            {
-              label: "Bulk Delete (Soft)",
-              onClick: handleBulkSoftDelete,
-              icon: Trash2,
-              variant: "destructive",
-            },
-          ]}
-          pageIndex={itemsResponse?.page || 1}
-          pageCount={itemsResponse?.pageCount || 1}
-          onPageChange={(page) => refetchItems()}
-          onRetry={refetchItems}
-        />
+              {
+                label: "Import Sheets",
+                onClick: () => setIsCSVImportOpen(true),
+                icon: FileSpreadsheet,
+                variant: "outline",
+                disabled: !isOnline,
+              },
+              {
+                label: "Export CSV",
+                onClick: () => handleExport("csv"),
+                icon: Download,
+                variant: "outline",
+              },
+              {
+                label: "Export Excel",
+                onClick: () => handleExport("xlsx"),
+                icon: FileSpreadsheet,
+                variant: "outline",
+              },
+            ]}
+            selectedCount={selectedCount}
+            bulkActions={[
+              {
+                label: "Bulk Stock In",
+                onClick: () => {
+                  setTxQuantity("1");
+                  setTxReason("Bulk replenishment");
+                  setTxNotes("");
+                  setIsBulkStockInOpen(true);
+                },
+                icon: ArrowDownToLine,
+                disabled: !isOnline,
+              },
+              {
+                label: "Bulk Stock Out",
+                onClick: () => {
+                  setTxQuantity("1");
+                  setTxReason("");
+                  setTxNotes("");
+                  setIsBulkStockOutOpen(true);
+                },
+                icon: ArrowUpFromLine,
+                disabled: !isOnline,
+              },
+              {
+                label: "Bulk Adjust Stock",
+                onClick: () => {
+                  setTxQuantity("0");
+                  setTxReason("");
+                  setTxNotes("");
+                  setIsBulkAdjustOpen(true);
+                },
+                icon: SlidersHorizontal,
+                disabled: !isOnline,
+              },
+              {
+                label: "Bulk Delete (Soft)",
+                onClick: handleBulkSoftDelete,
+                icon: Trash2,
+                variant: "destructive",
+                disabled: !isOnline,
+              },
+            ]}
+            pageIndex={itemsResponse?.page || 1}
+            pageCount={itemsResponse?.pageCount || 1}
+            onPageChange={(page) => refetchItems()}
+            onRetry={refetchItems}
+            columnPinning={columnPinning}
+            onColumnPinningChange={setColumnPinning}
+            columnSizing={columnSizing}
+            onColumnSizingChange={setColumnSizing}
+            columnVisibility={columnVisibility}
+            onColumnVisibilityChange={setColumnVisibility}
+          />
+        </div>
       )}
 
       {/* ==========================================
@@ -1260,7 +1421,7 @@ export function InventoryPage() {
               <CardHeader className="pb-1 pt-3.5"><CardTitle className="text-xs font-bold flex items-center gap-1.5"><FileSpreadsheet className="size-4 text-success" /> Current Stock Snapshot</CardTitle></CardHeader>
               <CardContent className="space-y-2 pt-2">
                 <p className="text-[11px] text-muted-foreground">Download the entire storage ledger with current stock metrics and storage locations.</p>
-                <Button onClick={handleExportCSV} size="xs" variant="outline" className="w-full flex items-center gap-1.5 h-8 font-bold mt-2 cursor-pointer">
+                <Button onClick={() => handleExport("csv")} size="xs" variant="outline" className="w-full flex items-center gap-1.5 h-8 font-bold mt-2 cursor-pointer">
                   <Download className="size-3.5" />
                   Download CSV Ledger
                 </Button>
@@ -1706,57 +1867,41 @@ export function InventoryPage() {
         </div>
       </CRUDDialogTemplate>
 
-      {/* CSV IMPORT DIALOG */}
-      <CRUDDialogTemplate
+      {/* Reusable Sheet Import / Column Mapping Wizard */}
+      <ImportExportWizard
         isOpen={isCSVImportOpen}
         onClose={() => setIsCSVImportOpen(false)}
-        title="Validate CSV Bulk Upload"
-        description="Upload storage parts CSV list to validate schema compatibility."
-        onSubmit={(e) => e.preventDefault()}
-        submitLabel="Upload Ledger"
-        cancelLabel="Dismiss"
-      >
-        <div className="space-y-3">
-          <div className="p-3 border border-dashed border-border rounded-sm bg-surface-subtle flex flex-col items-center justify-center gap-2">
-            <Upload className="size-6 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground font-semibold">Select ledger CSV template to validate</span>
-            <input 
-              type="file" 
-              accept=".csv" 
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  try {
-                    const res = await inventoryRepository.validateCSVImport(file);
-                    toast.success(`Validation finished: ${res.totalRows} records evaluated.`);
-                  } catch (err) {
-                    toast.error("CSV structure invalid");
-                  }
-                }
-              }}
-              className="text-xs mt-1" 
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <Button onClick={handleDownloadTemplate} size="xs" variant="outline" className="w-full flex items-center gap-1.5 h-8 font-semibold cursor-pointer">
-              <Download className="size-3.5" />
-              Get CSV Template
-            </Button>
-          </div>
-
-          <div className="pt-2 border-t border-border mt-3 flex justify-end">
-            <span 
-              title="Full import engine coming in a future release" 
-              className="inline-block"
-            >
-              <Button disabled variant="primary" size="xs" className="h-8 font-bold">
-                Proceed with Import
-              </Button>
-            </span>
-          </div>
-        </div>
-      </CRUDDialogTemplate>
+        fields={[
+          { key: "name", label: "Part Name", required: true },
+          { key: "category", label: "Category (SPARE_PART/CABLE/TOOL/CONSUMABLE)", required: true },
+          { key: "unit", label: "Unit (pcs/meters/packs)", required: true },
+          { key: "description", label: "Description", required: false },
+          { key: "status", label: "Status (ACTIVE/INACTIVE)", required: false },
+          { key: "manufacturer", label: "Manufacturer", required: false },
+          { key: "model", label: "Model", required: false },
+          { key: "barcodeQr", label: "Barcode/QR", required: false },
+          { key: "currentStock", label: "Current Stock", required: false },
+          { key: "minimumStock", label: "Minimum Stock", required: false },
+          { key: "maximumStock", label: "Maximum Stock", required: false },
+          { key: "reorderLevel", label: "Reorder Level", required: false },
+          { key: "unitCost", label: "Unit Cost", required: false },
+          { key: "location", label: "Warehouse Location", required: false },
+          { key: "notes", label: "Warehouse Notes", required: false },
+        ]}
+        onValidate={async (file, mapping) => {
+          return inventoryRepository.validateCSVImport(file, mapping);
+        }}
+        onCommit={async (validData) => {
+          return inventoryRepository.importCommit(validData);
+        }}
+        onSuccess={() => {
+          setIsCSVImportOpen(false);
+          queryClient.invalidateQueries({ queryKey: ["inventory-items"] }); // wait, is the query key inventory-items or inventory? Let's check or invalidate both!
+          queryClient.invalidateQueries({ queryKey: ["inventory"] });
+          toast.success("Inventory items imported successfully!");
+        }}
+        title="Import Warehouse Ledger"
+      />
 
       {/* READ ONLY DETAIL SLIDE PANEL */}
       <CRUDDialogTemplate

@@ -3,11 +3,45 @@ import { AssetsController } from "./assets.controller.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { authorize } from "../../middleware/authorize.js";
 import { initHealthEventListeners } from "./events/health-listener.js";
+import multer from "multer";
+
+const upload = multer({ dest: "uploads/" });
 
 // Initialize health engine event listeners
 initHealthEventListeners();
 
 export const assetsRouter = Router();
+
+// Import / Export routes
+assetsRouter.get(
+  "/export",
+  authenticate,
+  authorize("assets:read"),
+  AssetsController.exportAssets
+);
+
+assetsRouter.get(
+  "/import/template",
+  authenticate,
+  authorize("assets:read"),
+  AssetsController.downloadTemplate
+);
+
+assetsRouter.post(
+  "/import/validate",
+  authenticate,
+  authorize("assets:create"),
+  upload.single("file"),
+  AssetsController.importValidate
+);
+
+assetsRouter.post(
+  "/import/commit",
+  authenticate,
+  authorize("assets:create"),
+  AssetsController.importCommit
+);
+
 
 // Categories routes (placed above /:id to prevent routing conflict)
 assetsRouter.get(

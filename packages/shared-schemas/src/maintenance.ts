@@ -88,3 +88,24 @@ export const cancelMaintenanceSchema = z.object({
 });
 
 export type CancelMaintenanceInput = z.infer<typeof cancelMaintenanceSchema>;
+
+export const bulkScheduleSchema = z.object({
+  assetIds: z.array(z.string().uuid("Invalid asset ID")).min(1, "At least one asset must be selected"),
+  type: maintenanceTypeSchema,
+  technicianId: z.string().uuid("Invalid technician ID").optional().nullable(),
+  priority: maintenancePrioritySchema,
+  recurrence: maintenanceRecurrenceSchema,
+  scheduledDate: z.union([z.string(), z.date()]),
+  estimatedDuration: z.number().int().positive("Estimated duration must be positive (in minutes)"),
+  notes: z.string().optional().nullable(),
+});
+
+export type BulkScheduleInput = z.infer<typeof bulkScheduleSchema>;
+
+export const bulkAssignTechnicianSchema = z.object({
+  recordIds: z.array(z.string().uuid("Invalid record ID")).min(1, "At least one record must be selected"),
+  technicianId: z.string().uuid("Invalid technician ID").nullable().optional(),
+});
+
+export type BulkAssignTechnicianInput = z.infer<typeof bulkAssignTechnicianSchema>;
+

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -15,7 +15,12 @@ import {
   CalendarCheck,
   CheckCircle2,
   AlertOctagon,
-  RefreshCw
+  RefreshCw,
+  Save,
+  Layers,
+  Trash2,
+  Wifi,
+  WifiOff
 } from "lucide-react";
 import { EntityListTemplate } from "../../../components/templates/EntityListTemplate.js";
 import { assetRepository } from "../../../lib/repositories/asset.repository.js";
@@ -26,15 +31,118 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui
 import { CRUDDialogTemplate } from "../../../components/templates/CRUDDialogTemplate.js";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../../../components/ui/select.js";
 import { Input } from "../../../components/ui/input.js";
+import { Button } from "../../../components/ui/button.js";
 import { Textarea } from "../../../components/ui/textarea.js";
 import { formatDate } from "@campuscare/shared-utils";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, ColumnPinningState, ColumnSizingState, VisibilityState } from "@tanstack/react-table";
 import type { MaintenanceRecord, Asset } from "@campuscare/shared-types";
 
 export function MaintenancePage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+
+  // Selection state
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const toggleSelectAll = (checked: boolean, rows: MaintenanceRecord[]) => {
+    if (checked) {
+      setSelectedIds(rows.map((r) => r.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+  const toggleSelectRow = (checked: boolean, id: string) => {
+    if (checked) {
+      setSelectedIds((prev) => [...prev, id]);
+    } else {
+      setSelectedIds((prev) => prev.filter((x) => x !== id));
+    }
+  };
+
+  // React Table Sizing, Pinning & Visibility States
+  const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({ left: [], right: [] });
+  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+
+  // Online / Offline State
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      toast.success("Connection restored. Write operations enabled.");
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast.error("Network connection lost. Switch to read-only mode.");
+    };
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  // Saved Views State
+  const [savedViews, setSavedViews] = useState<Record<string, any>>(() => {
+    try {
+      const saved = localStorage.getItem("campuscare_maintenance_views");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [selectedView, setSelectedView] = useState<string>("");
+  const [newViewName, setNewViewName] = useState<string>("");
+
+  const handleSaveView = () => {
+    if (!newViewName.trim()) return;
+    const viewConfig = {
+      search,
+      filters,
+      columnPinning,
+      columnSizing,
+      columnVisibility,
+    };
+    const updated = { ...savedViews, [newViewName]: viewConfig };
+    setSavedViews(updated);
+    localStorage.setItem("campuscare_maintenance_views", JSON.stringify(updated));
+    setSelectedView(newViewName);
+    setNewViewName("");
+    toast.success(`View "${newViewName}" saved successfully`);
+  };
+
+  const handleApplyView = (name: string) => {
+    const view = savedViews[name];
+    if (!view) return;
+    setSearch(view.search || "");
+    setFilters(view.filters || {});
+    setColumnPinning(view.columnPinning || { left: [], right: [] });
+    setColumnSizing(view.columnSizing || {});
+    setColumnVisibility(view.columnVisibility || {});
+    setSelectedView(name);
+    toast.success(`Applied view "${name}"`);
+  };
+
+  const handleDeleteView = (name: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = { ...savedViews };
+    delete updated[name];
+    setSavedViews(updated);
+    localStorage.setItem("campuscare_maintenance_views", JSON.stringify(updated));
+    if (selectedView === name) {
+      setSelectedView("");
+    }
+    toast.success(`Deleted view "${name}"`);
+  };
+
+  // Maintenance Filters state
+  const [filters, setFilters] = useState<Record<string, string>>({
+    status: "",
+    priority: "",
+    type: "",
+    technicianId: "",
+  });
 
   // Selected Record state for actions
   const [selectedRecord, setSelectedRecord] = useState<MaintenanceRecord | null>(null);
@@ -68,8 +176,8 @@ export function MaintenancePage() {
 
   // Queries
   const { data: response, isLoading, error, refetch } = useQuery({
-    queryKey: ["maintenance-records", search],
-    queryFn: () => maintenanceRepository.list({ search }),
+    queryKey: ["maintenance-records", search, filters],
+    queryFn: () => maintenanceRepository.list({ search, ...filters }),
   });
 
   const { data: summary, refetch: refetchSummary } = useQuery({
@@ -123,6 +231,33 @@ export function MaintenancePage() {
     },
     onError: (err: any) => {
       toast.error(err.message || "Failed to assign technician.");
+    },
+  });
+
+  const bulkScheduleMutation = useMutation({
+    mutationFn: (payload: any) => maintenanceRepository.bulkSchedule(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["maintenance-records"] });
+      queryClient.invalidateQueries({ queryKey: ["maintenance-summary"] });
+      toast.success("Bulk services scheduled successfully.");
+      setSelectedIds([]);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to schedule bulk services.");
+    },
+  });
+
+  const bulkAssignMutation = useMutation({
+    mutationFn: (payload: { recordIds: string[]; technicianId: string | null }) =>
+      maintenanceRepository.bulkAssign(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["maintenance-records"] });
+      queryClient.invalidateQueries({ queryKey: ["maintenance-summary"] });
+      toast.success("Bulk technicians assigned successfully.");
+      setSelectedIds([]);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed bulk assignment.");
     },
   });
 
@@ -307,6 +442,25 @@ export function MaintenancePage() {
 
   const columns: ColumnDef<MaintenanceRecord>[] = [
     {
+      id: "select",
+      header: () => (
+        <input
+          type="checkbox"
+          checked={response?.data?.length ? selectedIds.length === response.data.length : false}
+          onChange={(e) => toggleSelectAll(e.target.checked, response?.data || [])}
+          className="rounded border-border text-primary focus:ring-primary size-3.5 cursor-pointer"
+        />
+      ),
+      cell: ({ row }) => (
+        <input
+          type="checkbox"
+          checked={selectedIds.includes(row.original.id)}
+          onChange={(e) => toggleSelectRow(e.target.checked, row.original.id)}
+          className="rounded border-border text-primary focus:ring-primary size-3.5 cursor-pointer"
+        />
+      ),
+    },
+    {
       accessorKey: "type",
       header: "Service Type",
       cell: ({ row }) => (
@@ -461,6 +615,17 @@ export function MaintenancePage() {
 
   return (
     <div className="space-y-4">
+      {/* Offline Read-Only Banner */}
+      {!isOnline && (
+        <div className="bg-amber-950/40 border border-amber-500/50 p-3 rounded-lg text-amber-400 text-sm font-semibold flex items-center justify-between gap-4 mb-4">
+          <span className="flex items-center gap-2">
+            <WifiOff className="h-4 w-4 text-amber-500" />
+            You are currently offline. CampusCare is running in read-only mode. Database modifications are disabled.
+          </span>
+          <span className="bg-amber-500/20 text-[10px] px-2 py-0.5 rounded font-extrabold uppercase text-amber-300">Offline Mode</span>
+        </div>
+      )}
+
       {/* 1. Dashboard summary widgets */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         <Card className="rounded-sm border border-border bg-card p-3 flex flex-col justify-between">
@@ -561,24 +726,146 @@ export function MaintenancePage() {
 
       {/* Main content body */}
       {viewMode === "list" ? (
-        <EntityListTemplate
-          title="University Maintenance Registry"
-          description="Track hardware preventive checks, corrective repair orders, and technician dispatches."
-          columns={columns}
-          data={response?.data || []}
-          loading={isLoading}
-          error={error ? (error as Error).message : null}
-          searchQuery={search}
-          onSearchChange={setSearch}
-          activeFilters={{}}
-          onFilterChange={() => {}}
-          onClearFilters={() => setSearch("")}
-          actions={[]}
-          pageIndex={response?.page || 1}
-          pageCount={response?.pageCount || 1}
-          onPageChange={() => {}}
-          onRetry={refetch}
-        />
+        <div className="space-y-3">
+          {/* Saved Views Control Panel */}
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-zinc-900 border border-zinc-800 rounded-lg mb-3">
+            <div className="flex items-center gap-3">
+              <Layers className="h-4 w-4 text-zinc-400" />
+              <span className="text-sm font-semibold text-zinc-300">Saved Views:</span>
+              <div className="flex gap-1.5 flex-wrap">
+                {Object.keys(savedViews).length === 0 ? (
+                  <span className="text-zinc-500 text-xs py-1">No saved views</span>
+                ) : (
+                  Object.keys(savedViews).map((name) => (
+                    <Button
+                      key={name}
+                      variant={selectedView === name ? "default" : "outline"}
+                      size="xs"
+                      onClick={() => handleApplyView(name)}
+                      className="h-7 text-xs flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border-zinc-700 text-zinc-300"
+                    >
+                      {name}
+                      <Trash2
+                        className="h-3 w-3 text-red-400 hover:text-red-600 ml-1 cursor-pointer"
+                        onClick={(e) => handleDeleteView(name, e)}
+                      />
+                    </Button>
+                  ))
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="New view name..."
+                value={newViewName}
+                onChange={(e) => setNewViewName(e.target.value)}
+                className="h-8 max-w-[160px] text-xs bg-zinc-950 border-zinc-800 text-zinc-300"
+              />
+              <Button onClick={handleSaveView} size="xs" variant="outline" className="h-8 gap-1 text-zinc-300 border-zinc-700">
+                <Save className="h-3.5 w-3.5" />
+                Save View
+              </Button>
+            </div>
+          </div>
+
+          <EntityListTemplate
+            title="University Maintenance Registry"
+            description="Track hardware preventive checks, corrective repair orders, and technician dispatches."
+            columns={columns}
+            data={response?.data || []}
+            loading={isLoading}
+            error={error ? (error as Error).message : null}
+            searchQuery={search}
+            onSearchChange={setSearch}
+            filterOptions={[
+              {
+                key: "status",
+                label: "Status Filter",
+                options: [
+                  { value: "SCHEDULED", label: "Scheduled" },
+                  { value: "ASSIGNED", label: "Assigned" },
+                  { value: "IN_PROGRESS", label: "In Progress" },
+                  { value: "COMPLETED", label: "Completed" },
+                  { value: "CANCELLED", label: "Cancelled" },
+                ],
+              },
+              {
+                key: "priority",
+                label: "Priority Filter",
+                options: [
+                  { value: "LOW", label: "Low" },
+                  { value: "MEDIUM", label: "Medium" },
+                  { value: "HIGH", label: "High" },
+                  { value: "CRITICAL", label: "Critical" },
+                ],
+              },
+              {
+                key: "type",
+                label: "Type Filter",
+                options: [
+                  { value: "PREVENTIVE", label: "Preventive" },
+                  { value: "CORRECTIVE", label: "Corrective" },
+                  { value: "INSPECTION", label: "Inspection" },
+                  { value: "CALIBRATION", label: "Calibration" },
+                  { value: "SOFTWARE_UPDATE", label: "Software Update" },
+                  { value: "HARDWARE_REPAIR", label: "Hardware Repair" },
+                ],
+              },
+              {
+                key: "technicianId",
+                label: "Technician Filter",
+                options: techList.map((t: any) => ({ value: t.id, label: `${t.firstName} ${t.lastName}` })),
+              },
+            ]}
+            activeFilters={filters}
+            onFilterChange={(k, v) => setFilters(prev => ({ ...prev, [k]: v }))}
+            onClearFilters={() => {
+              setSearch("");
+              setFilters({ status: "", priority: "", type: "", technicianId: "" });
+            }}
+            actions={[
+              {
+                label: "Run Rules",
+                onClick: () => triggerAutomationMutation.mutate(),
+                icon: RefreshCw,
+                disabled: !isOnline,
+              },
+              {
+                label: "Schedule Service",
+                onClick: () => {
+                  resetScheduleForm();
+                  setIsScheduleOpen(true);
+                },
+                icon: Wrench,
+                disabled: !isOnline,
+              },
+            ]}
+            selectedCount={selectedIds.length}
+            bulkActions={[
+              {
+                label: "Assign Technician",
+                onClick: () => {
+                  if (selectedIds.length === 0) return;
+                  const techId = prompt("Enter target Technician User ID (leave empty to unassign):");
+                  if (techId === null) return;
+                  bulkAssignMutation.mutate({ recordIds: selectedIds, technicianId: techId || null });
+                },
+                icon: UserCheck,
+                disabled: !isOnline,
+              },
+            ]}
+            pageIndex={response?.page || 1}
+            pageCount={response?.pageCount || 1}
+            onPageChange={(page) => refetch()}
+            onRetry={refetch}
+            columnPinning={columnPinning}
+            onColumnPinningChange={setColumnPinning}
+            columnSizing={columnSizing}
+            onColumnSizingChange={setColumnSizing}
+            columnVisibility={columnVisibility}
+            onColumnVisibilityChange={setColumnVisibility}
+          />
+        </div>
       ) : (
         <Card className="rounded-sm border border-border bg-card">
           <CardHeader className="p-4 border-b border-border">

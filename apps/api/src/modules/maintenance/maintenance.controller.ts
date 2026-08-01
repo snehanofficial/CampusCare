@@ -6,6 +6,8 @@ import {
   assignTechnicianSchema,
   completeMaintenanceSchema,
   cancelMaintenanceSchema,
+  bulkScheduleSchema,
+  bulkAssignTechnicianSchema,
 } from "@campuscare/shared-schemas";
 import { z } from "zod";
 
@@ -148,6 +150,30 @@ export class MaintenanceController {
   static async triggerAutomation(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const result = await MaintenanceService.runAutomationChecks();
+      sendSuccess(res, result, 200);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async bulkSchedule(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const validated = bulkScheduleSchema.parse(req.body);
+      const result = await MaintenanceService.bulkSchedule(validated as any, req.user!.id);
+      sendSuccess(res, result, 201);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async bulkAssign(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const validated = bulkAssignTechnicianSchema.parse(req.body);
+      const result = await MaintenanceService.bulkAssignTechnicians(
+        validated.recordIds,
+        validated.technicianId || null,
+        req.user!.id
+      );
       sendSuccess(res, result, 200);
     } catch (err) {
       next(err);

@@ -1,17 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Eye, Plus, Trash, Pencil, MoreVertical, ArrowLeftRight, CheckSquare, Clipboard, Undo, Calendar } from "lucide-react";
-import type { ColumnDef } from "@tanstack/react-table";
+import { Eye, Plus, Trash, Pencil, MoreVertical, ArrowLeftRight, CheckSquare, Clipboard, Undo, Calendar, Download, FileSpreadsheet, Layers, Save, Trash2, Wifi, WifiOff } from "lucide-react";
+import type { ColumnDef, ColumnPinningState, ColumnSizingState, VisibilityState } from "@tanstack/react-table";
 import type { Asset } from "@campuscare/shared-types";
 import { AssetStatus, LifecycleStage, HealthStatus, ProcurementStatus, AssignmentStatus } from "@campuscare/shared-types";
+import { ImportExportWizard } from "../../../components/common/ImportExportWizard.js";
+import QRCode from "qrcode";
+
 
 // Design System & Shared Components using path aliases
 import { EntityListTemplate } from "@/components/templates/EntityListTemplate.js";
 import { CRUDDialogTemplate } from "@/components/templates/CRUDDialogTemplate.js";
 import { Input } from "@/components/ui/input.js";
 import { Tag } from "@/components/ui/tag.js";
+import { Button } from "@/components/ui/button.js";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog.js";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select.js";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs.js";
 import { Textarea } from "@/components/ui/textarea.js";
@@ -36,6 +41,126 @@ export function AssetsPage() {
 
   // Active tab state ("assets" | "procurements")
   const [activeTab, setActiveTab] = useState("assets");
+
+  // React Table Sizing, Pinning & Visibility States
+  const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({ left: [], right: [] });
+  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+
+  // Online / Offline State
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      toast.success("Connection restored. Write operations enabled.");
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast.error("Network connection lost. Switch to read-only mode.");
+    };
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  // Saved Views State
+  const [savedViews, setSavedViews] = useState<Record<string, any>>(() => {
+    try {
+      const saved = localStorage.getItem("campuscare_asset_views");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [selectedView, setSelectedView] = useState<string>("");
+  const [newViewName, setNewViewName] = useState<string>("");
+
+  const handleSaveView = () => {
+    if (!newViewName.trim()) return;
+    const viewConfig = {
+      search,
+      filters,
+      columnPinning,
+      columnSizing,
+      columnVisibility,
+    };
+    const updated = { ...savedViews, [newViewName]: viewConfig };
+    setSavedViews(updated);
+    localStorage.setItem("campuscare_asset_views", JSON.stringify(updated));
+    setSelectedView(newViewName);
+    setNewViewName("");
+    toast.success(`View "${newViewName}" saved successfully`);
+  };
+
+  const handleApplyView = (name: string) => {
+    const view = savedViews[name];
+    if (!view) return;
+    setSearch(view.search || "");
+    setFilters(view.filters || {});
+    setColumnPinning(view.columnPinning || { left: [], right: [] });
+    setColumnSizing(view.columnSizing || {});
+    setColumnVisibility(view.columnVisibility || {});
+    setSelectedView(name);
+    toast.success(`Applied view "${name}"`);
+  };
+
+  const handleDeleteView = (name: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = { ...savedViews };
+    delete updated[name];
+    setSavedViews(updated);
+    localStorage.setItem("campuscare_asset_views", JSON.stringify(updated));
+    if (selectedView === name) {
+      setSelectedView("");
+    }
+    toast.success(`Deleted view "${name}"`);
+  };
+
+  // Import / Export Wizard States
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Batch QR Printing States
+  const [isQRPrintOpen, setIsQRPrintOpen] = useState(false);
+  const [qrUrls, setQrUrls] = useState<Record<string, string>>({});
+  const [printLayout, setPrintLayout] = useState<"3x10" | "2x2" | "single">("3x10");
+
+  // Export handlers
+  const handleExport = async (format: "csv" | "xlsx") => {
+    setIsExporting(true);
+    try {
+      const blob = await assetRepository.exportAssets({ ...filters, search, format });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `assets-export-${Date.now()}.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Successfully exported assets as ${format.toUpperCase()}`);
+    } catch (err) {
+      toast.error("Export failed. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDownloadTemplate = async (format: "csv" | "xlsx") => {
+    try {
+      const blob = await assetRepository.downloadTemplate(format);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `assets-import-template.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Downloaded template for ${format.toUpperCase()}`);
+    } catch (err) {
+      toast.error("Failed to download template.");
+    }
+  };
 
   // ==========================================
   // MASTER ASSETS REGISTRY STATE & MUTATIONS
@@ -187,6 +312,29 @@ export function AssetsPage() {
   const departmentsList = deptsRes?.data || [];
   const categoriesList = catsRes?.data || [];
   const usersList = usersRes?.data || [];
+
+  // QR Code generation for selected assets (runs after response & selectedIds are in scope)
+  useEffect(() => {
+    if (!isQRPrintOpen || selectedIds.length === 0) return;
+    const generate = async () => {
+      const urls: Record<string, string> = {};
+      for (const id of selectedIds) {
+        const asset = response?.data?.find((a: any) => a.id === id);
+        if (asset && !qrUrls[id]) {
+          try {
+            const url = await QRCode.toDataURL(asset.tag);
+            urls[id] = url;
+          } catch (err) {
+            console.error("QR generation error", err);
+          }
+        }
+      }
+      if (Object.keys(urls).length > 0) {
+        setQrUrls((prev) => ({ ...prev, ...urls }));
+      }
+    };
+    generate();
+  }, [isQRPrintOpen, selectedIds, response?.data]);
 
   // ==========================================
   // MUTATIONS
@@ -1121,7 +1269,7 @@ export function AssetsPage() {
         bulkMutation.mutate({ action: "retire", assetIds: selectedIds, payload: { notes: "Bulk retirement from dashboard" } });
       }
     } else if (action === "qr") {
-      bulkMutation.mutate({ action: "qr", assetIds: selectedIds });
+      setIsQRPrintOpen(true);
     } else {
       const deptId = prompt("Enter target Department ID:");
       const loc = prompt("Enter new Location Text:");
@@ -1144,6 +1292,17 @@ export function AssetsPage() {
   return (
     <>
       <div className="space-y-4">
+        {/* Offline Read-Only Banner */}
+        {!isOnline && (
+          <div className="bg-amber-950/40 border border-amber-500/50 p-3 rounded-lg text-amber-400 text-sm font-semibold flex items-center justify-between gap-4 mb-4">
+            <span className="flex items-center gap-2">
+              <WifiOff className="h-4 w-4 text-amber-500" />
+              You are currently offline. CampusCare is running in read-only mode. Database modifications are disabled.
+            </span>
+            <span className="bg-amber-500/20 text-[10px] px-2 py-0.5 rounded font-extrabold uppercase text-amber-300">Offline Mode</span>
+          </div>
+        )}
+
         {/* Underline Tabs Selector */}
         <Tabs value={activeTab} onValueChange={handlePageTabChange}>
           <TabsList className="mb-1">
@@ -1152,6 +1311,47 @@ export function AssetsPage() {
           </TabsList>
           
           <TabsContent value="assets">
+            {/* Saved Views Control Panel */}
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-zinc-900 border border-zinc-800 rounded-lg mb-3">
+              <div className="flex items-center gap-3">
+                <Layers className="h-4 w-4 text-zinc-400" />
+                <span className="text-sm font-semibold text-zinc-300">Saved Views:</span>
+                <div className="flex gap-1.5 flex-wrap">
+                  {Object.keys(savedViews).length === 0 ? (
+                    <span className="text-zinc-500 text-xs py-1">No saved views</span>
+                  ) : (
+                    Object.keys(savedViews).map((name) => (
+                      <Button
+                        key={name}
+                        variant={selectedView === name ? "default" : "outline"}
+                        size="xs"
+                        onClick={() => handleApplyView(name)}
+                        className="h-7 text-xs flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border-zinc-700 text-zinc-300"
+                      >
+                        {name}
+                        <Trash2
+                          className="h-3 w-3 text-red-400 hover:text-red-600 ml-1 cursor-pointer"
+                          onClick={(e) => handleDeleteView(name, e)}
+                        />
+                      </Button>
+                    ))
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="New view name..."
+                  value={newViewName}
+                  onChange={(e) => setNewViewName(e.target.value)}
+                  className="h-8 max-w-[160px] text-xs bg-zinc-950 border-zinc-800 text-zinc-300"
+                />
+                <Button onClick={handleSaveView} size="xs" variant="outline" className="h-8 gap-1 text-zinc-300 border-zinc-700">
+                  <Save className="h-3.5 w-3.5" />
+                  Save View
+                </Button>
+              </div>
+            </div>
+
             <EntityListTemplate
               title="Asset Registry"
               description="University hardware and IT asset tracking index."
@@ -1180,6 +1380,23 @@ export function AssetsPage() {
                     setIsCreateOpen(true);
                   },
                   icon: Plus,
+                  disabled: !isOnline,
+                },
+                {
+                  label: "Import Sheets",
+                  onClick: () => setIsImportOpen(true),
+                  icon: FileSpreadsheet,
+                  disabled: !isOnline,
+                },
+                {
+                  label: "Export CSV",
+                  onClick: () => handleExport("csv"),
+                  icon: Download,
+                },
+                {
+                  label: "Export Excel",
+                  onClick: () => handleExport("xlsx"),
+                  icon: FileSpreadsheet,
                 },
               ]}
               selectedCount={selectedIds.length}
@@ -1188,6 +1405,12 @@ export function AssetsPage() {
               pageCount={response?.pageCount || 1}
               onPageChange={setPage}
               onRetry={refetch}
+              columnPinning={columnPinning}
+              onColumnPinningChange={setColumnPinning}
+              columnSizing={columnSizing}
+              onColumnSizingChange={setColumnSizing}
+              columnVisibility={columnVisibility}
+              onColumnVisibilityChange={setColumnVisibility}
             />
           </TabsContent>
 
@@ -2044,7 +2267,150 @@ export function AssetsPage() {
           ))}
         </div>
       </CRUDDialogTemplate>
+
+      {/* Reusable Sheet Import / Column Mapping Wizard */}
+      <ImportExportWizard
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        fields={[
+          { key: "name", label: "Asset Name", required: true },
+          { key: "tag", label: "Asset Tag", required: true },
+          { key: "serialNumber", label: "Serial Number", required: false },
+          { key: "model", label: "Model", required: true },
+          { key: "manufacturer", label: "Manufacturer", required: false },
+          { key: "status", label: "Status (OPERATIONAL/MAINTENANCE/DECOMMISSIONED)", required: true },
+          { key: "lifecycleStage", label: "Lifecycle Stage (PROCURED/AVAILABLE/UNDER_MAINTENANCE/RETIRED)", required: true },
+          { key: "healthStatus", label: "Health Status (HEALTHY/DEGRADED/CRITICAL)", required: true },
+          { key: "location", label: "Location", required: true },
+          { key: "departmentId", label: "Department ID (UUID)", required: true },
+          { key: "categoryId", label: "Category ID (UUID)", required: false },
+          { key: "building", label: "Building", required: false },
+          { key: "floor", label: "Floor", required: false },
+          { key: "room", label: "Room", required: false },
+        ]}
+        onValidate={async (file, mapping) => {
+          return assetRepository.importValidate(file, mapping);
+        }}
+        onCommit={async (validData) => {
+          return assetRepository.importCommit(validData);
+        }}
+        onSuccess={() => {
+          setIsImportOpen(false);
+          queryClient.invalidateQueries({ queryKey: ["assets"] });
+          toast.success("Assets imported successfully!");
+        }}
+        title="Import Assets Checklist"
+      />
+
+      {/* QR Code Batch Printing Sheets Dialog */}
+      {isQRPrintOpen && (
+        <Dialog open={isQRPrintOpen} onOpenChange={setIsQRPrintOpen}>
+          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto bg-zinc-950 border-zinc-800">
+            <DialogHeader>
+              <DialogTitle className="text-zinc-200">Print QR Labels ({selectedIds.length} items)</DialogTitle>
+            </DialogHeader>
+            
+            <div className="flex items-center justify-between gap-4 mb-6 border-b border-zinc-800 pb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-zinc-300">Layout Format:</span>
+                <select
+                  value={printLayout}
+                  onChange={(e: any) => setPrintLayout(e.target.value)}
+                  className="bg-zinc-900 border border-zinc-700 rounded p-1.5 text-zinc-300 text-sm focus:outline-none"
+                >
+                  <option value="3x10">Avery 3x10 Grid (30 Labels/Sheet)</option>
+                  <option value="2x2">2x2 Grid Layout</option>
+                  <option value="single">Single Label per row</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button onClick={() => handleDownloadTemplate("csv")} size="sm" variant="outline" className="text-zinc-300 border-zinc-700">
+                  Get Import Template
+                </Button>
+                <Button onClick={() => window.print()} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                  Print Sheet
+                </Button>
+              </div>
+            </div>
+
+            {/* Printable area styling for media print */}
+            <style dangerouslySetInnerHTML={{__html: `
+              @media print {
+                body * {
+                  visibility: hidden !important;
+                }
+                .print-sheet, .print-sheet * {
+                  visibility: visible !important;
+                }
+                .print-sheet {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  background: white !important;
+                  color: black !important;
+                }
+              }
+            `}} />
+
+            {/* Printable area */}
+            <div className="bg-white p-6 rounded-lg text-black print-sheet overflow-auto">
+              {printLayout === "3x10" && (
+                <div className="grid grid-cols-3 gap-x-4 gap-y-6 max-w-full">
+                  {selectedIds.map((id) => {
+                    const asset = response?.data?.find((a: any) => a.id === id);
+                    if (!asset) return null;
+                    return (
+                      <div key={id} className="border border-gray-300 p-3 rounded flex flex-col items-center justify-center text-center bg-white text-black min-h-[140px]">
+                        <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">{asset.assetCode}</span>
+                        {qrUrls[id] && <img src={qrUrls[id]} alt={asset.tag} className="w-16 h-16 my-1.5" />}
+                        <span className="text-[9px] font-bold truncate max-w-[140px]">{asset.name}</span>
+                        <span className="text-[8px] text-zinc-400 font-mono">{asset.tag}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {printLayout === "2x2" && (
+                <div className="grid grid-cols-2 gap-8 max-w-full">
+                  {selectedIds.map((id) => {
+                    const asset = response?.data?.find((a: any) => a.id === id);
+                    if (!asset) return null;
+                    return (
+                      <div key={id} className="border border-gray-400 p-6 rounded-lg flex flex-col items-center justify-center text-center bg-white text-black min-h-[220px]">
+                        <span className="text-xs font-black uppercase text-zinc-600 tracking-widest">{asset.assetCode}</span>
+                        {qrUrls[id] && <img src={qrUrls[id]} alt={asset.tag} className="w-28 h-28 my-3" />}
+                        <span className="text-xs font-extrabold">{asset.name}</span>
+                        <span className="text-[10px] text-zinc-500 font-mono">{asset.tag}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {printLayout === "single" && (
+                <div className="flex flex-col gap-6 max-w-full items-center">
+                  {selectedIds.map((id) => {
+                    const asset = response?.data?.find((a: any) => a.id === id);
+                    if (!asset) return null;
+                    return (
+                      <div key={id} className="border-2 border-gray-400 p-8 rounded-xl flex flex-col items-center justify-center text-center bg-white text-black w-full max-w-[400px]">
+                        <span className="text-sm font-black uppercase text-zinc-700 tracking-widest">{asset.assetCode}</span>
+                        {qrUrls[id] && <img src={qrUrls[id]} alt={asset.tag} className="w-40 h-40 my-4" />}
+                        <span className="text-sm font-black">{asset.name}</span>
+                        <span className="text-xs text-zinc-500 font-mono">{asset.tag}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }
 export default AssetsPage;
+

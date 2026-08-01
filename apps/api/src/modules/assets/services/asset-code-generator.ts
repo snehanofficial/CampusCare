@@ -5,11 +5,11 @@ export class AssetCodeGenerator {
    * Generates a unique, sequential asset code in the format: AST-YYYY-XXXX
    * e.g., AST-2026-0001
    */
-  static async generateCode(): Promise<string> {
+  static async generateCode(tx: any = prisma): Promise<string> {
     const currentYear = new Date().getFullYear();
     
     // Find the latest asset created in the current year, including inactive/soft-deleted ones
-    const lastAsset = await prisma.asset.findFirst({
+    const lastAsset = await tx.asset.findFirst({
       where: {
         assetCode: {
           startsWith: `AST-${currentYear}-`,

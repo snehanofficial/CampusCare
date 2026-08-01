@@ -4,6 +4,7 @@ import { isMockEnabled, simulateDelay, mockAssets } from "../../mocks/index.js";
 import type { Asset } from "@campuscare/shared-types";
 import { sdkRequest } from "../api-sdk.js";
 import { logger } from "../logger.js";
+import { apiClient } from "../api-client.js";
 
 export interface IAssetRepository extends IRepository<Asset> {
   list(params?: RepositoryQueryParams): Promise<RepositoryListResponse<Asset>>;
@@ -27,6 +28,12 @@ export interface IAssetRepository extends IRepository<Asset> {
   returnAsset(id: string, payload: any): Promise<any>;
   transferAsset(id: string, payload: any): Promise<any>;
   changeAssetLifecycle(id: string, payload: any): Promise<any>;
+
+  // Import / Export
+  importValidate(file: File, mapping?: any): Promise<any>;
+  importCommit(assets: any[]): Promise<any>;
+  exportAssets(params?: any): Promise<Blob>;
+  downloadTemplate(format: "csv" | "xlsx"): Promise<Blob>;
 }
 
 // In-memory mock procurements list
@@ -341,6 +348,58 @@ class MockAssetRepository implements IAssetRepository {
     asset.updatedAt = new Date().toISOString();
     return simulateDelay(asset);
   }
+
+  async importValidate(file: File, mapping?: any): Promise<any> {
+    return simulateDelay({
+      totalRows: 5,
+      successCount: 4,
+      failureCount: 1,
+      errors: [
+        { row: 3, field: "tag", value: "CC-DUP-TAG", message: "Asset Tag already exists" }
+      ],
+      validData: [
+        { name: "Mock Imported Notebook 1", tag: "CC-IMP-001", model: "Precision 5570", status: "OPERATIONAL", lifecycleStage: "AVAILABLE", healthStatus: "HEALTHY", location: "Room 101", departmentId: "d-1" },
+        { name: "Mock Imported Notebook 2", tag: "CC-IMP-002", model: "Precision 5570", status: "OPERATIONAL", lifecycleStage: "AVAILABLE", healthStatus: "HEALTHY", location: "Room 101", departmentId: "d-1" }
+      ]
+    });
+  }
+
+  async importCommit(assets: any[]): Promise<any> {
+    assets.forEach(a => {
+      mockAssets.push({
+        id: `mock-imp-${Math.floor(Math.random() * 10000)}`,
+        name: a.name,
+        assetCode: `AST-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+        tag: a.tag,
+        qrCodeId: a.tag,
+        serialNumber: a.serialNumber || `SN-${Math.floor(100000 + Math.random() * 900000)}`,
+        model: a.model,
+        manufacturer: a.manufacturer || "Dell",
+        status: a.status || "OPERATIONAL",
+        lifecycleStage: a.lifecycleStage || "AVAILABLE",
+        healthStatus: a.healthStatus || "HEALTHY",
+        location: a.location,
+        building: a.building || null,
+        floor: a.floor || null,
+        room: a.room || null,
+        departmentId: a.departmentId,
+        categoryId: a.categoryId || null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      } as any);
+    });
+    return simulateDelay({ success: true, count: assets.length });
+  }
+
+  async exportAssets(params?: any): Promise<Blob> {
+    const csvContent = "id,name,assetCode,tag,serialNumber,model,manufacturer,status,lifecycleStage,healthStatus,location\n1,Principal Database Server,AST-2026-0001,CC-TAG-001,SN-DELL-8822,PowerEdge R750,Dell,OPERATIONAL,AVAILABLE,HEALTHY,Server Room 101\n";
+    return simulateDelay(new Blob([csvContent], { type: "text/csv" }));
+  }
+
+  async downloadTemplate(format: "csv" | "xlsx"): Promise<Blob> {
+    const csvContent = "name,tag,qrCodeId,serialNumber,model,manufacturer,status,lifecycleStage,healthStatus,location,building,floor,room,purchaseOrderNumber,purchasePrice,purchaseDate,warrantyStart,warrantyExpiry,contractNumber,departmentId,categoryId\n";
+    return simulateDelay(new Blob([csvContent], { type: "text/csv" }));
+  }
 }
 
 class HttpAssetRepository implements IAssetRepository {
@@ -489,6 +548,39 @@ class HttpAssetRepository implements IAssetRepository {
       url: `/assets/${id}/lifecycle`,
       data: payload,
     });
+  }
+
+  async importValidate(file: File, mapping?: any): Promise<any> {
+    const formData = new FormData();
+    formData.append("file", file);
+    if (mapping) {
+      formData.append("mapping", JSON.stringify(mapping));
+    }
+    const response = await apiClient.post<any>("/assets/import/validate", formData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+    return response.data?.data;
+  }
+
+  async importCommit(assets: any[]): Promise<any> {
+    const response = await apiClient.post<any>("/assets/import/commit", { assets });
+    return response.data?.data;
+  }
+
+  async exportAssets(params?: any): Promise<Blob> {
+    const response = await apiClient.get<Blob>("/assets/export", {
+      params,
+      responseType: "blob"
+    });
+    return response.data;
+  }
+
+  async downloadTemplate(format: "csv" | "xlsx"): Promise<Blob> {
+    const response = await apiClient.get<Blob>("/assets/import/template", {
+      params: { format },
+      responseType: "blob"
+    });
+    return response.data;
   }
 }
 

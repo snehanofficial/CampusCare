@@ -25,6 +25,8 @@ export interface IMaintenanceRepository extends IRepository<MaintenanceRecord> {
   getSummary(): Promise<any>;
   getTechnicians(): Promise<any>;
   triggerAutomation(): Promise<any>;
+  bulkSchedule(payload: any): Promise<any>;
+  bulkAssign(payload: { recordIds: string[]; technicianId: string | null }): Promise<any>;
 }
 
 // In-Memory Mock Data
@@ -329,6 +331,55 @@ class MockMaintenanceRepository implements IMaintenanceRepository {
     await simulateDelay(null);
     return { generatedCount: 0 };
   }
+
+  async bulkSchedule(payload: any): Promise<any> {
+    const assetIds = payload.assetIds || [];
+    assetIds.forEach((assetId: string) => {
+      mockSchedulesList.push({
+        id: `mock-sched-${Math.floor(Math.random() * 10000)}`,
+        assetId,
+        type: payload.type,
+        technicianId: payload.technicianId || null,
+        priority: payload.priority,
+        recurrence: payload.recurrence,
+        scheduledDate: new Date(payload.scheduledDate),
+        estimatedDuration: payload.estimatedDuration,
+        notes: payload.notes || null,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      mockRecordsList.push({
+        id: `mock-rec-${Math.floor(Math.random() * 10000)}`,
+        assetId,
+        scheduleId: `mock-sched-${Math.floor(Math.random() * 10000)}`,
+        type: payload.type,
+        status: payload.technicianId ? "ASSIGNED" : "SCHEDULED",
+        priority: payload.priority,
+        technicianId: payload.technicianId || null,
+        scheduledDate: new Date(payload.scheduledDate),
+        estimatedDuration: payload.estimatedDuration,
+        notes: payload.notes || null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
+    });
+    return simulateDelay({ success: true, count: assetIds.length });
+  }
+
+  async bulkAssign(payload: { recordIds: string[]; technicianId: string | null }): Promise<any> {
+    const recordIds = payload.recordIds || [];
+    recordIds.forEach((recordId: string) => {
+      const rec = mockRecordsList.find(r => r.id === recordId);
+      if (rec) {
+        rec.technicianId = payload.technicianId;
+        if (rec.status === "SCHEDULED" && payload.technicianId) {
+          rec.status = "ASSIGNED" as MaintenanceStatus;
+        }
+      }
+    });
+    return simulateDelay({ success: true, count: recordIds.length });
+  }
 }
 
 class ApiMaintenanceRepository implements IMaintenanceRepository {
@@ -436,10 +487,34 @@ class ApiMaintenanceRepository implements IMaintenanceRepository {
       url: "/maintenance/automation/trigger",
     });
   }
+
+  async bulkSchedule(payload: any): Promise<any> {
+    return sdkRequest<any>({
+      method: "POST",
+      url: "/maintenance/bulk/schedule",
+      data: payload,
+    });
+  }
+
+  async bulkAssign(payload: { recordIds: string[]; technicianId: string | null }): Promise<any> {
+    return sdkRequest<any>({
+      method: "POST",
+      url: "/maintenance/bulk/assign",
+      data: payload,
+    });
+  }
 }
 
-export const maintenanceRepository: IMaintenanceRepository = isMockEnabled()
-  ? new MockMaintenanceRepository()
-  : new ApiMaintenanceRepository();
+export const maintenanceRepository: IMaintenanceRepository = new Proxy(
+  {} as IMaintenanceRepository,
+  {
+    get: (target, prop) => {
+      const activeRepo = isMockEnabled()
+        ? new MockMaintenanceRepository()
+        : new ApiMaintenanceRepository();
+      return Reflect.get(activeRepo, prop);
+    },
+  }
+);
 
 export default maintenanceRepository;

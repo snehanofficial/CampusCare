@@ -746,6 +746,38 @@ export class InventoryService {
     }));
   }
 
+  static async bulkCreate(items: any[], userId: string) {
+    return prisma.$transaction(async (tx) => {
+      const created = [];
+      for (const item of items) {
+        const itemCode = await ItemCodeGenerator.generateCode(tx);
+        const createdItem = await tx.inventoryItem.create({
+          data: {
+            name: item.name,
+            description: item.description || null,
+            category: item.category,
+            status: item.status || "ACTIVE",
+            unit: item.unit,
+            manufacturer: item.manufacturer || null,
+            model: item.model || null,
+            barcodeQr: item.barcodeQr || null,
+            currentStock: item.currentStock || 0,
+            minimumStock: item.minimumStock || 0,
+            maximumStock: item.maximumStock || 0,
+            reorderLevel: item.reorderLevel || 0,
+            unitCost: item.unitCost || null,
+            location: item.location || null,
+            notes: item.notes || null,
+            itemCode,
+          },
+        });
+        sharedEventBus.publish("inventory:item_created", { itemId: createdItem.id, performedById: userId });
+        created.push(this.toWithAvailable(createdItem));
+      }
+      return created;
+    });
+  }
+
   static generateCSV(items: any[]): string {
     const headers = ["ID", "Item Code", "Name", "Category", "Status", "Unit", "Current Stock", "Reserved Stock", "Available Stock", "Min Stock", "Max Stock", "Reorder Level", "Unit Cost", "Location"];
     const rows = items.map(item => [

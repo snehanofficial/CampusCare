@@ -848,5 +848,138 @@ export class MaintenanceService {
 
     return { generatedCount: count };
   }
+
+  static async bulkSchedule(data: {
+    assetIds: string[];
+    type: MaintenanceType;
+    technicianId?: string | null;
+    priority: MaintenancePriority;
+    recurrence: MaintenanceRecurrence;
+    scheduledDate: string | Date;
+    estimatedDuration: number;
+    notes?: string | null;
+  }, userId: string) {
+    return prisma.$transaction(async (tx) => {
+      const results = [];
+      const scheduledDate = new Date(data.scheduledDate);
+      
+      for (const assetId of data.assetIds) {
+        const asset = await tx.asset.findUnique({ where: { id: assetId } });
+        if (!asset) throw new NotFoundError(`Asset not found: ${assetId}`);
+        this.validateAssetLifecycle(asset.lifecycleStage as LifecycleStage);
+
+        await this.checkActiveMaintenance(assetId, undefined, tx);
+
+        const schedule = await tx.maintenanceSchedule.create({
+          data: {
+            assetId,
+            type: data.type,
+            technicianId: data.technicianId || null,
+            priority: data.priority,
+            recurrence: data.recurrence,
+            scheduledDate,
+            estimatedDuration: data.estimatedDuration,
+            notes: data.notes,
+          },
+        });
+
+        const record = await tx.maintenanceRecord.create({
+          data: {
+            assetId,
+            scheduleId: schedule.id,
+            type: data.type,
+            status: data.technicianId ? MaintenanceStatus.ASSIGNED : MaintenanceStatus.SCHEDULED,
+            priority: data.priority,
+            technicianId: data.technicianId || null,
+            scheduledDate,
+            estimatedDuration: data.estimatedDuration,
+            notes: data.notes,
+          },
+        });
+
+        await tx.maintenanceHistory.create({
+          data: {
+            recordId: record.id,
+            status: data.technicianId ? MaintenanceStatus.ASSIGNED : MaintenanceStatus.SCHEDULED,
+            notes: `Bulk scheduled maintenance task. Recurrence: ${data.recurrence}`,
+            performedById: userId,
+          },
+        });
+
+        sharedEventBus.publish("MaintenanceScheduled", {
+          recordId: record.id,
+          scheduleId: schedule.id,
+          assetId,
+          scheduledDate,
+          performedBy: userId,
+        });
+
+        results.push(schedule);
+      }
+      return results;
+    });
+  }
+
+  static async bulkAssignTechnicians(
+    recordIds: string[],
+    technicianId: string | null,
+    userId: string
+  ) {
+    return prisma.$transaction(async (tx) => {
+      const results = [];
+      let technicianName = "Unassigned";
+      if (technicianId) {
+        const tech = await tx.user.findUnique({ where: { id: technicianId } });
+        if (tech) technicianName = `${tech.firstName} ${tech.lastName}`;
+      }
+
+      for (const recordId of recordIds) {
+        const record = await tx.maintenanceRecord.findUnique({
+          where: { id: recordId },
+        });
+        if (!record) throw new NotFoundError(`Maintenance record not found: ${recordId}`);
+
+        if (
+          record.status === MaintenanceStatus.COMPLETED ||
+          record.status === MaintenanceStatus.CANCELLED ||
+          record.status === MaintenanceStatus.ARCHIVED
+        ) {
+          throw new BadRequestError(`Cannot assign technician to a terminal maintenance record: ${recordId}`);
+        }
+
+        const nextStatus =
+          record.status === MaintenanceStatus.SCHEDULED && technicianId
+            ? MaintenanceStatus.ASSIGNED
+            : record.status;
+
+        const updatedRecord = await tx.maintenanceRecord.update({
+          where: { id: recordId },
+          data: {
+            technicianId: technicianId || null,
+            status: nextStatus,
+          },
+        });
+
+        await tx.maintenanceHistory.create({
+          data: {
+            recordId,
+            status: nextStatus,
+            notes: `Bulk technician updated to: ${technicianName}`,
+            performedById: userId,
+          },
+        });
+
+        sharedEventBus.publish("MaintenanceAssigned", {
+          recordId,
+          technicianId,
+          status: nextStatus,
+          performedBy: userId,
+        });
+
+        results.push(updatedRecord);
+      }
+      return results;
+    });
+  }
 }
 export default MaintenanceService;

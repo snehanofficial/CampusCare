@@ -16,9 +16,12 @@ router.get("/reports/movement", authorize("inventory:read"), InventoryController
 router.get("/reports/low-stock", authorize("inventory:read"), InventoryController.getLowStockReport);
 
 // Exports / Imports
+router.get("/export", authorize("inventory:read"), InventoryController.exportCSV);
 router.get("/export/csv", authorize("inventory:read"), InventoryController.exportCSV);
+router.get("/import/template", authorize("inventory:read"), InventoryController.downloadCSVTemplate);
 router.get("/export/csv-template", authorize("inventory:read"), InventoryController.downloadCSVTemplate);
 router.post("/import/validate", authorize("inventory:manage"), upload.single("file"), InventoryController.validateCSVImport);
+router.post("/import/commit", authorize("inventory:manage"), InventoryController.commitImport);
 
 // Alerts
 router.get("/alerts/summary", authorize("inventory:read"), InventoryController.getAlertSummary);

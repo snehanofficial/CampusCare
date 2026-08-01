@@ -8,6 +8,7 @@ export interface ActionItem {
   onClick: () => void;
   variant?: "default" | "primary" | "secondary" | "outline" | "ghost" | "destructive";
   icon?: React.ComponentType<{ className?: string }>;
+  disabled?: boolean;
 }
 
 interface ActionToolbarProps {
@@ -58,9 +59,10 @@ export function ActionToolbar({
                   <DropdownMenuItem
                     key={action.label}
                     onClick={action.onClick}
+                    disabled={action.disabled}
                     className={`text-xs font-semibold ${
                       action.variant === "destructive" ? "text-destructive hover:bg-destructive/10" : ""
-                    }`}
+                    } ${action.disabled ? "opacity-50 pointer-events-none" : ""}`}
                   >
                     {Icon && <Icon className="size-3.5 mr-1.5 flex-shrink-0" />}
                     {action.label}
@@ -82,6 +84,7 @@ export function ActionToolbar({
                   variant={action.variant || "default"}
                   size="xs"
                   onClick={action.onClick}
+                  disabled={action.disabled}
                   className="h-7 text-xs flex items-center gap-1.5 cursor-pointer"
                 >
                   {Icon && <Icon className="size-3.5" />}

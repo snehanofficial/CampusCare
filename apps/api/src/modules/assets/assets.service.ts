@@ -377,7 +377,7 @@ export class AssetsService {
     return prisma.$transaction(async (tx) => {
       const created = [];
       for (const item of assets) {
-        const assetCode = item.assetCode || (await AssetCodeGenerator.generateCode());
+        const assetCode = item.assetCode || (await AssetCodeGenerator.generateCode(tx));
         const asset = await tx.asset.create({
           data: {
             name: item.name,

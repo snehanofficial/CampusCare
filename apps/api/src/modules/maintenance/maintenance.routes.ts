@@ -50,6 +50,19 @@ maintenanceRouter.get(
   MaintenanceController.list
 );
 
+// Bulk operations
+maintenanceRouter.post(
+  "/bulk/schedule",
+  authorize("assets:update"),
+  MaintenanceController.bulkSchedule
+);
+
+maintenanceRouter.post(
+  "/bulk/assign",
+  authorize("assets:update"),
+  MaintenanceController.bulkAssign
+);
+
 // Get details of a single record
 maintenanceRouter.get(
   "/:id",

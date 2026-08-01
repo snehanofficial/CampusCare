@@ -38,25 +38,29 @@ let mockWeightsConfig = {
 };
 
 class MockHeatmapRepository implements IHeatmapRepository {
+  private isActiveFilter(value: any): boolean {
+    return value !== undefined && value !== null && value !== "" && value !== "ALL";
+  }
+
   private applyFilters(list: any[], filters: any): any[] {
     let result = [...list];
     if (filters) {
-      if (filters.healthStatus) {
+      if (this.isActiveFilter(filters.healthStatus)) {
         result = result.filter(a => a.healthStatus === filters.healthStatus);
       }
-      if (filters.lifecycleStage) {
+      if (this.isActiveFilter(filters.lifecycleStage)) {
         result = result.filter(a => a.lifecycleStage === filters.lifecycleStage);
       }
-      if (filters.status) {
+      if (this.isActiveFilter(filters.status)) {
         result = result.filter(a => a.status === filters.status);
       }
-      if (filters.departmentId) {
+      if (this.isActiveFilter(filters.departmentId)) {
         result = result.filter(a => a.departmentId === filters.departmentId);
       }
-      if (filters.categoryId) {
+      if (this.isActiveFilter(filters.categoryId)) {
         result = result.filter(a => a.categoryId === filters.categoryId);
       }
-      if (filters.building) {
+      if (this.isActiveFilter(filters.building)) {
         const bLower = filters.building.toLowerCase();
         result = result.filter(a => a.building && a.building.toLowerCase().includes(bLower));
       }

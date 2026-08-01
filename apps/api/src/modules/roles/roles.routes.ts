@@ -1,7 +1,11 @@
 import { Router } from "express";
 import { RolesController } from "./roles.controller.js";
+import { authenticate } from "../../middleware/authenticate.js";
 
 export const rolesRouter = Router();
+
+// Apply authentication to all routes
+rolesRouter.use(authenticate);
 
 /**
  * @swagger
@@ -9,6 +13,8 @@ export const rolesRouter = Router();
  *   get:
  *     summary: Retrieve summary for roles
  *     tags: [Roles]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Operation successful
