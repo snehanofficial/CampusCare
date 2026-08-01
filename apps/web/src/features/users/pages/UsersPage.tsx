@@ -5,13 +5,16 @@ import { Tag } from "../../../components/ui/tag.js";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { MockUser } from "../../../mocks/users.js";
-import { UserPlus, Edit2, ShieldAlert, Trash2 } from "lucide-react";
+import { UserPlus, Edit2, ShieldAlert, ShieldCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "../../../components/ui/button.js";
 import { UserFormDialog } from "../components/UserFormDialog.js";
+import { TemporaryAccessWorkspace } from "../../privileges/components/TemporaryAccessWorkspace.js";
+import { useAuth } from "../../../hooks/useAuth.js";
 
 export function UsersPage() {
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<Record<string, string>>({
@@ -22,6 +25,7 @@ export function UsersPage() {
   // Modal Dialog States
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [isTemporaryAccessOpen, setIsTemporaryAccessOpen] = useState(false);
 
   // 1. Query for User list with pagination & filters
   const { data: response, isLoading, error, refetch } = useQuery({
@@ -238,6 +242,11 @@ export function UsersPage() {
             },
             icon: UserPlus,
           },
+          {
+            label: "Temporary Access",
+            onClick: () => setIsTemporaryAccessOpen(true),
+            icon: ShieldCheck,
+          },
         ]}
         pageIndex={page}
         pageCount={response?.pageCount || 1}
@@ -250,6 +259,12 @@ export function UsersPage() {
         onClose={() => setIsFormOpen(false)}
         userId={selectedUserId}
         onSuccess={() => refetch()}
+      />
+
+      <TemporaryAccessWorkspace
+        isOpen={isTemporaryAccessOpen}
+        onClose={() => setIsTemporaryAccessOpen(false)}
+        isSystemAdmin={currentUser?.role === "SYSTEM_ADMIN"}
       />
     </>
   );

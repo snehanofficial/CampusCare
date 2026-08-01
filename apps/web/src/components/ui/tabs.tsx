@@ -13,7 +13,10 @@ export function Tabs({ value, onValueChange, children, className }: TabsProps) {
     <div className={cn("space-y-4", className)}>
       {React.Children.map(children, (child) => {
         if (React.isValidElement(child)) {
-          return React.cloneElement(child as React.ReactElement<any>, { value, onValueChange });
+          return React.cloneElement(child as React.ReactElement<any>, {
+            activeValue: value,
+            onValueChange,
+          });
         }
         return child;
       })}
@@ -26,7 +29,7 @@ export function Tabs({ value, onValueChange, children, className }: TabsProps) {
  * Flat bottom border with indicator underline on active item.
  * Avoids the shadcn rounded-pill background pattern entirely.
  */
-export function TabsList({ children, className, value, onValueChange }: any) {
+export function TabsList({ children, className, activeValue, onValueChange }: any) {
   return (
     <div
       className={cn(
@@ -36,7 +39,7 @@ export function TabsList({ children, className, value, onValueChange }: any) {
     >
       {React.Children.map(children, (child) => {
         if (React.isValidElement(child)) {
-          return React.cloneElement(child as React.ReactElement<any>, { activeValue: value, onValueChange });
+          return React.cloneElement(child as React.ReactElement<any>, { activeValue, onValueChange });
         }
         return child;
       })}
