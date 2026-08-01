@@ -32,7 +32,7 @@ interface TabsListProps {
  * Enterprise underline-style tab bar.
  * Flat bottom border with indicator underline on active item.
  */
-export function TabsList({ children, className }: any) {
+export function TabsList({ children, className, activeValue, onValueChange }: any) {
   return (
     <div
       className={cn(
@@ -40,7 +40,12 @@ export function TabsList({ children, className }: any) {
         className
       )}
     >
-      {children}
+      {React.Children.map(children, (child) => {
+        if (React.isValidElement(child)) {
+          return React.cloneElement(child as React.ReactElement<any>, { activeValue, onValueChange });
+        }
+        return child;
+      })}
     </div>
   );
 }
