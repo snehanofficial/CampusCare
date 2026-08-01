@@ -29,6 +29,7 @@ const ErrorMaintenancePage = lazy(() => import("../../features/errors/pages/Main
 const TicketsPage = lazy(() => import("../../features/tickets/pages/TicketsPage.js"));
 const IncidentsPage = lazy(() => import("../../features/incidents/pages/IncidentsPage.js"));
 const AssetsPage = lazy(() => import("../../features/assets/pages/AssetsPage.js"));
+const AssetDetailPage = lazy(() => import("../../features/assets/pages/AssetDetailPage.js"));
 const MaintenancePage = lazy(() => import("../../features/maintenance/pages/MaintenancePage.js"));
 const InventoryPage = lazy(() => import("../../features/inventory/pages/InventoryPage.js"));
 const ReportsPage = lazy(() => import("../../features/reports/pages/ReportsPage.js"));
@@ -175,6 +176,16 @@ export const router = createBrowserRouter([
           <PermissionGuard requiredPermissions={["assets:read"]}>
             <Suspense fallback={<PageSkeleton />}>
               <AssetsPage />
+            </Suspense>
+          </PermissionGuard>
+        ),
+      },
+      {
+        path: "assets/:id",
+        element: (
+          <PermissionGuard requiredPermissions={["assets:read"]}>
+            <Suspense fallback={<PageSkeleton />}>
+              <AssetDetailPage />
             </Suspense>
           </PermissionGuard>
         ),

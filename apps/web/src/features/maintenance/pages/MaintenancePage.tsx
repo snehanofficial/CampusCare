@@ -4,7 +4,7 @@ import { assetRepository } from "../../../lib/repositories/asset.repository.js";
 import { Tag } from "../../../components/ui/tag.js";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { MockAsset } from "../../../mocks/assets.js";
+import type { Asset } from "@campuscare/shared-types";
 import { Eye, Wrench } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,7 +20,7 @@ export function MaintenancePage() {
       }),
   });
 
-  const columns: ColumnDef<MockAsset>[] = [
+  const columns: ColumnDef<Asset>[] = [
     {
       accessorKey: "tag",
       header: "Asset Tag",

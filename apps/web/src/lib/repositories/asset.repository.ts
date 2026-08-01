@@ -1,15 +1,23 @@
 import { IRepository } from "./base.repository.js";
 import { RepositoryQueryParams, RepositoryListResponse } from "./types.js";
 import { isMockEnabled, simulateDelay, mockAssets } from "../../mocks/index.js";
-import type { MockAsset } from "../../mocks/assets.js";
+import type { Asset } from "@campuscare/shared-types";
+import { sdkRequest } from "../api-sdk.js";
+import { logger } from "../logger.js";
 
-export interface IAssetRepository extends IRepository<MockAsset> {
-  list(params?: RepositoryQueryParams): Promise<RepositoryListResponse<MockAsset>>;
+export interface IAssetRepository extends IRepository<Asset> {
+  list(params?: RepositoryQueryParams): Promise<RepositoryListResponse<Asset>>;
+  bulkAction(
+    action: "validate" | "create" | "update" | "assign" | "transfer" | "retire" | "qr",
+    assetIds?: string[],
+    assets?: Partial<Asset>[],
+    payload?: any
+  ): Promise<any>;
 }
 
 class MockAssetRepository implements IAssetRepository {
-  async list(params?: RepositoryQueryParams): Promise<RepositoryListResponse<MockAsset>> {
-    let list = [...mockAssets];
+  async list(params?: RepositoryQueryParams): Promise<RepositoryListResponse<Asset>> {
+    let list = [...(mockAssets as any[])];
 
     if (params?.search) {
       const q = params.search.toLowerCase();
@@ -17,8 +25,10 @@ class MockAssetRepository implements IAssetRepository {
         (a) =>
           a.name.toLowerCase().includes(q) ||
           a.tag.toLowerCase().includes(q) ||
-          a.serialNumber.toLowerCase().includes(q) ||
-          a.model.toLowerCase().includes(q)
+          (a.assetCode && a.assetCode.toLowerCase().includes(q)) ||
+          (a.serialNumber && a.serialNumber.toLowerCase().includes(q)) ||
+          (a.model && a.model.toLowerCase().includes(q)) ||
+          (a.manufacturer && a.manufacturer.toLowerCase().includes(q))
       );
     }
 
@@ -46,24 +56,32 @@ class MockAssetRepository implements IAssetRepository {
     });
   }
 
-  async get(id: string): Promise<MockAsset> {
+  async get(id: string): Promise<Asset> {
     const item = mockAssets.find((a) => a.id === id);
     if (!item) throw new Error("Asset not found");
-    return simulateDelay(item);
+    return simulateDelay(item as any);
   }
 
-  async create(data: Partial<MockAsset>): Promise<MockAsset> {
-    const newAsset: MockAsset = {
+  async create(data: Partial<Asset>): Promise<Asset> {
+    const newAsset: any = {
       id: `a-${mockAssets.length + 1}`,
       name: data.name || "New Asset",
+      assetCode: data.assetCode || `AST-2026-000${mockAssets.length + 1}`,
       tag: data.tag || `CC-GEN-${Math.floor(1000 + Math.random() * 9000)}`,
+      qrCodeId: data.qrCodeId || data.tag || `CC-GEN-${Math.floor(1000 + Math.random() * 9000)}`,
       serialNumber: data.serialNumber || "SN-UNKNOWN",
       model: data.model || "Generic Model",
+      manufacturer: data.manufacturer || "Generic",
       status: data.status || "OPERATIONAL",
+      lifecycleStage: data.lifecycleStage || "PROCURED",
+      healthStatus: data.healthStatus || "HEALTHY",
       location: data.location || "Central Storage",
-      purchaseDate: data.purchaseDate || new Date().toISOString().split("T")[0]!,
-      warrantyExpiry: data.warrantyExpiry || new Date().toISOString().split("T")[0]!,
+      building: data.building || null,
+      floor: data.floor || null,
+      room: data.room || null,
       departmentId: data.departmentId || "d-1",
+      categoryId: data.categoryId || null,
+      isActive: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -71,7 +89,7 @@ class MockAssetRepository implements IAssetRepository {
     return simulateDelay(newAsset);
   }
 
-  async update(id: string, data: Partial<MockAsset>): Promise<MockAsset> {
+  async update(id: string, data: Partial<Asset>): Promise<Asset> {
     const index = mockAssets.findIndex((a) => a.id === id);
     if (index === -1) throw new Error("Asset not found");
     const updated = {
@@ -79,8 +97,8 @@ class MockAssetRepository implements IAssetRepository {
       ...data,
       updatedAt: new Date().toISOString(),
     };
-    mockAssets[index] = updated;
-    return simulateDelay(updated);
+    mockAssets[index] = updated as any;
+    return simulateDelay(updated as any);
   }
 
   async delete(id: string): Promise<boolean> {
@@ -89,23 +107,79 @@ class MockAssetRepository implements IAssetRepository {
     mockAssets.splice(index, 1);
     return simulateDelay(true);
   }
+
+  async bulkAction(
+    action: "validate" | "create" | "update" | "assign" | "transfer" | "retire" | "qr",
+    assetIds?: string[],
+    assets?: Partial<Asset>[],
+    payload?: any
+  ): Promise<any> {
+    logger.debug("asset-repository", `Mocking bulk action: ${action}`);
+    return simulateDelay({ success: true, count: assetIds?.length || assets?.length || 0 });
+  }
 }
 
 class HttpAssetRepository implements IAssetRepository {
-  async list(params?: RepositoryQueryParams): Promise<RepositoryListResponse<MockAsset>> {
-    throw new Error("HTTP Repository not connected yet.");
+  async list(params?: RepositoryQueryParams): Promise<RepositoryListResponse<Asset>> {
+    return sdkRequest<RepositoryListResponse<Asset>>({
+      method: "GET",
+      url: "/assets",
+      params: {
+        search: params?.search,
+        page: params?.page,
+        pageSize: params?.pageSize,
+        ...params?.filters
+      }
+    });
   }
-  async get(id: string): Promise<MockAsset> {
-    throw new Error("HTTP Repository not connected yet.");
+
+  async get(id: string): Promise<Asset> {
+    return sdkRequest<Asset>({
+      method: "GET",
+      url: `/assets/${id}`,
+    });
   }
-  async create(data: Partial<MockAsset>): Promise<MockAsset> {
-    throw new Error("HTTP Repository not connected yet.");
+
+  async create(data: Partial<Asset>): Promise<Asset> {
+    return sdkRequest<Asset>({
+      method: "POST",
+      url: "/assets",
+      data,
+    });
   }
-  async update(id: string, data: Partial<MockAsset>): Promise<MockAsset> {
-    throw new Error("HTTP Repository not connected yet.");
+
+  async update(id: string, data: Partial<Asset>): Promise<Asset> {
+    return sdkRequest<Asset>({
+      method: "PUT",
+      url: `/assets/${id}`,
+      data,
+    });
   }
+
   async delete(id: string): Promise<boolean> {
-    throw new Error("HTTP Repository not connected yet.");
+    await sdkRequest<any>({
+      method: "DELETE",
+      url: `/assets/${id}`,
+    });
+    return true;
+  }
+
+  async bulkAction(
+    action: "validate" | "create" | "update" | "assign" | "transfer" | "retire" | "qr",
+    assetIds?: string[],
+    assets?: Partial<Asset>[],
+    payload?: any
+  ): Promise<any> {
+    return sdkRequest<any>({
+      method: "POST",
+      url: "/assets/bulk",
+      data: {
+        action,
+        assetIds,
+        assets,
+        payload
+      }
+    });
   }
 }
 
