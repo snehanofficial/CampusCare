@@ -1,2 +1,2 @@
-// Placeholder for feature inventory subfolder utils
-export {};
+export * from "./inventory-calculations.js";
+

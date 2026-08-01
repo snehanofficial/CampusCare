@@ -9,6 +9,17 @@ export interface Notification {
   createdAt: Date;
 }
 
+export interface NotificationPreference {
+  id: string;
+  userId: string;
+  category: string;
+  email: boolean;
+  inApp: boolean;
+  push: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface WebPushSubscription {
   id: string;
   userId: string;

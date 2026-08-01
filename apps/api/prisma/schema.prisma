@@ -33,10 +33,21 @@ model User {
   assignedTickets       Ticket[]               @relation("AssignedTickets")
   comments              TicketComment[]
   performedAuditLogs    AuditLog[]             @relation("PerformedBy")
-  performedTransactions InventoryTransaction[] @relation("PerformedBy")
   notifications         Notification[]
   assetHistory          AssetHistory[]
   ticketAttachments     TicketAttachment[]
+  assignmentsReceived   AssetAssignment[]      @relation("AssignedToUser")
+  assignmentsCreated    AssetAssignment[]      @relation("AssignedByStaff")
+  maintenanceSchedules  MaintenanceSchedule[]  @relation("ScheduleTechnician")
+  maintenanceRecords    MaintenanceRecord[]    @relation("RecordTechnician")
+  maintenanceHistory    MaintenanceHistory[]   @relation("HistoryPerformedBy")
+  // Phase 4 Inventory relations
+  performedTransactions InventoryTransaction[] @relation("PerformedBy")
+  inventoryAllocations  InventoryAllocation[]  @relation("AllocationAllocatedBy")
+  inventoryReservations InventoryReservation[] @relation("ReservationRequestedBy")
+  kbArticlesCreated     KnowledgeArticle[]    @relation("KBCreatedBy")
+  kbArticlesUpdated     KnowledgeArticle[]    @relation("KBUpdatedBy")
+  articleFeedbacks      ArticleFeedback[]
 
   // GTPE back-references
   gtpeRequests         TemporaryPermissionRequest[] @relation("GtpeRequester")
@@ -48,6 +59,7 @@ model User {
   @@index([departmentId])
   @@map("users")
 }
+
 
 model Role {
   id          String   @id @default(uuid()) @map("id")
@@ -269,6 +281,8 @@ model Department {
   users   User[]    @relation("UserDepartment")
   tickets Ticket[]
   assets  Asset[]
+  assetAssignments AssetAssignment[] @relation("AssignedToDepartment")
+  procurements     Procurement[]
 
   @@map("departments")
 }
@@ -377,9 +391,12 @@ model Incident {
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
   resolvedAt  DateTime? @map("resolved_at")
+  serviceId   String?   @map("service_id")
 
-  tickets IncidentTicket[]
+  tickets  IncidentTicket[]
+  service  Service?        @relation(fields: [serviceId], references: [id], onDelete: SetNull)
 
+  @@index([serviceId])
   @@map("incidents")
 }
 
@@ -399,28 +416,59 @@ model IncidentTicket {
 // ---------------------------------------------------------
 
 model Asset {
-  id             String    @id @default(uuid()) @map("id")
-  name           String    @map("name")
-  tag            String    @unique @map("tag")         // QR Code identifier
-  serialNumber   String?   @unique @map("serial_number")
-  model          String    @map("model")
-  manufacturer   String?   @map("manufacturer")
-  status         String    @map("status")              // OPERATIONAL | MAINTENANCE | BROKEN | RETIRED | LOST
-  location       String    @map("location")
-  purchaseDate   DateTime? @map("purchase_date")
-  warrantyExpiry DateTime? @map("warranty_expiry")
-  purchasePrice  Decimal?  @map("purchase_price")
-  departmentId   String    @map("department_id")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
+  id                  String          @id @default(uuid()) @map("id")
+  name                String          @map("name")
+  assetCode           String          @unique @map("asset_code")
+  tag                 String          @unique @map("tag")         // QR Code identifier
+  qrCodeId            String?         @unique @map("qr_code_id")
+  serialNumber        String?         @unique @map("serial_number")
+  model               String          @map("model")
+  manufacturer        String?         @map("manufacturer")
+  status              AssetStatus     @map("status")
+  lifecycleStage      LifecycleStage  @default(PROCURED) @map("lifecycle_stage")
+  healthStatus        HealthStatus    @default(HEALTHY) @map("health_status")
+  location            String          @map("location")
+  building            String?         @map("building")
+  floor               String?         @map("floor")
+  room                String?         @map("room")
+  
+  // Procurement details
+  purchaseOrderNumber String?         @map("purchase_order_number")
+  vendorId            String?         @map("vendor_id")
+  purchasePrice       Decimal?        @map("purchase_price")
+  purchaseDate        DateTime?       @map("purchase_date")
 
-  department Department     @relation(fields: [departmentId], references: [id])
-  tickets    Ticket[]
-  history    AssetHistory[]
+  // Warranty / AMC details
+  warrantyStart       DateTime?       @map("warranty_start")
+  warrantyExpiry      DateTime?       @map("warranty_expiry")
+  contractNumber      String?         @map("contract_number")
+
+  departmentId        String          @map("department_id")
+  categoryId          String?         @map("category_id")
+  
+  // Audit metadata
+  isActive            Boolean         @default(true) @map("is_active")
+  createdBy           String?         @map("created_by")
+  updatedBy           String?         @map("updated_by")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+  healthScore         Int             @default(100) @map("health_score")
+  prevHealthScore     Int?            @map("prev_health_score")
+
+  department           Department            @relation(fields: [departmentId], references: [id])
+  category             AssetCategory?        @relation(fields: [categoryId], references: [id])
+  tickets              Ticket[]
+  history              AssetHistory[]
+  assignments          AssetAssignment[]
+  maintenanceSchedules MaintenanceSchedule[]
+  maintenanceRecords   MaintenanceRecord[]
 
   @@index([tag])
+  @@index([assetCode])
   @@index([departmentId])
   @@index([status])
+  @@index([lifecycleStage])
+  @@index([healthStatus])
   @@map("assets")
 }
 
@@ -439,37 +487,151 @@ model AssetHistory {
   @@map("asset_history")
 }
 
+enum InventoryCategory {
+  SPARE_PART
+  CONSUMABLE
+  TOOL
+  CABLE
+  PERIPHERAL
+  NETWORKING
+  STORAGE
+  POWER
+  OTHER
+}
+
+enum InventoryStatus {
+  ACTIVE
+  INACTIVE
+  DISCONTINUED
+}
+
+enum InventoryTransactionType {
+  STOCK_IN
+  STOCK_OUT
+  ADJUSTMENT
+  TRANSFER
+  MAINTENANCE_CONSUMPTION
+  RESERVATION
+  RESERVATION_RELEASE
+  SCRAP
+}
+
+enum AllocationStatus {
+  PENDING
+  CONSUMED
+  RETURNED
+  CANCELLED
+}
+
+enum ReservationStatus {
+  ACTIVE
+  RELEASED
+  CONSUMED
+  EXPIRED
+  CANCELLED
+}
+
 model InventoryItem {
-  id          String   @id @default(uuid()) @map("id")
-  name        String   @map("name")
-  sku         String   @unique @map("sku")
-  quantity    Int      @map("quantity")
-  minQuantity Int      @default(5) @map("min_quantity")
-  unitPrice   Decimal  @map("unit_price")
-  location    String?  @map("location")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id            String            @id @default(uuid()) @map("id")
+  itemCode      String            @unique @map("item_code")       // INV-YYYY-XXXX, immutable
+  name          String            @map("name")
+  description   String?           @map("description")
+  category      InventoryCategory @map("category")
+  status        InventoryStatus   @default(ACTIVE) @map("status")
+  unit          String            @map("unit")                    // "pcs", "metres", etc.
+  manufacturer  String?           @map("manufacturer")
+  model         String?           @map("model")
+  barcodeQr     String?           @map("barcode_qr")              // optional scanner support
+  currentStock  Int               @default(0) @map("current_stock")
+  reservedStock Int               @default(0) @map("reserved_stock")
+  minimumStock  Int               @default(0) @map("minimum_stock")
+  maximumStock  Int               @map("maximum_stock")
+  reorderLevel  Int               @map("reorder_level")
+  unitCost      Decimal?          @map("unit_cost")
+  location      String?           @map("location")
+  notes         String?           @map("notes")
+  isActive      Boolean           @default(true) @map("is_active") // soft-delete flag
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
 
-  transactions InventoryTransaction[]
+  transactions  InventoryTransaction[]
+  allocations   InventoryAllocation[]
+  reservations  InventoryReservation[]
 
+  @@index([itemCode])
+  @@index([category])
+  @@index([status])
+  @@index([reorderLevel])
+  @@index([location])
+  @@index([barcodeQr])
   @@map("inventory_items")
 }
 
 model InventoryTransaction {
-  id              String   @id @default(uuid()) @map("id")
-  itemId          String   @map("item_id")
-  transactionType String   @map("transaction_type")  // ADD | DEDUCT
-  quantity        Int      @map("quantity")
-  referenceId     String?  @map("reference_id")      // ticket_id or asset_history_id
-  notes           String?  @map("notes")
-  performedById   String   @map("performed_by_id")
-  createdAt       DateTime @default(now()) @map("created_at")
+  id              String                   @id @default(uuid()) @map("id")
+  itemId          String                   @map("item_id")
+  transactionType InventoryTransactionType @map("transaction_type")
+  quantity        Int                      @map("quantity")
+  previousStock   Int                      @map("previous_stock")
+  newStock        Int                      @map("new_stock")
+  referenceId     String?                  @map("reference_id")   // e.g. maintenanceRecordId
+  referenceType   String?                  @map("reference_type") // e.g. "MaintenanceRecord"
+  reason          String?                  @map("reason")
+  notes           String?                  @map("notes")
+  performedById   String                   @map("performed_by_id")
+  createdAt       DateTime                 @default(now()) @map("created_at")
 
   item        InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
   performedBy User          @relation("PerformedBy", fields: [performedById], references: [id])
 
   @@index([itemId])
+  @@index([transactionType])
+  @@index([createdAt])
   @@map("inventory_transactions")
+}
+
+model InventoryAllocation {
+  id                  String           @id @default(uuid()) @map("id")
+  itemId              String           @map("item_id")
+  maintenanceRecordId String           @map("maintenance_record_id")
+  quantityRequested   Int              @map("quantity_requested")
+  quantityConsumed    Int              @default(0) @map("quantity_consumed")
+  status              AllocationStatus @default(PENDING) @map("status")
+  notes               String?          @map("notes")
+  allocatedById       String           @map("allocated_by_id")
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+
+  item              InventoryItem     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  maintenanceRecord MaintenanceRecord @relation(fields: [maintenanceRecordId], references: [id], onDelete: Cascade)
+  allocatedBy       User              @relation("AllocationAllocatedBy", fields: [allocatedById], references: [id])
+
+  @@index([itemId])
+  @@index([maintenanceRecordId])
+  @@index([status])
+  @@map("inventory_allocations")
+}
+
+model InventoryReservation {
+  id          String            @id @default(uuid()) @map("id")
+  itemId      String            @map("item_id")
+  quantity    Int               @map("quantity")
+  status      ReservationStatus @default(ACTIVE) @map("status")
+  requestedBy String            @map("requested_by")
+  moduleRef   String?           @map("module_ref")    // "Maintenance" | "Procurement"
+  referenceId String?           @map("reference_id")
+  expiresAt   DateTime?         @map("expires_at")
+  notes       String?           @map("notes")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  item        InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  reservedBy  User          @relation("ReservationRequestedBy", fields: [requestedBy], references: [id])
+
+  @@index([itemId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("inventory_reservations")
 }
 
 // ---------------------------------------------------------
@@ -493,6 +655,20 @@ model Notification {
   @@index([userId])
   @@index([isRead])
   @@map("notifications")
+}
+
+model NotificationPreference {
+  id        String   @id @default(uuid()) @map("id")
+  userId    String   @map("user_id")
+  category  String   @map("category") // TICKET | INCIDENT | ASSET | MAINTENANCE | INVENTORY | SLA | SYSTEM
+  email     Boolean  @default(true) @map("email")
+  inApp     Boolean  @default(true) @map("in_app")
+  push      Boolean  @default(true) @map("push")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, category])
+  @@map("notification_preferences")
 }
 
 // ---------------------------------------------------------
@@ -519,18 +695,52 @@ model SlaPolicy {
 // Service Status Model (Status Page)
 // ---------------------------------------------------------
 
-model ServiceStatus {
+model Service {
   id          String   @id @default(uuid()) @map("id")
-  name        String   @unique @map("name")     // e.g. "Email System"
+  name        String   @unique @map("name")
   description String?  @map("description")
-  status      String   @map("status")           // OPERATIONAL | DEGRADED | PARTIAL_OUTAGE | MAJOR_OUTAGE | MAINTENANCE
-  category    String   @map("category")         // e.g. "Infrastructure", "Applications"
-  statusNote  String?  @map("status_note")      // Optional incident note
-  sortOrder   Int      @default(0) @map("sort_order")
+  category    String   @map("category")
+  status      String   @map("status")
+  icon        String?  @map("icon")
+  createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
+
+  histories    ServiceStatusHistory[]
+  maintenances MaintenanceWindow[]
+  incidents    Incident[]
+
+  @@map("services")
+}
+
+model ServiceStatusHistory {
+  id             String   @id @default(uuid()) @map("id")
+  serviceId      String   @map("service_id")
+  previousStatus String   @map("previous_status")
+  newStatus      String   @map("new_status")
+  reason         String?  @map("reason")
+  changedBy      String?  @map("changed_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  service        Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId])
+  @@map("service_status_history")
+}
+
+model MaintenanceWindow {
+  id          String   @id @default(uuid()) @map("id")
+  serviceId   String   @map("service_id")
+  title       String   @map("title")
+  description String?  @map("description")
+  startTime   DateTime @map("start_time")
+  endTime     DateTime @map("end_time")
+  status      String   @map("status")
   createdAt   DateTime @default(now()) @map("created_at")
 
-  @@map("service_statuses")
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId])
+  @@map("maintenance_windows")
 }
 
 // ---------------------------------------------------------
@@ -561,19 +771,108 @@ model AuditLog {
 // Knowledge Base Models
 // ---------------------------------------------------------
 
-model KnowledgeBase {
-  id         String   @id @default(uuid()) @map("id")
-  title      String   @map("title")
-  content    String   @map("content")
-  category   String   @map("category")
-  tags       String[] @map("tags")
-  views      Int      @default(0) @map("views")
-  isPublished Boolean  @default(false) @map("is_published")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+model KnowledgeCategory {
+  id          String   @id @default(uuid()) @map("id")
+  name        String   @unique @map("name")
+  description String?  @map("description")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  @@index([category])
-  @@map("knowledge_base")
+  articles KnowledgeArticle[]
+
+  @@map("knowledge_categories")
+}
+
+model KnowledgeArticle {
+  id          String   @id @default(uuid()) @map("id")
+  title       String   @map("title")
+  slug        String   @unique @map("slug")
+  content     String   @map("content")
+  summary     String   @map("summary")
+  categoryId  String   @map("category_id")
+  tags        String[] @map("tags")
+  status      String   @default("DRAFT") @map("status")   // DRAFT | PUBLISHED
+  createdById String   @map("created_by_id")
+  updatedById String?  @map("updated_by_id")
+  viewCount   Int      @default(0) @map("view_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  category  KnowledgeCategory @relation(fields: [categoryId], references: [id])
+  createdBy User              @relation("KBCreatedBy", fields: [createdById], references: [id])
+  updatedBy User?             @relation("KBUpdatedBy", fields: [updatedById], references: [id])
+  feedbacks ArticleFeedback[]
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([slug])
+  @@map("knowledge_articles")
+}
+
+model ArticleFeedback {
+  id        String   @id @default(uuid()) @map("id")
+  articleId String   @map("article_id")
+  userId    String   @map("user_id")
+  helpful   Boolean  @map("helpful")
+  comment   String?  @map("comment")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  article KnowledgeArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, userId])
+  @@index([articleId])
+  @@map("article_feedbacks")
+}
+
+model EmailLog {
+  id            String   @id @default(uuid()) @map("id")
+  recipient     String   @map("recipient")
+  template      String   @map("template")
+  status        String   @map("status") // SENT | FAILED | PENDING
+  retryCount    Int      @default(0) @map("retry_count")
+  error         String?  @map("error")
+  recipientType String?  @map("recipient_type")
+  eventType     String?  @map("event_type")
+  userId        String?  @map("user_id")
+  timestamp     DateTime @default(now()) @map("timestamp")
+
+  @@map("email_logs")
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid()) @map("id")
+  userId    String   @map("user_id")
+  endpoint  String   @unique @map("endpoint")
+  p256dh    String   @map("p256dh")
+  auth      String   @map("auth")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("push_subscriptions")
+}
+
+model EmailPreference {
+  id        String   @id @default(uuid()) @map("id")
+  userId    String   @map("user_id")
+  eventType String   @map("event_type")
+  enabled   Boolean  @default(true) @map("enabled")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, eventType])
+  @@map("email_preferences")
+}
+
+model SystemNotification {
+  id        String   @id @default(uuid()) @map("id")
+  title     String   @map("title")
+  message   String   @map("message")
+  sendEmail Boolean  @default(false) @map("send_email")
+  createdBy String   @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("system_notifications")
 }
 
 // ---------------------------------------------------------
@@ -613,4 +912,254 @@ model AutomationLog {
   @@index([ruleId])
   @@index([ticketId])
   @@map("automation_logs")
+}
+
+// ---------------------------------------------------------
+// Developer B Enums & Asset Category
+// ---------------------------------------------------------
+
+enum AssetStatus {
+  OPERATIONAL
+  MAINTENANCE
+  DECOMMISSIONED
+  BROKEN
+}
+
+enum LifecycleStage {
+  PROCURED
+  AVAILABLE
+  ASSIGNED
+  IN_USE
+  MAINTENANCE
+  RESERVED
+  RETURNED
+  RETIRED
+  DISPOSED
+}
+
+enum ProcurementStatus {
+  REQUESTED
+  ORDERED
+  RECEIVED
+  REGISTERED
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  RETURNED
+  TRANSFERRED
+}
+
+enum HealthStatus {
+  HEALTHY
+  MONITOR
+  WARNING
+  CRITICAL
+  FAILING
+}
+
+model AssetCategory {
+  id          String   @id @default(uuid()) @map("id")
+  name        String   @unique @map("name")
+  description String?  @map("description")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  assets      Asset[]
+  procurements Procurement[]
+
+  @@map("asset_categories")
+}
+
+// ---------------------------------------------------------
+// Phase 2 Procurement & Asset Assignment Models
+// ---------------------------------------------------------
+
+model Procurement {
+  id                  String            @id @default(uuid()) @map("id")
+  requestNumber       String            @unique @map("request_number")
+  purchaseOrderNumber String?           @map("purchase_order_number")
+  invoiceNumber       String?           @map("invoice_number")
+  purchaseDate        DateTime?         @map("purchase_date")
+  purchaseCost        Decimal           @map("purchase_cost")
+  vendorReference     String?           @map("vendor_reference")
+  status              ProcurementStatus @default(REQUESTED) @map("status")
+  assetName           String            @map("asset_name")
+  model               String            @map("model")
+  manufacturer        String?           @map("manufacturer")
+  categoryId          String?           @map("category_id")
+  departmentId        String            @map("department_id")
+  quantity            Int               @map("quantity")
+  registeredCount     Int               @default(0) @map("registered_count")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+
+  department          Department        @relation(fields: [departmentId], references: [id])
+  category            AssetCategory?    @relation(fields: [categoryId], references: [id])
+
+  @@index([status])
+  @@index([requestNumber])
+  @@map("procurements")
+}
+
+model AssetAssignment {
+  id           String           @id @default(uuid()) @map("id")
+  assetId      String           @map("asset_id")
+  assigneeType String           @map("assignee_type")
+  userId       String?          @map("user_id")
+  departmentId String?          @map("department_id")
+  location     String?          @map("location")
+  assignedAt   DateTime         @default(now()) @map("assigned_at")
+  returnedAt   DateTime?        @map("returned_at")
+  status       AssignmentStatus @default(ACTIVE) @map("status")
+  assignedById String           @map("assigned_by_id")
+  notes        String?          @map("notes")
+
+  asset        Asset            @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  user         User?            @relation("AssignedToUser", fields: [userId], references: [id])
+  department   Department?      @relation("AssignedToDepartment", fields: [departmentId], references: [id])
+  assignedBy   User             @relation("AssignedByStaff", fields: [assignedById], references: [id])
+
+  @@index([assetId])
+  @@index([userId])
+  @@index([departmentId])
+  @@index([status])
+  @@map("asset_assignments")
+}
+
+// ---------------------------------------------------------
+// Phase 3 Maintenance Management Models
+// ---------------------------------------------------------
+
+// ---------------------------------------------------------
+// Phase 4 Inventory Enums
+// ---------------------------------------------------------
+
+// (The enums above were moved up to accommodate the models)
+
+// ---------------------------------------------------------
+// Phase 3 Maintenance Management Enums
+// ---------------------------------------------------------
+
+enum MaintenanceType {
+  PREVENTIVE
+  CORRECTIVE
+  INSPECTION
+  CALIBRATION
+  SOFTWARE_UPDATE
+  HARDWARE_REPAIR
+}
+
+enum MaintenanceStatus {
+  SCHEDULED
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
+enum MaintenancePriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum MaintenanceRecurrence {
+  ONE_TIME
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  HALF_YEARLY
+  ANNUAL
+}
+
+enum MaintenanceOutcome {
+  SUCCESSFUL
+  PARTIALLY_COMPLETED
+  FAILED
+}
+
+model MaintenanceSchedule {
+  id                String                @id @default(uuid()) @map("id")
+  assetId           String                @map("asset_id")
+  type              MaintenanceType       @map("type")
+  technicianId      String?               @map("technician_id")
+  priority          MaintenancePriority   @map("priority")
+  recurrence        MaintenanceRecurrence @map("recurrence")
+  scheduledDate     DateTime              @map("scheduled_date")
+  estimatedDuration Int                   @map("estimated_duration") // in minutes
+  notes             String?               @map("notes")
+  isActive          Boolean               @default(true) @map("is_active")
+  createdAt         DateTime              @default(now()) @map("created_at")
+  updatedAt         DateTime              @updatedAt @map("updated_at")
+
+  asset             Asset                 @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  technician        User?                 @relation("ScheduleTechnician", fields: [technicianId], references: [id])
+  records           MaintenanceRecord[]
+
+  @@index([assetId])
+  @@index([technicianId])
+  @@map("maintenance_schedules")
+}
+
+model MaintenanceRecord {
+  id                 String              @id @default(uuid()) @map("id")
+  assetId            String              @map("asset_id")
+  scheduleId         String?             @map("schedule_id")
+  type               MaintenanceType     @map("type")
+  status             MaintenanceStatus   @default(SCHEDULED) @map("status")
+  priority           MaintenancePriority @map("priority")
+  technicianId       String?             @map("technician_id")
+  scheduledDate      DateTime            @map("scheduled_date")
+  estimatedDuration  Int                 @map("estimated_duration") // in minutes
+  actualDuration     Int?                @map("actual_duration")    // in minutes
+  startTime          DateTime?           @map("start_time")
+  endTime            DateTime?           @map("end_time")
+  notes              String?             @map("notes")
+  completionNotes    String?             @map("completion_notes")
+  cancellationReason String?             @map("cancellation_reason")
+  outcome            MaintenanceOutcome? @map("outcome")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+
+  asset                Asset                 @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  technician           User?                 @relation("RecordTechnician", fields: [technicianId], references: [id])
+  schedule             MaintenanceSchedule?  @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  history              MaintenanceHistory[]
+  inventoryAllocations InventoryAllocation[]
+
+  @@index([assetId])
+  @@index([technicianId])
+  @@index([scheduleId])
+  @@index([status])
+  @@map("maintenance_records")
+}
+
+model MaintenanceHistory {
+  id            String            @id @default(uuid()) @map("id")
+  recordId      String            @map("record_id")
+  status        MaintenanceStatus @map("status")
+  notes         String?           @map("notes")
+  performedById String            @map("performed_by_id")
+  createdAt     DateTime          @default(now()) @map("created_at")
+
+  record        MaintenanceRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  performedBy   User              @relation("HistoryPerformedBy", fields: [performedById], references: [id])
+
+  @@index([recordId])
+  @@index([performedById])
+  @@map("maintenance_history")
+}
+
+model HealthConfiguration {
+  id        String   @id @default(uuid()) @map("id")
+  key       String   @unique @map("key")
+  value     Json     @map("value")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("health_configurations")
 }

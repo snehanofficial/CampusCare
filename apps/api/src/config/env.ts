@@ -24,7 +24,9 @@ const envSchema = z.object({
   SMTP_PASS: z.string().min(1, "SMTP_PASS is required"),
   SMTP_FROM: z.string().default("noreply@campuscare.edu"),
   VAPID_PUBLIC_KEY: z.string().min(1, "VAPID_PUBLIC_KEY is required"),
-  VAPID_PRIVATE_KEY: z.string().min(1, "VAPID_PRIVATE_KEY is required")
+  VAPID_PRIVATE_KEY: z.string().min(1, "VAPID_PRIVATE_KEY is required"),
+  VAPID_EMAIL: z.string().email("VAPID_EMAIL must be a valid email").default("support@campuscare.edu"),
+  CORS_ORIGIN: z.string().default("http://localhost:5173")
 });
 
 const _env = envSchema.safeParse(process.env);

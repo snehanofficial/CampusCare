@@ -2,7 +2,8 @@ export interface MockNotification {
   id: string;
   title: string;
   message: string;
-  type: "TICKET" | "WARNING" | "SYSTEM" | "SUCCESS";
+  type: string;
+  category?: string;
   isRead: boolean;
   createdAt: string;
 }
@@ -13,6 +14,7 @@ export const mockNotifications: MockNotification[] = [
     title: "New Assignment",
     message: "Ticket INC-1029 has been assigned to you.",
     type: "TICKET",
+    category: "TICKET",
     isRead: false,
     createdAt: "5m ago",
   },
@@ -21,6 +23,7 @@ export const mockNotifications: MockNotification[] = [
     title: "SLA Warning",
     message: "Ticket INC-1025 is nearing SLA response breach.",
     type: "WARNING",
+    category: "SLA",
     isRead: false,
     createdAt: "1h ago",
   },
@@ -29,6 +32,7 @@ export const mockNotifications: MockNotification[] = [
     title: "System Update",
     message: "Campus Wi-Fi status updated to operational.",
     type: "SYSTEM",
+    category: "SYSTEM",
     isRead: true,
     createdAt: "1d ago",
   },
@@ -37,6 +41,7 @@ export const mockNotifications: MockNotification[] = [
     title: "Projector Repaired",
     message: "Maintenance request for Seminar Hall B has been resolved.",
     type: "SUCCESS",
+    category: "MAINTENANCE",
     isRead: true,
     createdAt: "2d ago",
   }

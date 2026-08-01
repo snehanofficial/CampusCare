@@ -33,8 +33,9 @@ app.use(helmet({
       },
     },
   }) as any);
+const allowedOrigins = env.CORS_ORIGIN.split(",").map((origin) => origin.trim());
 app.use(cors({
-  origin: env.NODE_ENV === "production" ? false : true, // Adjust in production
+  origin: allowedOrigins,
   credentials: true
 }));
 app.use(compression());
@@ -79,10 +80,15 @@ app.get("/swagger.json", (req, res) => {
   res.json(swaggerSpec);
 });
 
-// 5. Mount API Version v1 Routes
+// 5. Health check (used by Render/Docker)
+app.get("/api/v1/health", (req, res) => {
+  res.status(200).json({ success: true, status: "ok" });
+});
+
+// 6. Mount API Version v1 Routes
 app.use("/api/v1", apiRouter);
 
-// 6. 404 Route handler
+// 7. 404 Route handler
 app.use((req, res, next) => {
   res.status(404).json({
     success: false,
@@ -93,5 +99,5 @@ app.use((req, res, next) => {
   });
 });
 
-// 7. Global Exception Handler
+// 8. Global Exception Handler
 app.use(errorHandler);

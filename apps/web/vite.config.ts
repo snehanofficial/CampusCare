@@ -15,7 +15,15 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       VitePWA({
+        strategies: "injectManifest",
+        srcDir: "src/workers",
+        filename: "sw.ts",
         registerType: "autoUpdate",
+        injectRegister: false,
+        devOptions: {
+          enabled: true,
+          type: "module",
+        },
         manifest: {
           name: "CampusCare ITSM Portal",
           short_name: "CampusCare",

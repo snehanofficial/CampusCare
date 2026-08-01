@@ -1,0 +1,31 @@
+<span class="badge badge-success">Ticket Created</span>
+<h1>New Support Ticket Registered</h1>
+<p>Hello {{recipientName}},</p>
+<p>Your support ticket has been successfully created in the CampusCare Help Desk. Our IT support team has been notified and will review your request shortly.</p>
+
+<div class="meta-box">
+  <table>
+    <tr>
+      <td class="meta-label">Ticket ID:</td>
+      <td class="meta-value"><strong>{{ticketNumber}}</strong></td>
+    </tr>
+    <tr>
+      <td class="meta-label">Subject:</td>
+      <td class="meta-value">{{title}}</td>
+    </tr>
+    <tr>
+      <td class="meta-label">Priority:</td>
+      <td class="meta-value">{{priority}}</td>
+    </tr>
+    <tr>
+      <td class="meta-label">Description:</td>
+      <td class="meta-value">{{description}}</td>
+    </tr>
+  </table>
+</div>
+
+<p>You can track the progress of your ticket, add comments, and upload attachments by clicking the button below:</p>
+
+{{button "View Ticket Details" actionUrl}}
+
+<p style="margin-top: 24px;">Thank you for your patience,<br/>CampusCare IT Service Desk Team</p>

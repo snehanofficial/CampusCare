@@ -1,0 +1,31 @@
+<span class="badge badge-info">System Announcement</span>
+<h1>New Broadcast Announcement</h1>
+<p>Hello {{recipientName}},</p>
+<p>An administrator has broadcasted a new system announcement:</p>
+
+<div class="meta-box">
+  <table>
+    <tr>
+      <td class="meta-label">Title:</td>
+      <td class="meta-value"><strong>{{title}}</strong></td>
+    </tr>
+    <tr>
+      <td class="meta-label">Details:</td>
+      <td class="meta-value">{{message}}</td>
+    </tr>
+    <tr>
+      <td class="meta-label">Broadcasted By:</td>
+      <td class="meta-value">{{createdBy}}</td>
+    </tr>
+    <tr>
+      <td class="meta-label">Date:</td>
+      <td class="meta-value">{{date}}</td>
+    </tr>
+  </table>
+</div>
+
+<p>You can view the full list of system announcements in the notification dashboard by clicking the button below:</p>
+
+{{button "Open Notification Dashboard" actionUrl}}
+
+<p style="margin-top: 24px;">Regards,<br/>CampusCare IT Administration Team</p>

@@ -32,6 +32,14 @@ interface EntityListTemplateProps<TData, TValue> {
   pageCount?: number;
   onPageChange?: (page: number) => void;
   onRetry?: () => void;
+
+  // React Table states
+  columnPinning?: any;
+  onColumnPinningChange?: (pinning: any) => void;
+  columnSizing?: any;
+  onColumnSizingChange?: (sizing: any) => void;
+  columnVisibility?: any;
+  onColumnVisibilityChange?: (visibility: any) => void;
 }
 
 export function EntityListTemplate<TData, TValue>({
@@ -56,6 +64,12 @@ export function EntityListTemplate<TData, TValue>({
   pageCount = 1,
   onPageChange,
   onRetry,
+  columnPinning,
+  onColumnPinningChange,
+  columnSizing,
+  onColumnSizingChange,
+  columnVisibility,
+  onColumnVisibilityChange,
 }: EntityListTemplateProps<TData, TValue>) {
   const [debugState, setDebugState] = useState<"normal" | "loading" | "empty" | "error">("normal");
 
@@ -155,6 +169,12 @@ export function EntityListTemplate<TData, TValue>({
             pageSize={pageSize}
             pageCount={pageCount}
             onPageChange={onPageChange}
+            columnPinning={columnPinning}
+            onColumnPinningChange={onColumnPinningChange}
+            columnSizing={columnSizing}
+            onColumnSizingChange={onColumnSizingChange}
+            columnVisibility={columnVisibility}
+            onColumnVisibilityChange={onColumnVisibilityChange}
           />
         </div>
       )}

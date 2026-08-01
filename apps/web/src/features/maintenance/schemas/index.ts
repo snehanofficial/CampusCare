@@ -1,2 +1,1 @@
-// Placeholder for feature maintenance subfolder schemas
-export {};
+export * from "@campuscare/shared-schemas";
