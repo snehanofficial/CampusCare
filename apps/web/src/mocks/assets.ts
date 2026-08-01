@@ -2,15 +2,21 @@ export interface MockAsset {
   id: string;
   name: string;
   tag: string;
+  qrCodeId?: string;
   serialNumber: string;
   model: string;
-  status: "DEPLOYED" | "OPERATIONAL" | "MAINTENANCE" | "DECOMMISSIONED";
+  status: any;
+  lifecycleStage?: any;
   location: string;
+  building?: string | null;
+  floor?: string | null;
+  room?: string | null;
   purchaseDate: string;
   warrantyExpiry: string;
   departmentId: string;
   createdAt: string;
   updatedAt: string;
+  assetCode?: string;
 }
 
 export const mockAssets: MockAsset[] = [

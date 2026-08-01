@@ -37,6 +37,8 @@ model User {
   notifications         Notification[]
   assetHistory          AssetHistory[]
   ticketAttachments     TicketAttachment[]
+  assignmentsReceived   AssetAssignment[]      @relation("AssignedToUser")
+  assignmentsCreated    AssetAssignment[]      @relation("AssignedByStaff")
 
   @@index([email])
   @@index([roleId])
@@ -147,6 +149,8 @@ model Department {
   users   User[]    @relation("UserDepartment")
   tickets Ticket[]
   assets  Asset[]
+  assetAssignments AssetAssignment[] @relation("AssignedToDepartment")
+  procurements     Procurement[]
 
   @@map("departments")
 }
@@ -274,28 +278,55 @@ model IncidentTicket {
 // ---------------------------------------------------------
 
 model Asset {
-  id             String    @id @default(uuid()) @map("id")
-  name           String    @map("name")
-  tag            String    @unique @map("tag")         // QR Code identifier
-  serialNumber   String?   @unique @map("serial_number")
-  model          String    @map("model")
-  manufacturer   String?   @map("manufacturer")
-  status         String    @map("status")              // OPERATIONAL | MAINTENANCE | BROKEN | RETIRED | LOST
-  location       String    @map("location")
-  purchaseDate   DateTime? @map("purchase_date")
-  warrantyExpiry DateTime? @map("warranty_expiry")
-  purchasePrice  Decimal?  @map("purchase_price")
-  departmentId   String    @map("department_id")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
+  id                  String          @id @default(uuid()) @map("id")
+  name                String          @map("name")
+  assetCode           String          @unique @map("asset_code")
+  tag                 String          @unique @map("tag")         // QR Code identifier
+  qrCodeId            String?         @unique @map("qr_code_id")
+  serialNumber        String?         @unique @map("serial_number")
+  model               String          @map("model")
+  manufacturer        String?         @map("manufacturer")
+  status              AssetStatus     @map("status")
+  lifecycleStage      LifecycleStage  @default(PROCURED) @map("lifecycle_stage")
+  healthStatus        HealthStatus    @default(HEALTHY) @map("health_status")
+  location            String          @map("location")
+  building            String?         @map("building")
+  floor               String?         @map("floor")
+  room                String?         @map("room")
+  
+  // Procurement details
+  purchaseOrderNumber String?         @map("purchase_order_number")
+  vendorId            String?         @map("vendor_id")
+  purchasePrice       Decimal?        @map("purchase_price")
+  purchaseDate        DateTime?       @map("purchase_date")
 
-  department Department     @relation(fields: [departmentId], references: [id])
-  tickets    Ticket[]
-  history    AssetHistory[]
+  // Warranty / AMC details
+  warrantyStart       DateTime?       @map("warranty_start")
+  warrantyExpiry      DateTime?       @map("warranty_expiry")
+  contractNumber      String?         @map("contract_number")
+
+  departmentId        String          @map("department_id")
+  categoryId          String?         @map("category_id")
+  
+  // Audit metadata
+  isActive            Boolean         @default(true) @map("is_active")
+  createdBy           String?         @map("created_by")
+  updatedBy           String?         @map("updated_by")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  department          Department      @relation(fields: [departmentId], references: [id])
+  category            AssetCategory?  @relation(fields: [categoryId], references: [id])
+  tickets             Ticket[]
+  history             AssetHistory[]
+  assignments         AssetAssignment[]
 
   @@index([tag])
+  @@index([assetCode])
   @@index([departmentId])
   @@index([status])
+  @@index([lifecycleStage])
+  @@index([healthStatus])
   @@map("assets")
 }
 
@@ -449,4 +480,118 @@ model KnowledgeBase {
 
   @@index([category])
   @@map("knowledge_base")
+}
+
+// ---------------------------------------------------------
+// Developer B Enums & Asset Category
+// ---------------------------------------------------------
+
+enum AssetStatus {
+  OPERATIONAL
+  MAINTENANCE
+  DECOMMISSIONED
+  BROKEN
+}
+
+enum LifecycleStage {
+  PROCURED
+  AVAILABLE
+  ASSIGNED
+  IN_USE
+  MAINTENANCE
+  RESERVED
+  RETURNED
+  RETIRED
+  DISPOSED
+}
+
+enum ProcurementStatus {
+  REQUESTED
+  ORDERED
+  RECEIVED
+  REGISTERED
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  RETURNED
+  TRANSFERRED
+}
+
+enum HealthStatus {
+  HEALTHY
+  MONITOR
+  WARNING
+  CRITICAL
+  FAILING
+}
+
+model AssetCategory {
+  id          String   @id @default(uuid()) @map("id")
+  name        String   @unique @map("name")
+  description String?  @map("description")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  assets      Asset[]
+  procurements Procurement[]
+
+  @@map("asset_categories")
+}
+
+// ---------------------------------------------------------
+// Phase 2 Procurement & Asset Assignment Models
+// ---------------------------------------------------------
+
+model Procurement {
+  id                  String            @id @default(uuid()) @map("id")
+  requestNumber       String            @unique @map("request_number")
+  purchaseOrderNumber String?           @map("purchase_order_number")
+  invoiceNumber       String?           @map("invoice_number")
+  purchaseDate        DateTime?         @map("purchase_date")
+  purchaseCost        Decimal           @map("purchase_cost")
+  vendorReference     String?           @map("vendor_reference")
+  status              ProcurementStatus @default(REQUESTED) @map("status")
+  assetName           String            @map("asset_name")
+  model               String            @map("model")
+  manufacturer        String?           @map("manufacturer")
+  categoryId          String?           @map("category_id")
+  departmentId        String            @map("department_id")
+  quantity            Int               @map("quantity")
+  registeredCount     Int               @default(0) @map("registered_count")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+
+  department          Department        @relation(fields: [departmentId], references: [id])
+  category            AssetCategory?    @relation(fields: [categoryId], references: [id])
+
+  @@index([status])
+  @@index([requestNumber])
+  @@map("procurements")
+}
+
+model AssetAssignment {
+  id           String           @id @default(uuid()) @map("id")
+  assetId      String           @map("asset_id")
+  assigneeType String           @map("assignee_type")
+  userId       String?          @map("user_id")
+  departmentId String?          @map("department_id")
+  location     String?          @map("location")
+  assignedAt   DateTime         @default(now()) @map("assigned_at")
+  returnedAt   DateTime?        @map("returned_at")
+  status       AssignmentStatus @default(ACTIVE) @map("status")
+  assignedById String           @map("assigned_by_id")
+  notes        String?          @map("notes")
+
+  asset        Asset            @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  user         User?            @relation("AssignedToUser", fields: [userId], references: [id])
+  department   Department?      @relation("AssignedToDepartment", fields: [departmentId], references: [id])
+  assignedBy   User             @relation("AssignedByStaff", fields: [assignedById], references: [id])
+
+  @@index([assetId])
+  @@index([userId])
+  @@index([departmentId])
+  @@index([status])
+  @@map("asset_assignments")
 }

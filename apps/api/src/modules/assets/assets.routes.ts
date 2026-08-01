@@ -34,6 +34,49 @@ assetsRouter.delete(
   AssetsController.deleteCategory
 );
 
+// Procurement routes (placed above /:id to prevent routing conflict)
+assetsRouter.get(
+  "/procurements",
+  authenticate,
+  authorize("assets:read"),
+  AssetsController.listProcurements
+);
+
+assetsRouter.get(
+  "/procurements/:id",
+  authenticate,
+  authorize("assets:read"),
+  AssetsController.getProcurement
+);
+
+assetsRouter.post(
+  "/procurements",
+  authenticate,
+  authorize("assets:create"),
+  AssetsController.createProcurement
+);
+
+assetsRouter.put(
+  "/procurements/:id",
+  authenticate,
+  authorize("assets:update"),
+  AssetsController.updateProcurement
+);
+
+assetsRouter.delete(
+  "/procurements/:id",
+  authenticate,
+  authorize("assets:delete"),
+  AssetsController.deleteProcurement
+);
+
+assetsRouter.post(
+  "/procurements/:id/register",
+  authenticate,
+  authorize("assets:create"),
+  AssetsController.registerProcurementAssets
+);
+
 // Bulk operations
 assetsRouter.post(
   "/bulk",
@@ -76,4 +119,33 @@ assetsRouter.delete(
   authenticate,
   authorize("assets:delete"),
   AssetsController.delete
+);
+
+// Phase 2 Assignment / Lifecycle endpoints
+assetsRouter.post(
+  "/:id/assign",
+  authenticate,
+  authorize("assets:update"),
+  AssetsController.assignAsset
+);
+
+assetsRouter.post(
+  "/:id/return",
+  authenticate,
+  authorize("assets:update"),
+  AssetsController.returnAsset
+);
+
+assetsRouter.post(
+  "/:id/transfer",
+  authenticate,
+  authorize("assets:update"),
+  AssetsController.transferAsset
+);
+
+assetsRouter.post(
+  "/:id/lifecycle",
+  authenticate,
+  authorize("assets:update"),
+  AssetsController.changeAssetLifecycle
 );
