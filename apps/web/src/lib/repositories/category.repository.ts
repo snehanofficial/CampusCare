@@ -1,6 +1,7 @@
 import { IRepository } from "./base.repository.js";
 import { RepositoryQueryParams, RepositoryListResponse } from "./types.js";
 import { isMockEnabled, simulateDelay, mockCategories } from "../../mocks/index.js";
+import { apiClient } from "../api-client.js";
 
 export interface MockCategory {
   id: string;
@@ -95,19 +96,90 @@ class MockCategoryRepository implements ICategoryRepository {
 
 class HttpCategoryRepository implements ICategoryRepository {
   async list(params?: RepositoryQueryParams): Promise<RepositoryListResponse<MockCategory>> {
-    throw new Error("HTTP Category repository not connected yet.");
+    const { data } = await apiClient.get<{ success: boolean; data: any[] | RepositoryListResponse<any> }>("/categories", {
+      params: {
+        search: params?.search,
+        page: params?.page,
+        pageSize: params?.pageSize,
+        ...params?.filters,
+      },
+    });
+
+    const formatCategory = (cat: any): MockCategory => ({
+      id: cat.id,
+      name: cat.name,
+      code: cat.name.substring(0, 4).toUpperCase().replace(/\s/g, "_"),
+      defaultSlaHours: 8,
+      active: cat.isActive !== undefined ? cat.isActive : true,
+    });
+
+    if (Array.isArray(data.data)) {
+      return {
+        data: data.data.map(formatCategory),
+        total: data.data.length,
+        page: 1,
+        pageSize: data.data.length,
+        pageCount: 1,
+      };
+    }
+
+    return {
+      data: data.data.data.map(formatCategory),
+      total: data.data.total,
+      page: data.data.page,
+      pageSize: data.data.pageSize,
+      pageCount: data.data.pageCount,
+    };
   }
+
   async get(id: string): Promise<MockCategory> {
-    throw new Error("HTTP Category repository not connected yet.");
+    const { data } = await apiClient.get<{ success: boolean; data: any }>(`/categories/${id}`);
+    const cat = data.data;
+    return {
+      id: cat.id,
+      name: cat.name,
+      code: cat.name.substring(0, 4).toUpperCase().replace(/\s/g, "_"),
+      defaultSlaHours: 8,
+      active: cat.isActive,
+    };
   }
+
   async create(data: Partial<MockCategory>): Promise<MockCategory> {
-    throw new Error("HTTP Category repository not connected yet.");
+    const payload = {
+      name: data.name,
+      description: data.name,
+      sortOrder: 0,
+    };
+    const { data: res } = await apiClient.post<{ success: boolean; data: any }>("/categories", payload);
+    const cat = res.data;
+    return {
+      id: cat.id,
+      name: cat.name,
+      code: cat.name.substring(0, 4).toUpperCase().replace(/\s/g, "_"),
+      defaultSlaHours: 8,
+      active: cat.isActive,
+    };
   }
+
   async update(id: string, data: Partial<MockCategory>): Promise<MockCategory> {
-    throw new Error("HTTP Category repository not connected yet.");
+    const payload: any = {};
+    if (data.name !== undefined) payload.name = data.name;
+    if (data.active !== undefined) payload.isActive = data.active;
+
+    const { data: res } = await apiClient.put<{ success: boolean; data: any }>(`/categories/${id}`, payload);
+    const cat = res.data;
+    return {
+      id: cat.id,
+      name: cat.name,
+      code: cat.name.substring(0, 4).toUpperCase().replace(/\s/g, "_"),
+      defaultSlaHours: 8,
+      active: cat.isActive,
+    };
   }
+
   async delete(id: string): Promise<boolean> {
-    throw new Error("HTTP Category repository not connected yet.");
+    const { data: res } = await apiClient.delete<{ success: boolean; data: any }>(`/categories/${id}`);
+    return res.data.deleted || res.data.deactivated || res.success;
   }
 }
 

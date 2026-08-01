@@ -38,6 +38,11 @@ model User {
   assetHistory          AssetHistory[]
   ticketAttachments     TicketAttachment[]
 
+  // GTPE back-references
+  gtpeRequests         TemporaryPermissionRequest[] @relation("GtpeRequester")
+  gtpeReviewedRequests TemporaryPermissionRequest[] @relation("GtpeReviewer")
+  gtpeTemplates        PermissionTemplate[]         @relation("GtpeTemplateCreator")
+
   @@index([email])
   @@index([roleId])
   @@index([departmentId])
@@ -72,6 +77,11 @@ model Permission {
   roles           RolePermission[]
   userPermissions UserPermission[]
 
+  // GTPE (Granular Temporary Privilege Escalation) back-references
+  templateItems    PermissionTemplateItem[]
+  requestItems     TemporaryPermissionRequestItem[]
+  approvalPolicies ApprovalPolicy[]
+
   @@index([category])
   @@map("permissions")
 }
@@ -97,12 +107,124 @@ model UserPermission {
   expiresAt    DateTime? @map("expires_at")
   createdAt    DateTime  @default(now()) @map("created_at")
 
+  // ── GTPE additive columns (all nullable / defaulted: no breaking change) ─────
+  status               String    @default("ACTIVE") @map("status") // ACTIVE | EXPIRED | REVOKED
+  source               String    @default("MANUAL") @map("source") // MANUAL | GTPE_GRANT | GTPE_REQUEST | GTPE_TEMPLATE
+  sourceRequestId      String?   @map("source_request_id")
+  templateId           String?   @map("template_id")
+  approvalLevel        String?   @map("approval_level") // LOW | MEDIUM | HIGH | CRITICAL
+  durationMinutes      Int?      @map("duration_minutes")
+  revokedAt            DateTime? @map("revoked_at")
+  revokedById          String?   @map("revoked_by_id")
+  revokeReason         String?   @map("revoke_reason")
+  ipAddress            String?   @map("ip_address")
+  deviceInfo           String?   @map("device_info")
+  notifiedExpiringSoon Boolean   @default(false) @map("notified_expiring_soon")
+
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([permissionId])
+  @@index([status, expiresAt])
+  @@index([sourceRequestId])
   @@map("user_permissions")
+}
+
+// ---------------------------------------------------------
+// GTPE — Granular Temporary Privilege Escalation Models
+// ---------------------------------------------------------
+
+/// A self-service request for one or more temporary permissions.
+model TemporaryPermissionRequest {
+  id              String    @id @default(uuid()) @map("id")
+  requesterId     String    @map("requester_id")
+  reason          String    @map("reason")
+  durationMinutes Int       @map("duration_minutes")
+  status          String    @default("PENDING") @map("status") // PENDING | APPROVED | REJECTED | CANCELLED | EXPIRED
+  approvalLevel   String    @map("approval_level") // LOW | MEDIUM | HIGH | CRITICAL
+  requiredRole    String    @map("required_role") // DEPT_ADMIN | SYSTEM_ADMIN (snapshot at submit time)
+  departmentId    String?   @map("department_id") // snapshot of requester department
+  reviewedById    String?   @map("reviewed_by_id")
+  reviewedAt      DateTime? @map("reviewed_at")
+  reviewNote      String?   @map("review_note")
+  activatedAt     DateTime? @map("activated_at")
+  expiresAt       DateTime? @map("expires_at")
+  ipAddress       String?   @map("ip_address")
+  deviceInfo      String?   @map("device_info")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  requester User  @relation("GtpeRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  reviewedBy User? @relation("GtpeReviewer", fields: [reviewedById], references: [id])
+
+  items TemporaryPermissionRequestItem[]
+
+  @@index([requesterId])
+  @@index([status])
+  @@index([status, createdAt])
+  @@map("temporary_permission_requests")
+}
+
+model TemporaryPermissionRequestItem {
+  requestId    String @map("request_id")
+  permissionId String @map("permission_id")
+
+  request    TemporaryPermissionRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  permission Permission                 @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([requestId, permissionId])
+  @@map("temporary_permission_request_items")
+}
+
+/// A reusable bundle of permissions + default duration for fast granting.
+model PermissionTemplate {
+  id                     String   @id @default(uuid()) @map("id")
+  name                   String   @unique @map("name")
+  description            String?  @map("description")
+  defaultDurationMinutes Int      @default(60) @map("default_duration_minutes")
+  isActive               Boolean  @default(true) @map("is_active")
+  createdById            String?  @map("created_by_id")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  createdBy User? @relation("GtpeTemplateCreator", fields: [createdById], references: [id])
+
+  items PermissionTemplateItem[]
+
+  @@index([isActive])
+  @@map("permission_templates")
+}
+
+model PermissionTemplateItem {
+  templateId   String @map("template_id")
+  permissionId String @map("permission_id")
+
+  template   PermissionTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  permission Permission         @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([templateId, permissionId])
+  @@map("permission_template_items")
+}
+
+/// Determines who must approve a temporary permission request and for how long it may last.
+/// Resolution precedence: exact permission → category → hardcoded fallback (LOW / DEPT_ADMIN / 60min).
+model ApprovalPolicy {
+  id                 String   @id @default(uuid()) @map("id")
+  permissionId       String?  @unique @map("permission_id")
+  permissionCategory String?  @unique @map("permission_category")
+  approvalLevel      String   @default("LOW") @map("approval_level") // LOW | MEDIUM | HIGH | CRITICAL
+  approverRole       String   @default("DEPT_ADMIN") @map("approver_role") // DEPT_ADMIN | SYSTEM_ADMIN
+  maxDurationMinutes Int      @default(60) @map("max_duration_minutes")
+  autoApprove        Boolean  @default(false) @map("auto_approve")
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  permission Permission? @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@index([isActive])
+  @@map("approval_policies")
 }
 
 // Session model: replaces simple RefreshToken — tracks device info for session management
@@ -186,8 +308,11 @@ model Ticket {
   closedAt     DateTime? @map("closed_at")
   resolvedAt   DateTime? @map("resolved_at")
   dueAt        DateTime? @map("due_at")       // SLA deadline
+  reopenCount  Int       @default(0) @map("reopen_count")
+  reopenReason String?   @map("reopen_reason")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
+
 
   creator     User               @relation("CreatedTickets", fields: [creatorId], references: [id])
   assignee    User?              @relation("AssignedTickets", fields: [assigneeId], references: [id])
@@ -449,4 +574,43 @@ model KnowledgeBase {
 
   @@index([category])
   @@map("knowledge_base")
+}
+
+// ---------------------------------------------------------
+// Workflow Automation Engine Models
+// ---------------------------------------------------------
+
+model AutomationRule {
+  id             String   @id @default(uuid()) @map("id")
+  name           String   @unique @map("name")
+  description    String?  @map("description")
+  isActive       Boolean  @default(true) @map("is_active")
+  priority       Int      @default(0) @map("priority")       // Lower number = runs first
+  trigger        String   @map("trigger")                    // ON_CREATE | ON_UPDATE | ON_STATUS_CHANGE
+  conditions     Json     @map("conditions")                 // [{field, operator, value}]
+  actions        Json     @map("actions")                    // [{type, value}]
+  executionCount Int      @default(0) @map("execution_count")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  logs AutomationLog[]
+
+  @@index([isActive])
+  @@index([trigger])
+  @@map("automation_rules")
+}
+
+model AutomationLog {
+  id         String   @id @default(uuid()) @map("id")
+  ruleId     String   @map("rule_id")
+  ticketId   String   @map("ticket_id")
+  triggered  Boolean  @map("triggered")
+  actionsRun Json     @map("actions_run")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  rule AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@index([ruleId])
+  @@index([ticketId])
+  @@map("automation_logs")
 }

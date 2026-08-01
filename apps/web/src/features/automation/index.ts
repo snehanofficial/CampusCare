@@ -1,2 +1,1 @@
-// Main entry point for feature automation
-export {};
+export * from "./pages/index.js";

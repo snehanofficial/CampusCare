@@ -2,6 +2,7 @@ import { IRepository } from "./base.repository.js";
 import { RepositoryQueryParams, RepositoryListResponse } from "./types.js";
 import { isMockEnabled, simulateDelay, mockUsers } from "../../mocks/index.js";
 import type { MockUser } from "../../mocks/users.js";
+import { apiClient } from "../api-client.js";
 
 export interface IUserRepository extends IRepository<MockUser> {
   list(params?: RepositoryQueryParams): Promise<RepositoryListResponse<MockUser>>;
@@ -88,19 +89,35 @@ class MockUserRepository implements IUserRepository {
 
 class HttpUserRepository implements IUserRepository {
   async list(params?: RepositoryQueryParams): Promise<RepositoryListResponse<MockUser>> {
-    throw new Error("HTTP Repository not connected yet.");
+    const { data } = await apiClient.get<{ success: boolean; data: RepositoryListResponse<MockUser> }>("/users", {
+      params: {
+        search: params?.search,
+        page: params?.page,
+        pageSize: params?.pageSize,
+        ...params?.filters,
+      },
+    });
+    return data.data;
   }
+
   async get(id: string): Promise<MockUser> {
-    throw new Error("HTTP Repository not connected yet.");
+    const { data } = await apiClient.get<{ success: boolean; data: MockUser }>(`/users/${id}`);
+    return data.data;
   }
-  async create(data: Partial<MockUser>): Promise<MockUser> {
-    throw new Error("HTTP Repository not connected yet.");
+
+  async create(data: any): Promise<MockUser> {
+    const { data: res } = await apiClient.post<{ success: boolean; data: MockUser }>("/users", data);
+    return res.data;
   }
-  async update(id: string, data: Partial<MockUser>): Promise<MockUser> {
-    throw new Error("HTTP Repository not connected yet.");
+
+  async update(id: string, data: any): Promise<MockUser> {
+    const { data: res } = await apiClient.put<{ success: boolean; data: MockUser }>(`/users/${id}`, data);
+    return res.data;
   }
+
   async delete(id: string): Promise<boolean> {
-    throw new Error("HTTP Repository not connected yet.");
+    const { data: res } = await apiClient.delete<{ success: boolean; data: { deleted: boolean; deactivated: boolean } }>(`/users/${id}`);
+    return res.data.deleted || res.data.deactivated;
   }
 }
 

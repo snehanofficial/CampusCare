@@ -13,7 +13,15 @@ export interface MockTicket {
   createdAt: string;
   updatedAt: string;
   resolvedAt?: string;
+  reopenCount?: number;
+  reopenReason?: string;
+  dueAt?: string;
+  creatorName?: string;
+  assigneeName?: string;
+  categoryName?: string;
+  departmentName?: string;
 }
+
 
 export const mockTickets: MockTicket[] = [
   {
@@ -29,6 +37,7 @@ export const mockTickets: MockTicket[] = [
     isIncident: true,
     createdAt: "2026-07-30T10:00:00Z",
     updatedAt: "2026-07-30T10:00:00Z",
+    dueAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // Breached
   },
   {
     id: "t-2",
@@ -44,6 +53,7 @@ export const mockTickets: MockTicket[] = [
     isIncident: false,
     createdAt: "2026-07-30T14:30:00Z",
     updatedAt: "2026-07-31T09:00:00Z",
+    dueAt: new Date(Date.now() + 4 * 60 * 60 * 1000 + 15 * 60 * 1000).toISOString(), // 4h 15m remaining
   },
   {
     id: "t-3",

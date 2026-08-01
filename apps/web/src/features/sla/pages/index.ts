@@ -1,2 +1,2 @@
-// Placeholder for feature sla subfolder pages
-export {};
+export { SlaPage } from "./SlaPage.js";
+export { default } from "./SlaPage.js";

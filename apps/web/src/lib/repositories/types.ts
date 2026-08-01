@@ -3,6 +3,8 @@ export interface RepositoryQueryParams {
   filters?: Record<string, any>;
   page?: number;
   pageSize?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }
 
 export interface RepositoryListResponse<T> {

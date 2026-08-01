@@ -1,2 +1,1 @@
-// Main entry point for feature sla
-export {};
+export * from "./pages/index.js";
