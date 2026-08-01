@@ -185,8 +185,7 @@ async function generateAssetReport(filters?: ReportFilters): Promise<AssetReport
     if (a.status === "OPERATIONAL") operational++;
     else if (a.status === "MAINTENANCE") inMaintenance++;
     else if (a.status === "BROKEN") broken++;
-    else if (a.status === "RETIRED") retired++;
-    else if (a.status === "LOST") lost++;
+    else if (a.status === "DECOMMISSIONED") retired++;
 
     // Group by model as category proxy
     const cat = a.model || "Unknown";
@@ -231,8 +230,8 @@ async function generateInventoryReport(filters?: ReportFilters): Promise<Invento
   });
 
   const lowStockItems = items
-    .filter((i) => i.quantity <= i.minQuantity)
-    .map((i) => ({ id: i.id, name: i.name, sku: i.sku, quantity: i.quantity, minQuantity: i.minQuantity }));
+    .filter((i) => i.currentStock <= i.minimumStock)
+    .map((i) => ({ id: i.id, name: i.name, sku: i.itemCode, quantity: i.currentStock, minQuantity: i.minimumStock }));
 
   let stockAdditions = 0;
   let stockDeductions = 0;
@@ -240,7 +239,7 @@ async function generateInventoryReport(filters?: ReportFilters): Promise<Invento
 
   for (const item of items) {
     for (const tx of item.transactions) {
-      if (tx.transactionType === "ADD") stockAdditions += tx.quantity;
+      if (tx.transactionType === "STOCK_IN") stockAdditions += tx.quantity;
       else stockDeductions += tx.quantity;
 
       if (recentTransactions.length < 20) {
@@ -256,7 +255,7 @@ async function generateInventoryReport(filters?: ReportFilters): Promise<Invento
 
   return {
     totalItems: items.length,
-    totalQuantity: items.reduce((sum, i) => sum + i.quantity, 0),
+    totalQuantity: items.reduce((sum, i) => sum + i.currentStock, 0),
     lowStockItems,
     recentTransactions,
     stockAdditions,
