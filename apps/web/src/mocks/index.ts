@@ -1,4 +1,5 @@
 import type { AuthUser, Session } from "@campuscare/shared-types";
+import { PERMISSION_REGISTRY } from "@campuscare/constants";
 import { mockUsers } from "./users.js";
 import { mockTickets } from "./tickets.js";
 import { mockAssets } from "./assets.js";
@@ -95,32 +96,9 @@ export const mockAdapters = {
         firstName: activeUser.firstName,
         lastName: activeUser.lastName,
         role: activeUser.role,
-        permissions: [
-          "tickets:create",
-          "tickets:read_own",
-          "tickets:read_all",
-          "tickets:update_own",
-          "tickets:update_all",
-          "tickets:assign",
-          "tickets:resolve",
-          "tickets:delete",
-          "assets:create",
-          "assets:read",
-          "assets:update",
-          "assets:delete",
-          "inventory:read",
-          "inventory:manage",
-          "users:read",
-          "users:manage",
-          "departments:manage",
-          "categories:manage",
-          "reports:view",
-          "sla:manage",
-          "audit:read",
-          "settings:manage",
-          "notifications:send",
-          "knowledge-base:manage",
-        ],
+        // Mocked user is a SYSTEM_ADMIN stand-in — grant every registered permission
+        // so it always mirrors the real registry instead of a hand-maintained list.
+        permissions: PERMISSION_REGISTRY.map((p) => p.code),
         avatarUrl: null,
       });
     },

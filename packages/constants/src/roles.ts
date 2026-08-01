@@ -42,13 +42,15 @@ export const ROLE_SEED_DATA: readonly RoleSeedEntry[] = [
     displayName: "IT Technician",
     description: "IT support technician — handles tickets and manages assets",
     permissions: [
+      // Technicians act on their assigned queue only — never on the global queue.
+      // They keep read_own/update_own for tickets they personally submitted.
       "tickets:create",
       "tickets:read_own",
-      "tickets:read_all",
       "tickets:update_own",
-      "tickets:update_all",
-      "tickets:assign",
       "tickets:resolve",
+      "technician:assigned:view",
+      "technician:ticket:view",
+      "technician:ticket:update-status",
       "assets:read",
       "assets:update",
       "inventory:read",

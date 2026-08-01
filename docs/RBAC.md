@@ -48,9 +48,14 @@ All permission codes follow the pattern: `resource:action`
 | `tickets:create` | Submit a new support ticket |
 | `tickets:read_own` | View tickets the user created |
 | `tickets:read_all` | View all tickets in the system |
+| `tickets:update_own` | Update tickets the user created |
+| `tickets:update_all` | Update any ticket in the system |
 | `tickets:assign` | Assign a ticket to a technician |
 | `tickets:resolve` | Mark a ticket as resolved/closed |
 | `tickets:delete` | Permanently delete a ticket |
+| `technician:assigned:view` | List only the tickets assigned to the technician |
+| `technician:ticket:view` | Open the detail view of a ticket assigned to the technician |
+| `technician:ticket:update-status` | Move an assigned ticket to `IN_PROGRESS` or `RESOLVED` |
 | `assets:create` | Register a new asset |
 | `assets:read` | View asset information |
 | `assets:update` | Modify asset details |
@@ -76,10 +81,15 @@ All permission codes follow the pattern: `resource:action`
 |:---|:---:|:---:|:---:|:---:|:---:|
 | `tickets:create` | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `tickets:read_own` | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `tickets:read_all` | ✗ | ✗ | ✓ | ✓ | ✓ |
-| `tickets:assign` | ✗ | ✗ | ✓ | ✓ | ✓ |
+| `tickets:read_all` | ✗ | ✗ | ✗ | ✓ | ✓ |
+| `tickets:update_own` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `tickets:update_all` | ✗ | ✗ | ✗ | ✓ | ✓ |
+| `tickets:assign` | ✗ | ✗ | ✗ | ✓ | ✓ |
 | `tickets:resolve` | ✗ | ✗ | ✓ | ✓ | ✓ |
 | `tickets:delete` | ✗ | ✗ | ✗ | ✗ | ✓ |
+| `technician:assigned:view` | ✗ | ✗ | ✓ | ✗ | ✓ |
+| `technician:ticket:view` | ✗ | ✗ | ✓ | ✗ | ✓ |
+| `technician:ticket:update-status` | ✗ | ✗ | ✓ | ✗ | ✓ |
 | `assets:create` | ✗ | ✗ | ✗ | ✓ | ✓ |
 | `assets:read` | ✗ | ✓ | ✓ | ✓ | ✓ |
 | `assets:update` | ✗ | ✗ | ✓ | ✓ | ✓ |
