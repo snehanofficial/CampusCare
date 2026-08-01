@@ -18,6 +18,10 @@ import { reportsRouter } from "./reports/reports.routes.js";
 import { knowledgeBaseRouter } from "./knowledge-base/knowledge-base.routes.js";
 import { auditRouter } from "./audit/audit.routes.js";
 import { settingsRouter } from "./settings/settings.routes.js";
+import { pushRouter } from "./push/push.routes.js";
+import { emailPreferenceRouter } from "./email-preferences/email-preference.routes.js";
+import { emailLogRouter } from "./mail/logs/email-log.routes.js";
+import { serviceStatusRouter } from "./service-status/service-status.routes.js";
 
 export const apiRouter = Router();
 
@@ -40,3 +44,7 @@ apiRouter.use("/reports", reportsRouter);
 apiRouter.use("/knowledge-base", knowledgeBaseRouter);
 apiRouter.use("/audit", auditRouter);
 apiRouter.use("/settings", settingsRouter);
+apiRouter.use("/push", pushRouter);
+apiRouter.use("/email-preferences", emailPreferenceRouter);
+apiRouter.use("/mail", emailLogRouter);
+apiRouter.use("/service-status", serviceStatusRouter);

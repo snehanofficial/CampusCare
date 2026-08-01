@@ -1,4 +1,4 @@
-import React from "react";
+import React, { createContext, useContext } from "react";
 import { cn } from "../../lib/utils.js";
 
 interface TabsProps {
@@ -8,25 +8,26 @@ interface TabsProps {
   className?: string;
 }
 
+interface TabsContextType {
+  value: string;
+  onValueChange: (value: string) => void;
+}
+
+const TabsContext = createContext<TabsContextType | undefined>(undefined);
+
 export function Tabs({ value, onValueChange, children, className }: TabsProps) {
   return (
-    <div className={cn("space-y-4", className)}>
-      {React.Children.map(children, (child) => {
-        if (React.isValidElement(child)) {
-          return React.cloneElement(child as React.ReactElement<any>, { value, onValueChange });
-        }
-        return child;
-      })}
-    </div>
+    <TabsContext.Provider value={{ value, onValueChange }}>
+      <div className={cn("space-y-4", className)}>{children}</div>
+    </TabsContext.Provider>
   );
 }
 
 /**
  * Enterprise underline-style tab bar.
  * Flat bottom border with indicator underline on active item.
- * Avoids the shadcn rounded-pill background pattern entirely.
  */
-export function TabsList({ children, className, value, onValueChange }: any) {
+export function TabsList({ children, className }: any) {
   return (
     <div
       className={cn(
@@ -34,22 +35,23 @@ export function TabsList({ children, className, value, onValueChange }: any) {
         className
       )}
     >
-      {React.Children.map(children, (child) => {
-        if (React.isValidElement(child)) {
-          return React.cloneElement(child as React.ReactElement<any>, { activeValue: value, onValueChange });
-        }
-        return child;
-      })}
+      {children}
     </div>
   );
 }
 
-export function TabsTrigger({ children, className, value, activeValue, onValueChange }: any) {
-  const active = value === activeValue;
+export function TabsTrigger({ children, className, value }: any) {
+  const context = useContext(TabsContext);
+  if (!context) {
+    throw new Error("TabsTrigger must be used within a Tabs component");
+  }
+  
+  const active = value === context.value;
+  
   return (
     <button
       type="button"
-      onClick={() => onValueChange(value)}
+      onClick={() => context.onValueChange(value)}
       className={cn(
         "relative inline-flex items-center gap-1.5 px-3 pb-2.5 pt-0.5 text-xs font-semibold transition-colors duration-100 whitespace-nowrap select-none cursor-pointer focus:outline-none disabled:pointer-events-none disabled:opacity-50",
         "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:transition-colors after:duration-100",
@@ -64,12 +66,19 @@ export function TabsTrigger({ children, className, value, activeValue, onValueCh
   );
 }
 
-export function TabsContent({ children, className, value, activeValue }: any) {
-  const active = value === activeValue;
+export function TabsContent({ children, className, value }: any) {
+  const context = useContext(TabsContext);
+  if (!context) {
+    throw new Error("TabsContent must be used within a Tabs component");
+  }
+  
+  const active = value === context.value;
   if (!active) return null;
+  
   return (
     <div className={cn("outline-none animate-in fade-in duration-100", className)}>
       {children}
     </div>
   );
 }
+export default Tabs;
