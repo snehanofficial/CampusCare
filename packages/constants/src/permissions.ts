@@ -172,6 +172,20 @@ export const PERMISSION_REGISTRY: readonly PermissionEntry[] = [
     category: "Reports",
     groupLabel: "Intelligence",
   },
+  {
+    code: "reports:export",
+    displayName: "Export Reports",
+    description: "Export reports to PDF, Excel, and CSV formats",
+    category: "Reports",
+    groupLabel: "Intelligence",
+  },
+  {
+    code: "reports:admin",
+    displayName: "Administer Reports",
+    description: "Schedule and administer report generation",
+    category: "Reports",
+    groupLabel: "Intelligence",
+  },
   // ─── SLA ────────────────────────────────────────────────────────────────────
   {
     code: "sla:manage",
@@ -212,6 +226,14 @@ export const PERMISSION_REGISTRY: readonly PermissionEntry[] = [
     category: "Knowledge Base",
     groupLabel: "Communication",
   },
+  // ─── Service Status ─────────────────────────────────────────────────────────
+  {
+    code: "service_status.manage",
+    displayName: "Manage Service Status",
+    description: "Update campus service health status and schedule maintenance windows",
+    category: "Service Status",
+    groupLabel: "Administration",
+  },
 ] as const;
 
 // Convenience lookup: code → entry
@@ -243,11 +265,14 @@ export const PERMISSIONS = {
   DEPARTMENTS_MANAGE: "departments:manage",
   CATEGORIES_MANAGE: "categories:manage",
   REPORTS_VIEW: "reports:view",
+  REPORTS_EXPORT: "reports:export",
+  REPORTS_ADMIN: "reports:admin",
   SLA_MANAGE: "sla:manage",
   AUDIT_READ: "audit:read",
   SETTINGS_MANAGE: "settings:manage",
   NOTIFICATIONS_SEND: "notifications:send",
   KNOWLEDGE_BASE_MANAGE: "knowledge-base:manage",
+  SERVICE_STATUS_MANAGE: "service_status.manage",
 } as const;
 
 export type PermissionCode = typeof PERMISSIONS[keyof typeof PERMISSIONS];

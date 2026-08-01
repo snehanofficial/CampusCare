@@ -1,2 +1,1 @@
-// Main entry point for feature maintenance
-export {};
+export * from "./pages/MaintenancePage.js";

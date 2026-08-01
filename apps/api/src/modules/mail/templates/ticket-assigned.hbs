@@ -1,0 +1,31 @@
+<span class="badge badge-info">Ticket Assigned</span>
+<h1>New Ticket Assignment Alert</h1>
+<p>Hello {{recipientName}},</p>
+<p>The following support ticket has been assigned to you for resolution. Please review the ticket details, investigate the issue, and update the status accordingly.</p>
+
+<div class="meta-box">
+  <table>
+    <tr>
+      <td class="meta-label">Ticket ID:</td>
+      <td class="meta-value"><strong>{{ticketNumber}}</strong></td>
+    </tr>
+    <tr>
+      <td class="meta-label">Subject:</td>
+      <td class="meta-value">{{title}}</td>
+    </tr>
+    <tr>
+      <td class="meta-label">Priority:</td>
+      <td class="meta-value">{{priority}}</td>
+    </tr>
+    <tr>
+      <td class="meta-label">Description:</td>
+      <td class="meta-value">{{description}}</td>
+    </tr>
+  </table>
+</div>
+
+<p>You can access the ticket details and begin working on it by clicking the button below:</p>
+
+{{button "Review & Work Ticket" actionUrl}}
+
+<p style="margin-top: 24px;">Regards,<br/>CampusCare Queue Dispatcher</p>
