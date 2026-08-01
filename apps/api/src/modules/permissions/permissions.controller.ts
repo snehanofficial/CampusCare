@@ -11,4 +11,13 @@ export class PermissionsController {
       next(err);
     }
   }
+
+  static async getRegistry(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await PermissionsService.getRegistry();
+      sendSuccess(res, result);
+    } catch (err) {
+      next(err);
+    }
+  }
 }

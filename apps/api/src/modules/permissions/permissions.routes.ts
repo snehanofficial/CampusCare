@@ -20,3 +20,15 @@ permissionsRouter.use(authenticate);
  *         description: Operation successful
  */
 permissionsRouter.get("/", PermissionsController.getSummary);
+
+/**
+ * @swagger
+ * /api/v1/permissions/registry:
+ *   get:
+ *     summary: Full permission registry grouped by category
+ *     tags: [Permissions]
+ *     responses:
+ *       200:
+ *         description: Operation successful
+ */
+permissionsRouter.get("/registry", authenticate, PermissionsController.getRegistry);

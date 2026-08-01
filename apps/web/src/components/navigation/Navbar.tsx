@@ -4,6 +4,7 @@ import { NotificationBell } from "./NotificationBell.js";
 import { ThemeSwitch } from "./ThemeSwitch.js";
 import { DensitySwitch } from "./DensitySwitch.js";
 import { UserMenu } from "./UserMenu.js";
+import { TemporaryAccessIndicator } from "../../features/privileges/components/TemporaryAccessIndicator.js";
 
 interface NavbarProps {
   onMobileMenuToggle: () => void;
@@ -43,6 +44,7 @@ export function Navbar({ onMobileMenuToggle }: NavbarProps) {
         </button>
 
         <div className="flex items-center gap-2">
+          <TemporaryAccessIndicator />
           <DensitySwitch />
           <NotificationBell />
           <ThemeSwitch />

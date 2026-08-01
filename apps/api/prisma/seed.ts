@@ -295,6 +295,147 @@ async function main() {
     console.log("✓ Created technician user: tech@campuscare.edu / TechPassword123!");
   }
 
+  // 10. Seed GTPE (Granular Temporary Privilege Escalation) permissions
+  // Additive: these are upserted after the role mappings above so the existing
+  // ROLE_SEED_DATA-driven sync is untouched.
+  console.log("Seeding GTPE privilege permissions...");
+  const gtpePermissions = [
+    {
+      code: "privileges:request",
+      displayName: "Request Temporary Access",
+      description: "Submit a request for time-boxed elevated permissions",
+      category: "Privileges",
+      groupLabel: "Access Governance",
+    },
+    {
+      code: "privileges:approve",
+      displayName: "Approve Temporary Access",
+      description: "Review, approve or reject temporary access requests",
+      category: "Privileges",
+      groupLabel: "Access Governance",
+    },
+    {
+      code: "privileges:grant",
+      displayName: "Grant Temporary Access",
+      description: "Directly grant and revoke time-boxed permissions",
+      category: "Privileges",
+      groupLabel: "Access Governance",
+    },
+    {
+      code: "privileges:manage",
+      displayName: "Manage Privilege Policies",
+      description: "Manage permission templates and approval policies",
+      category: "Privileges",
+      groupLabel: "Access Governance",
+    },
+  ];
+
+  for (const perm of gtpePermissions) {
+    await prisma.permission.upsert({
+      where: { code: perm.code },
+      update: {
+        displayName: perm.displayName,
+        description: perm.description,
+        category: perm.category,
+        groupLabel: perm.groupLabel,
+      },
+      create: perm,
+    });
+  }
+
+  // Map GTPE permissions onto roles (additive; existing mappings preserved).
+  const gtpeRoleMap: Record<string, string[]> = {
+    SYSTEM_ADMIN: ["privileges:request", "privileges:approve", "privileges:grant", "privileges:manage"],
+    DEPT_ADMIN: ["privileges:request", "privileges:approve", "privileges:grant"],
+    TECHNICIAN: ["privileges:request"],
+    FACULTY: ["privileges:request"],
+    STUDENT: ["privileges:request"],
+  };
+
+  for (const [roleName, codes] of Object.entries(gtpeRoleMap)) {
+    const role = await prisma.role.findUnique({ where: { name: roleName } });
+    if (!role) continue;
+    const perms = await prisma.permission.findMany({ where: { code: { in: codes } } });
+    await prisma.rolePermission.createMany({
+      data: perms.map((p) => ({ roleId: role.id, permissionId: p.id })),
+      skipDuplicates: true,
+    });
+  }
+  console.log(`✓ Seeded ${gtpePermissions.length} GTPE permissions and role mappings.`);
+
+  // 11. Seed default approval policies (one per permission category)
+  console.log("Seeding GTPE approval policies...");
+  const approvalPolicies = [
+    { permissionCategory: "Tickets", approvalLevel: "LOW", approverRole: "DEPT_ADMIN", maxDurationMinutes: 480 },
+    { permissionCategory: "Assets", approvalLevel: "MEDIUM", approverRole: "DEPT_ADMIN", maxDurationMinutes: 240 },
+    { permissionCategory: "Inventory", approvalLevel: "MEDIUM", approverRole: "DEPT_ADMIN", maxDurationMinutes: 240 },
+    { permissionCategory: "Users", approvalLevel: "HIGH", approverRole: "SYSTEM_ADMIN", maxDurationMinutes: 120 },
+    { permissionCategory: "Roles", approvalLevel: "CRITICAL", approverRole: "SYSTEM_ADMIN", maxDurationMinutes: 60 },
+    { permissionCategory: "Privileges", approvalLevel: "CRITICAL", approverRole: "SYSTEM_ADMIN", maxDurationMinutes: 60 },
+    { permissionCategory: "Settings", approvalLevel: "CRITICAL", approverRole: "SYSTEM_ADMIN", maxDurationMinutes: 60 },
+    { permissionCategory: "Reports", approvalLevel: "LOW", approverRole: "DEPT_ADMIN", maxDurationMinutes: 480 },
+    { permissionCategory: "Analytics", approvalLevel: "LOW", approverRole: "DEPT_ADMIN", maxDurationMinutes: 480 },
+  ];
+
+  for (const policy of approvalPolicies) {
+    await prisma.approvalPolicy.upsert({
+      where: { permissionCategory: policy.permissionCategory },
+      update: {
+        approvalLevel: policy.approvalLevel,
+        approverRole: policy.approverRole,
+        maxDurationMinutes: policy.maxDurationMinutes,
+      },
+      create: { ...policy, autoApprove: false, isActive: true },
+    });
+  }
+  console.log(`✓ Seeded ${approvalPolicies.length} approval policies.`);
+
+  // 12. Seed example permission templates
+  console.log("Seeding GTPE permission templates...");
+  const templates = [
+    {
+      name: "Emergency Ticket Escalation",
+      description: "Full ticket queue control for handling a live incident",
+      defaultDurationMinutes: 120,
+      permissionCodes: ["tickets:read_all", "tickets:update_all", "tickets:assign"],
+    },
+    {
+      name: "Temporary Asset Auditor",
+      description: "Read-only access to the asset and inventory registers for an audit window",
+      defaultDurationMinutes: 480,
+      permissionCodes: ["assets:read", "inventory:read", "reports:read"],
+    },
+  ];
+
+  for (const template of templates) {
+    const perms = await prisma.permission.findMany({
+      where: { code: { in: template.permissionCodes } },
+    });
+    if (perms.length === 0) {
+      console.warn(`  ⚠️ Template "${template.name}" skipped: no matching permissions found.`);
+      continue;
+    }
+    const created = await prisma.permissionTemplate.upsert({
+      where: { name: template.name },
+      update: {
+        description: template.description,
+        defaultDurationMinutes: template.defaultDurationMinutes,
+        isActive: true,
+      },
+      create: {
+        name: template.name,
+        description: template.description,
+        defaultDurationMinutes: template.defaultDurationMinutes,
+        isActive: true,
+      },
+    });
+    await prisma.permissionTemplateItem.createMany({
+      data: perms.map((p) => ({ templateId: created.id, permissionId: p.id })),
+      skipDuplicates: true,
+    });
+    console.log(`  ✓ Template "${created.name}": ${perms.length} permissions.`);
+  }
+
   console.log("🌱 Database seed complete!");
 }
 
