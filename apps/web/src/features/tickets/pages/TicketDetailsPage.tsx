@@ -131,6 +131,7 @@ export function TicketDetailsPage() {
   const [showReopenInput, setShowReopenInput] = useState(false);
   // Technician quick-status state
   const [techStatus, setTechStatus] = useState("");
+  const [techRemarks, setTechRemarks] = useState("");
 
   // ── Queries ─────────────────────────────────────────────────────────────────
   const { data: ticket, isLoading, error } = useQuery({
@@ -142,6 +143,7 @@ export function TicketDetailsPage() {
   const { data: techUsersRes } = useQuery({
     queryKey: ["users", "technicians"],
     queryFn: () => userRepository.list({ filters: { role: "TECHNICIAN" }, pageSize: 100 }),
+    enabled: canAssign,
   });
   const technicians = techUsersRes?.data ?? [];
 
@@ -226,6 +228,22 @@ export function TicketDetailsPage() {
         })
         .catch(err => toast.error("Failed to link incident: " + err.message));
     }
+  };
+
+  const handleTechStatusUpdate = () => {
+    if (!techStatus) return;
+    updateMutation.mutate(
+      { status: techStatus },
+      {
+        onSuccess: () => {
+          if (techRemarks.trim()) {
+            addCommentMutation.mutate({ content: techRemarks.trim(), isInternal: false });
+          }
+          setTechStatus("");
+          setTechRemarks("");
+        },
+      },
+    );
   };
 
   const handlePostComment = (e: React.FormEvent) => {
@@ -348,11 +366,8 @@ export function TicketDetailsPage() {
           {isTechnician && !isResolved && ticket.status !== "CLOSED" && (
             <div className="flex items-center gap-2">
               <Select
-                value={techStatus || ticket.status}
-                onValueChange={(val) => {
-                  setTechStatus(val);
-                  updateMutation.mutate({ status: val });
-                }}
+                value={techStatus}
+                onValueChange={setTechStatus}
               >
                 <SelectTrigger className="text-xs h-8 w-36 bg-card">
                   <SelectValue placeholder="Change status..." />
@@ -366,6 +381,42 @@ export function TicketDetailsPage() {
           )}
         </div>
       </div>
+
+      {/* Technician Status Update Remarks Box */}
+      {isTechnician && !isResolved && ticket.status !== "CLOSED" && techStatus && (
+        <Card className="border-primary/30 bg-primary/5 max-w-xl">
+          <CardHeader className="p-3">
+            <CardTitle className="text-xs text-primary font-bold">
+              Remarks — Mark as {techStatus === "IN_PROGRESS" ? "In Progress" : "Resolved"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0 space-y-2">
+            <Textarea
+              value={techRemarks}
+              onChange={(e) => setTechRemarks(e.target.value)}
+              placeholder="Optional remarks about the work performed..."
+              className="text-xs"
+              rows={2}
+            />
+            <div className="flex gap-2 justify-end">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => { setTechStatus(""); setTechRemarks(""); }}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleTechStatusUpdate}
+                disabled={updateMutation.isPending}
+              >
+                Update Status
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Reopen Action Reason Box */}
       {showReopenInput && (

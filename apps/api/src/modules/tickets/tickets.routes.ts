@@ -9,14 +9,14 @@ export const ticketsRouter = Router();
 ticketsRouter.get(
   "/",
   authenticate,
-  authorizeAny("tickets:read", "tickets:read_own"),
+  authorizeAny("tickets:read_all", "technician:assigned:view", "tickets:read_own"),
   TicketsController.list,
 );
 
 ticketsRouter.get(
   "/:id",
   authenticate,
-  authorizeAny("tickets:read", "tickets:read_own"),
+  authorizeAny("tickets:read_all", "technician:ticket:view", "tickets:read_own"),
   TicketsController.getById,
 );
 
@@ -30,14 +30,18 @@ ticketsRouter.post(
 ticketsRouter.put(
   "/:id",
   authenticate,
-  authorizeAny("tickets:manage", "tickets:update_own"),
+  authorizeAny(
+    "tickets:update_all",
+    "technician:ticket:update-status",
+    "tickets:update_own",
+  ),
   TicketsController.update,
 );
 
 ticketsRouter.delete(
   "/:id",
   authenticate,
-  authorize("tickets:manage"),
+  authorize("tickets:delete"),
   TicketsController.delete,
 );
 
@@ -45,21 +49,21 @@ ticketsRouter.delete(
 ticketsRouter.post(
   "/:id/comments",
   authenticate,
-  authorizeAny("tickets:read", "tickets:read_own"), // Any user who can read tickets can comment
+  authorizeAny("tickets:read_all", "technician:ticket:view", "tickets:read_own"), // Any user who can read tickets can comment
   TicketsController.addComment,
 );
 
 ticketsRouter.delete(
   "/:id/comments/:commentId",
   authenticate,
-  authorize("tickets:manage"),
+  authorize("tickets:delete"),
   TicketsController.deleteComment,
 );
 
 ticketsRouter.post(
   "/merge",
   authenticate,
-  authorize("tickets:manage"),
+  authorize("tickets:update_all"),
   TicketsController.merge,
 );
 
@@ -78,7 +82,7 @@ ticketsRouter.post(
 ticketsRouter.post(
   "/auto-close",
   authenticate,
-  authorize("tickets:manage"),
+  authorize("tickets:delete"),
   TicketsController.autoClose,
 );
 

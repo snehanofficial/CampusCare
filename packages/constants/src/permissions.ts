@@ -67,6 +67,28 @@ export const PERMISSION_REGISTRY: readonly PermissionEntry[] = [
     category: "Tickets",
     groupLabel: "Support Operations",
   },
+  // ─── Technician Operations ──────────────────────────────────────────────────
+  {
+    code: "technician:assigned:view",
+    displayName: "View Assigned Queue",
+    description: "List only the tickets assigned to this technician",
+    category: "Tickets",
+    groupLabel: "Support Operations",
+  },
+  {
+    code: "technician:ticket:view",
+    displayName: "View Assigned Ticket",
+    description: "Open the detail view of a ticket assigned to this technician",
+    category: "Tickets",
+    groupLabel: "Support Operations",
+  },
+  {
+    code: "technician:ticket:update-status",
+    displayName: "Update Assigned Ticket Status",
+    description: "Move an assigned ticket to In Progress or Resolved",
+    category: "Tickets",
+    groupLabel: "Support Operations",
+  },
   // ─── Assets ─────────────────────────────────────────────────────────────────
   {
     code: "assets:create",
@@ -207,6 +229,9 @@ export const PERMISSIONS = {
   TICKETS_ASSIGN: "tickets:assign",
   TICKETS_RESOLVE: "tickets:resolve",
   TICKETS_DELETE: "tickets:delete",
+  TECHNICIAN_ASSIGNED_VIEW: "technician:assigned:view",
+  TECHNICIAN_TICKET_VIEW: "technician:ticket:view",
+  TECHNICIAN_TICKET_UPDATE_STATUS: "technician:ticket:update-status",
   ASSETS_CREATE: "assets:create",
   ASSETS_READ: "assets:read",
   ASSETS_UPDATE: "assets:update",
