@@ -186,8 +186,11 @@ model Ticket {
   closedAt     DateTime? @map("closed_at")
   resolvedAt   DateTime? @map("resolved_at")
   dueAt        DateTime? @map("due_at")       // SLA deadline
+  reopenCount  Int       @default(0) @map("reopen_count")
+  reopenReason String?   @map("reopen_reason")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
+
 
   creator     User               @relation("CreatedTickets", fields: [creatorId], references: [id])
   assignee    User?              @relation("AssignedTickets", fields: [assigneeId], references: [id])
@@ -449,4 +452,43 @@ model KnowledgeBase {
 
   @@index([category])
   @@map("knowledge_base")
+}
+
+// ---------------------------------------------------------
+// Workflow Automation Engine Models
+// ---------------------------------------------------------
+
+model AutomationRule {
+  id             String   @id @default(uuid()) @map("id")
+  name           String   @unique @map("name")
+  description    String?  @map("description")
+  isActive       Boolean  @default(true) @map("is_active")
+  priority       Int      @default(0) @map("priority")       // Lower number = runs first
+  trigger        String   @map("trigger")                    // ON_CREATE | ON_UPDATE | ON_STATUS_CHANGE
+  conditions     Json     @map("conditions")                 // [{field, operator, value}]
+  actions        Json     @map("actions")                    // [{type, value}]
+  executionCount Int      @default(0) @map("execution_count")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  logs AutomationLog[]
+
+  @@index([isActive])
+  @@index([trigger])
+  @@map("automation_rules")
+}
+
+model AutomationLog {
+  id         String   @id @default(uuid()) @map("id")
+  ruleId     String   @map("rule_id")
+  ticketId   String   @map("ticket_id")
+  triggered  Boolean  @map("triggered")
+  actionsRun Json     @map("actions_run")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  rule AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@index([ruleId])
+  @@index([ticketId])
+  @@map("automation_logs")
 }

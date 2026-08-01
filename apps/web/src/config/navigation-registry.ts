@@ -42,7 +42,7 @@ export const NAVIGATION_REGISTRY: readonly NavigationSection[] = [
       { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { label: "Service Status", href: "/service-status", icon: Activity },
       { label: "Notifications", href: "/notifications", icon: Bell },
-      { label: "UI Lab / Playground", href: "/playground", icon: FlaskConical },
+      { label: "UI Lab / Playground", href: "/playground", icon: FlaskConical, permission: "settings:manage" },
     ],
   },
   {
@@ -104,6 +104,12 @@ export const NAVIGATION_REGISTRY: readonly NavigationSection[] = [
         label: "Analytics",
         href: "/analytics",
         icon: TrendingUp,
+        permission: "reports:view",
+      },
+      {
+        label: "SLA Policies",
+        href: "/sla",
+        icon: Shield,
         permission: "reports:view",
       },
       {

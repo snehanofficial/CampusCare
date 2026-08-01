@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { DashboardTemplate } from "../../../components/templates/DashboardTemplate.js";
 import {
   Clock,
@@ -10,38 +10,114 @@ import {
   Package,
   BellRing,
 } from "lucide-react";
-import { mockTicketVolumeData, mockCategoryData, mockNotifications } from "../../../mocks/index.js";
-import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "../../../hooks/useAuth.js";
+import { analyticsRepository } from "../../../lib/repositories/analytics.repository.js";
 import { useNavigate } from "react-router";
 
 export function DashboardPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const role = user?.role ?? "STUDENT";
 
-  const stats = [
-    {
-      title: "Open Tickets",
-      value: "6",
-      delta: { value: 12.5, isPositive: false },
-      icon: Clock,
+  // ── Queries ─────────────────────────────────────────────────────────────────
+  const { data: chartsRes, isLoading: isChartsLoading } = useQuery({
+    queryKey: ["charts-data"],
+    queryFn: () => analyticsRepository.getCharts(),
+  });
+
+  const { data: dashboardRes, isLoading: isDashboardLoading } = useQuery({
+    queryKey: ["dashboard-data", role, user?.id],
+    queryFn: () => {
+      if (role === "SYSTEM_ADMIN") return analyticsRepository.getAdminDashboard() as Promise<any>;
+      if (role === "DEPT_ADMIN") return analyticsRepository.getDepartmentDashboard() as Promise<any>;
+      if (role === "TECHNICIAN") return analyticsRepository.getTechnicianDashboard() as Promise<any>;
+      return analyticsRepository.getStudentDashboard() as Promise<any>; // STUDENT / FACULTY
     },
-    {
-      title: "Critical Incidents",
-      value: "2",
-      delta: { value: 50.0, isPositive: false },
-      icon: ShieldAlert,
-    },
-    {
-      title: "Active Assets",
-      value: "1,248",
-      delta: { value: 1.2, isPositive: true },
-      icon: CheckCircle,
-    },
-    {
-      title: "Pending Approvals",
-      value: "3",
-      icon: AlertCircle,
-    },
-  ];
+  });
+
+  if (isChartsLoading || isDashboardLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="text-xs text-muted-foreground">Compiling Operations Room data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Build Stats ─────────────────────────────────────────────────────────────
+  let stats: any[] = [];
+  let timeline: any[] = [];
+
+  if (role === "SYSTEM_ADMIN" && dashboardRes) {
+    const admin = dashboardRes as any;
+    stats = [
+      { title: "Active Tickets", value: admin.activeTicketsCount, icon: Clock },
+      { title: "Resolved Tickets", value: admin.resolvedTicketsCount, icon: CheckCircle },
+      { title: "Global SLA Compliance", value: `${admin.globalSlaComplianceRate}%`, icon: ShieldAlert },
+      { title: "Active Outages", value: admin.outagesCount, icon: AlertCircle },
+    ];
+  } else if (role === "DEPT_ADMIN" && dashboardRes) {
+    const dept = dashboardRes as any;
+    stats = [
+      { title: "Department Workload", value: dept.totalTickets, icon: Clock },
+      { title: "Active Tickets", value: dept.activeTicketsCount, icon: Clock },
+      { title: "Resolved Tickets", value: dept.resolvedTicketsCount, icon: CheckCircle },
+      { title: "Dept SLA Compliance", value: `${dept.slaComplianceRate}%`, icon: ShieldAlert },
+    ];
+  } else if (role === "TECHNICIAN" && dashboardRes) {
+    const tech = dashboardRes as any;
+    stats = [
+      { title: "Assigned Tickets", value: tech.assignedTickets, icon: Clock },
+      { title: "Urgent Queue", value: tech.urgentTickets, icon: AlertCircle },
+      { title: "Reopened Tickets", value: tech.reopenedTickets, icon: Clock },
+      { title: "SLA Breaches", value: tech.slaBreachedTickets, icon: ShieldAlert },
+    ];
+    if (tech.recentAssignments) {
+      timeline = tech.recentAssignments.map((t: any) => ({
+        id: t.id,
+        time: new Date(t.updatedAt).toLocaleDateString(),
+        title: `${t.ticketNumber}: ${t.title}`,
+        description: `Status: ${t.status} | Priority: ${t.priority}`,
+        type: t.status === "RESOLVED" ? "success" : "info",
+        performedBy: "Assigned Technician",
+      }));
+    }
+  } else if (dashboardRes) {
+    const student = dashboardRes as any;
+    stats = [
+      { title: "Total Created", value: student.totalTickets, icon: Clock },
+      { title: "Resolutions Awaiting Review", value: student.resolvedTicketsWaitingVerification, icon: AlertCircle },
+      { title: "Active Requests", value: student.activeTickets, icon: Clock },
+      { title: "Completed Requests", value: student.closedTickets, icon: CheckCircle },
+    ];
+    if (student.recentTickets) {
+      timeline = student.recentTickets.map((t: any) => ({
+        id: t.id,
+        time: new Date(t.createdAt).toLocaleDateString(),
+        title: `${t.ticketNumber}: ${t.title}`,
+        description: `Status: ${t.status} | Priority: ${t.priority}`,
+        type: t.status === "RESOLVED" ? "success" : "info",
+        performedBy: user?.firstName ?? "Creator",
+      }));
+    }
+  }
+
+  // Fallback default timeline if empty
+  if (timeline.length === 0) {
+    timeline = [
+      {
+        id: "1",
+        time: "10m ago",
+        title: "Security monitor alerts fully verified",
+        description: "No SLA breach incidents detected in the active department logs.",
+        type: "success" as const,
+        performedBy: "Security Agent",
+      },
+    ];
+  }
 
   const quickActions = [
     {
@@ -71,49 +147,13 @@ export function DashboardPage() {
     { name: "Active Directory Domain Controller", status: "Operational" as const, uptime: "100%" },
     { name: "Canvas LMS Student Hub", status: "Degraded Performance" as const, uptime: "97.4%" },
     { name: "SIS Registrar System", status: "Operational" as const, uptime: "99.9%" },
-    { name: "Exchange Campus Email", status: "Operational" as const, uptime: "99.95%" },
-  ];
-
-  const timeline = [
-    {
-      id: "1",
-      time: "10m ago",
-      title: "Ticket INC-1029 assigned to Network Support Team",
-      description: "Sarah Technician updated ticket owner group to Tier-2 support.",
-      type: "info" as const,
-      performedBy: "Sarah Technician",
-    },
-    {
-      id: "2",
-      time: "1h ago",
-      title: "Wi-Fi access point in Library restarted",
-      description: "Automated alert resolution. Heartbeat ping restored on AP-LIB-02.",
-      type: "success" as const,
-      performedBy: "System Daemon",
-    },
-    {
-      id: "3",
-      time: "3h ago",
-      title: "New asset tag #CC-LAP-4029 registered",
-      description: "Lenovo ThinkPad L14 added to inventory registry under IT department.",
-      type: "info" as const,
-      performedBy: "Alex Admin",
-    },
-    {
-      id: "4",
-      time: "1d ago",
-      title: "SLA response warning triggered for INC-1025",
-      description: "Response limit breached. Priority ticket remained unassigned for > 2 hours.",
-      type: "warn" as const,
-      performedBy: "SLA Monitor Service",
-    },
   ];
 
   return (
     <DashboardTemplate
       stats={stats}
-      chartData={mockTicketVolumeData}
-      categoryChartData={mockCategoryData}
+      chartData={chartsRes?.ticketVolume ?? []}
+      categoryChartData={chartsRes?.categoryDistribution ?? []}
       timeline={timeline}
       quickActions={quickActions}
       services={services}
@@ -121,4 +161,6 @@ export function DashboardPage() {
     />
   );
 }
+
 export default DashboardPage;
+

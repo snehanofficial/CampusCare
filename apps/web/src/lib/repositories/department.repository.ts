@@ -1,6 +1,7 @@
 import { IRepository } from "./base.repository.js";
 import { RepositoryQueryParams, RepositoryListResponse } from "./types.js";
 import { isMockEnabled, simulateDelay, mockDepartments } from "../../mocks/index.js";
+import { apiClient } from "../api-client.js";
 
 export interface MockDepartment {
   id: string;
@@ -89,19 +90,46 @@ class MockDepartmentRepository implements IDepartmentRepository {
 
 class HttpDepartmentRepository implements IDepartmentRepository {
   async list(params?: RepositoryQueryParams): Promise<RepositoryListResponse<MockDepartment>> {
-    throw new Error("HTTP Department repository not connected yet.");
+    const { data } = await apiClient.get<{ success: boolean; data: MockDepartment[] | RepositoryListResponse<MockDepartment> }>("/departments", {
+      params: {
+        search: params?.search,
+        page: params?.page,
+        pageSize: params?.pageSize,
+        ...params?.filters,
+      },
+    });
+
+    // Handle both raw list and paginated response formats if the backend returns array
+    if (Array.isArray(data.data)) {
+      return {
+        data: data.data,
+        total: data.data.length,
+        page: 1,
+        pageSize: data.data.length,
+        pageCount: 1,
+      };
+    }
+    return data.data;
   }
+
   async get(id: string): Promise<MockDepartment> {
-    throw new Error("HTTP Department repository not connected yet.");
+    const { data } = await apiClient.get<{ success: boolean; data: MockDepartment }>(`/departments/${id}`);
+    return data.data;
   }
+
   async create(data: Partial<MockDepartment>): Promise<MockDepartment> {
-    throw new Error("HTTP Department repository not connected yet.");
+    const { data: res } = await apiClient.post<{ success: boolean; data: MockDepartment }>("/departments", data);
+    return res.data;
   }
+
   async update(id: string, data: Partial<MockDepartment>): Promise<MockDepartment> {
-    throw new Error("HTTP Department repository not connected yet.");
+    const { data: res } = await apiClient.put<{ success: boolean; data: MockDepartment }>(`/departments/${id}`, data);
+    return res.data;
   }
+
   async delete(id: string): Promise<boolean> {
-    throw new Error("HTTP Department repository not connected yet.");
+    const { data: res } = await apiClient.delete<{ success: boolean; data: boolean }>(`/departments/${id}`);
+    return res.data;
   }
 }
 

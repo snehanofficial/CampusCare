@@ -8,6 +8,8 @@ export interface MockUser {
   phone?: string;
   status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
   createdAt: string;
+  createdTicketsCount?: number;
+  assignedTicketsCount?: number;
 }
 
 export const mockUsers: MockUser[] = [

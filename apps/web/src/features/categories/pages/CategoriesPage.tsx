@@ -6,12 +6,13 @@ import { Input } from "../../../components/ui/input.js";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Tag } from "../../../components/ui/tag.js";
-import { FolderTree, Plus, Trash } from "lucide-react";
+import { Plus, Trash } from "lucide-react";
 import { toast } from "sonner";
 
 export function CategoriesPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<Record<string, string>>({
     active: "",
   });
@@ -22,11 +23,13 @@ export function CategoriesPage() {
   const [sla, setSla] = useState("8");
 
   const { data: response, isLoading, error, refetch } = useQuery({
-    queryKey: ["categories", search, filters],
+    queryKey: ["categories", search, filters, page],
     queryFn: () =>
       categoryRepository.list({
         search,
         filters,
+        page,
+        pageSize: 10,
       }),
   });
 
@@ -40,19 +43,25 @@ export function CategoriesPage() {
       setCode("");
       setSla("8");
     },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to create category.");
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => categoryRepository.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-      toast.success("Category deleted.");
+      toast.success("Category deleted or deactivated.");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to delete category.");
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !code.trim()) return;
+    if (!name.trim()) return;
     createMutation.mutate({ name, code, defaultSlaHours: parseInt(sla, 10), active: true });
   };
 
@@ -97,7 +106,11 @@ export function CategoriesPage() {
       header: "Actions",
       cell: ({ row }) => (
         <button
-          onClick={() => deleteMutation.mutate(row.original.id)}
+          onClick={() => {
+            if (window.confirm(`Are you sure you want to delete category: ${row.original.name}?`)) {
+              deleteMutation.mutate(row.original.id);
+            }
+          }}
           className="p-1 hover:bg-destructive/5 rounded text-muted-foreground hover:text-destructive cursor-pointer focus:outline-none"
           title="Delete"
         >
@@ -117,7 +130,10 @@ export function CategoriesPage() {
         loading={isLoading}
         error={error ? error.message : null}
         searchQuery={search}
-        onSearchChange={setSearch}
+        onSearchChange={(val) => {
+          setSearch(val);
+          setPage(1);
+        }}
         filterOptions={[
           {
             key: "active",
@@ -129,10 +145,14 @@ export function CategoriesPage() {
           },
         ]}
         activeFilters={filters}
-        onFilterChange={(k, v) => setFilters((prev) => ({ ...prev, [k]: v }))}
+        onFilterChange={(k, v) => {
+          setFilters((prev) => ({ ...prev, [k]: v }));
+          setPage(1);
+        }}
         onClearFilters={() => {
           setSearch("");
           setFilters({ active: "" });
+          setPage(1);
         }}
         actions={[
           {
@@ -141,9 +161,9 @@ export function CategoriesPage() {
             icon: Plus,
           },
         ]}
-        pageIndex={response?.page || 1}
+        pageIndex={page}
         pageCount={response?.pageCount || 1}
-        onPageChange={() => {}}
+        onPageChange={(p) => setPage(p)}
         onRetry={refetch}
       />
 
