@@ -1,3 +1,4 @@
+import { registerSW } from "virtual:pwa-register";
 import { apiClient } from "../../../lib/api-client.js";
 
 function urlBase64ToUint8Array(base64String: string) {
@@ -52,24 +53,46 @@ export class PushNotificationService {
         throw new Error("Push notifications are not supported in this browser");
       }
 
-      // 1. Register service worker
-      const registration = await navigator.serviceWorker.register("/sw.js", {
-        scope: "/",
-      });
-      await navigator.serviceWorker.ready;
+      // 1. Wipe out any stale service worker registrations left over from earlier
+      // (broken) attempts on this origin/scope. A leftover registration whose
+      // pushManager subscription is pinned to an old/rotated VAPID key is what
+      // makes Chrome throw "AbortError: Registration failed - push service error"
+      // when we try to subscribe with the current key.
+      const staleRegistrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(staleRegistrations.map((r) => r.unregister()));
 
-      // 2. Subscribe with VAPID Key
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey),
-      });
+      // 2. Register a fresh service worker via vite-plugin-pwa (resolves the
+      // correct SW URL/type for both dev and prod builds instead of hardcoding /sw.js)
+      registerSW({ immediate: true });
+      const registration = await navigator.serviceWorker.ready;
+
+      // 3. Subscribe with VAPID key, with one retry that force-clears the
+      // registration again if the push service still reports a conflict.
+      const subscribeOnce = () =>
+        registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey),
+        });
+
+      let subscription: PushSubscription;
+      try {
+        subscription = await subscribeOnce();
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") {
+          const stale = await registration.pushManager.getSubscription();
+          if (stale) await stale.unsubscribe();
+          subscription = await subscribeOnce();
+        } else {
+          throw err;
+        }
+      }
 
       const subJson = subscription.toJSON();
       if (!subJson.endpoint || !subJson.keys?.p256dh || !subJson.keys?.auth) {
         throw new Error("Subscription object is missing critical keys");
       }
 
-      // 3. Send subscription object to backend
+      // 5. Send subscription object to backend
       const response = await apiClient.post("/push/subscribe", {
         endpoint: subJson.endpoint,
         keys: {

@@ -4,6 +4,16 @@ import { sendSuccess } from "../../middleware/response.js";
 import { createSlaPolicySchema, updateSlaPolicySchema } from "./sla.schema.js";
 
 export class SlaController {
+  // ── GET /sla ──────────────────────────────────────────────────────────────────
+  static async getSummary(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await SlaService.getSlaComplianceReport();
+      sendSuccess(res, result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
   // ── GET /sla/policies ────────────────────────────────────────────────────────
   static async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {

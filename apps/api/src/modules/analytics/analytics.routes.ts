@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { AnalyticsController } from "./analytics.controller.js";
 import { authenticate } from "../../middleware/authenticate.js";
+import { authorize } from "../../middleware/authorize.js";
 
 export const analyticsRouter = Router();
 
@@ -20,10 +21,6 @@ analyticsRouter.use(authenticate);
  *         description: Operation successful
  */
 analyticsRouter.get("/", AnalyticsController.getSummary);
-import { authorize } from "../../middleware/authorize.js";
-
-
-export const analyticsRouter = Router();
 
 analyticsRouter.get(
   "/student",

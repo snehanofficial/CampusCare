@@ -22,7 +22,6 @@ slaRouter.use(authenticate);
 slaRouter.get("/", SlaController.getSummary);
 import { authorize } from "../../middleware/authorize.js";
 
-export const slaRouter = Router();
 
 // ─── Compliance Dashboard ───────────────────────────────────────────────────
 slaRouter.get(

@@ -57,9 +57,9 @@ export function DataTable<TData, TValue>({
     manualPagination: true,
     columnResizeMode: "onChange",
     state: {
-      columnPinning,
-      columnSizing,
-      columnVisibility,
+      columnPinning: columnPinning || { left: [], right: [] },
+      columnSizing: columnSizing || {},
+      columnVisibility: columnVisibility || {},
     },
     onColumnPinningChange: onColumnPinningChange ? (updater) => {
       if (typeof updater === "function") {

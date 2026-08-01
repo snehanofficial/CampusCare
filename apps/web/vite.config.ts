@@ -19,6 +19,7 @@ export default defineConfig(({ mode }) => {
         srcDir: "src/workers",
         filename: "sw.ts",
         registerType: "autoUpdate",
+        injectRegister: false,
         devOptions: {
           enabled: true,
           type: "module",

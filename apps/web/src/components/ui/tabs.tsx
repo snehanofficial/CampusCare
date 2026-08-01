@@ -1,11 +1,6 @@
 import React, { createContext, useContext } from "react";
 import { cn } from "../../lib/utils.js";
 
-const TabsContext = createContext<{
-  value: string;
-  onValueChange: (value: string) => void;
-} | null>(null);
-
 interface TabsProps {
   value: string;
   onValueChange: (value: string) => void;
