@@ -6,6 +6,14 @@ CampusCare is a full-stack ITSM platform for managing campus IT support — tick
 
 ---
 
+## 🌐 Live Demo
+
+**Application:** https://bitcampuscare.vercel.app
+
+> **Note:** The demo uses seeded sample data. Use the demo credentials below to sign in.
+
+---
+
 ## 👥 Team
 
 | Role | Name | Register No. | Email | Department |
@@ -32,6 +40,9 @@ After running the database seed (`pnpm db:seed`), the following demo accounts ar
 
 ## Table of Contents
 
+- [Live Demo](#live-demo)
+- [Team](#team)
+- [Demo Credentials](#demo-credentials)
 - [Tech Stack](#tech-stack)
 - [Folder Structure](#folder-structure)
 - [Getting Started](#getting-started)
