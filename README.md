@@ -40,9 +40,9 @@ After running the database seed (`pnpm db:seed`), the following demo accounts ar
 
 ## Table of Contents
 
-- [Live Demo](#live-demo)
-- [Team](#team)
-- [Demo Credentials](#demo-credentials)
+- [Live Demo](#-live-demo)
+- [Team](#-team)
+- [Demo Credentials](#-demo-credentials)
 - [Tech Stack](#tech-stack)
 - [Folder Structure](#folder-structure)
 - [Getting Started](#getting-started)
