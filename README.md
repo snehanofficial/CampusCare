@@ -4,6 +4,32 @@
 
 CampusCare is a full-stack ITSM platform for managing campus IT support — tickets, incidents, assets, SLAs, automation, and role-based access — built as a pnpm monorepo with a feature-based architecture on both frontend and backend.
 
+---
+
+## 👥 Team
+
+| Role | Name | Register No. | Email | Department |
+|------|------|--------------|-------|------------|
+| **Team Lead** | **Snehan S** | 7376252IT351 | snehans.it25@bitsathy.ac.in | Department of Information Technology |
+| **Team Member** | **Rishabh M** | 7376252IT304 | rishabhm.it25@bitsathy.ac.in | Department of Information Technology |
+| **Team Member** | **Somasri S** | 7376252IT352 | somasris.it25@bitsathy.ac.in | Department of Information Technology |
+
+---
+
+## 🎮 Demo Credentials
+
+After running the database seed (`pnpm db:seed`), the following demo accounts are available for exploring CampusCare.
+
+| Role | Email | Password |
+|------|-------|----------|
+| 👑 **System Administrator** | `admin@campuscare.edu` | `AdminPassword123!` |
+| 🔧 **IT Technician** | `tech@campuscare.edu` | `TechPassword123!` |
+| 🎓 **Student** | `student@campuscare.edu` | `StudentPassword123!` |
+
+> **Note:** These are seeded demonstration accounts intended for local development and evaluation only.
+
+---
+
 ## Table of Contents
 
 - [Tech Stack](#tech-stack)
