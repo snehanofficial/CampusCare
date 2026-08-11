@@ -25,6 +25,9 @@ import { ticketRepository } from "../../../lib/repositories/ticket.repository.js
 import { userRepository } from "../../../lib/repositories/user.repository.js";
 import { apiClient } from "../../../lib/api-client.js";
 import { incidentRepository } from "../../../lib/repositories/incident.repository.js";
+import { useTechnicianAvailability, useTechnicianWorkload, useAutoAssign } from "../../technicians/hooks/index.js";
+import { resolveAvailabilityState } from "../../technicians/utils/index.js";
+import { Sparkles } from "lucide-react";
 import { Button } from "../../../components/ui/button.js";
 import { Card, CardHeader, CardTitle, CardContent } from "../../../components/ui/card.js";
 import { Input } from "../../../components/ui/input.js";
@@ -146,6 +149,16 @@ export function TicketDetailsPage() {
     enabled: canAssign,
   });
   const technicians = techUsersRes?.data ?? [];
+  const technicianIds = technicians.map((t: any) => t.id);
+
+  // Availability + live workload for the assignment dropdown — authoritative
+  // backend data (TECH-001), never computed here. A technician appearing
+  // "Unavailable" can still be picked (manual override is intentionally
+  // unrestricted, matching backend policy — see TicketsService.updateTicket),
+  // but the UI must never let that look like a valid, uneventful choice.
+  const { data: techAvailability } = useTechnicianAvailability(ticket?.departmentId, canAssign && technicianIds.length > 0);
+  const { data: techWorkload } = useTechnicianWorkload(technicianIds, canAssign && technicianIds.length > 0);
+  const autoAssignMutation = useAutoAssign();
 
   const { data: activeIncidentsRes } = useQuery({
     queryKey: ["incidents", "active"],
@@ -785,9 +798,21 @@ export function TicketDetailsPage() {
               {/* Assignee Allocator: only for Admin and Dept Admin */}
               {canAssign ? (
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide block">
-                    Assign Technician
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide block">
+                      Assign Technician
+                    </label>
+                    <button
+                      type="button"
+                      title="Automatically assign the eligible technician with the lowest current workload"
+                      disabled={autoAssignMutation.isPending}
+                      onClick={() => ticketId && autoAssignMutation.mutate(ticketId)}
+                      className="inline-flex items-center gap-1 text-[10px] font-bold text-primary hover:underline disabled:opacity-50 focus:outline-none"
+                    >
+                      <Sparkles className="size-3" />
+                      Auto-assign
+                    </button>
+                  </div>
                   <Select
                     value={ticket.assigneeId || "UNASSIGNED"}
                     onValueChange={handleAssignChange}
@@ -797,13 +822,35 @@ export function TicketDetailsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="UNASSIGNED">Unassigned</SelectItem>
-                      {technicians.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.firstName} {t.lastName}
-                        </SelectItem>
-                      ))}
+                      {technicians.map((t: any) => {
+                        const availability = techAvailability?.find((a) => a.technicianId === t.id) ?? null;
+                        const state = resolveAvailabilityState({
+                          isActive: t.status ? t.status === "ACTIVE" : (t.isActive ?? true),
+                          isManuallyUnavailable: availability?.isManuallyUnavailable ?? false,
+                          unavailableUntil: availability?.unavailableUntil ?? null,
+                        });
+                        const workload = techWorkload?.[t.id] ?? 0;
+                        return (
+                          <SelectItem key={t.id} value={t.id}>
+                            <div className="flex items-center gap-1.5">
+                              <span>{t.firstName} {t.lastName}</span>
+                              <span className="text-[10px] text-muted-foreground tabular-nums">
+                                ({workload} open)
+                              </span>
+                              {state !== "AVAILABLE" && (
+                                <Tag variant={state === "INACTIVE" ? "secondary" : "warning"} className="text-[9px] px-1 py-0">
+                                  {state === "INACTIVE" ? "Inactive" : "Unavailable"}
+                                </Tag>
+                              )}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
+                  <p className="text-[10px] text-muted-foreground">
+                    Manually assigning an unavailable technician overrides the automatic eligibility check.
+                  </p>
                 </div>
               ) : (
                 <div className="text-xs">

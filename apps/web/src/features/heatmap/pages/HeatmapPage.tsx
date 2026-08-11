@@ -83,7 +83,7 @@ export function HeatmapPage() {
     queryFn: () => heatmapRepository.getHealthConfig()
   });
 
-  const { data: departments } = useQuery({
+  const { data: departments = [] } = useQuery({
     queryKey: ["departments"],
     queryFn: () => departmentRepository.list().then(res => res.data)
   });

@@ -20,7 +20,9 @@ export const createIncidentSchema = z.object({
 
   rootCause: z.string().max(500).optional().nullable(),
 
-  ticketIds: z.array(z.string().uuid()).optional().default([]),
+  ticketIds: z.array(z.uuid()).optional().default([]),
+
+  serviceId: z.uuid().optional().nullable(),
 });
 
 export type CreateIncidentInput = z.infer<typeof createIncidentSchema>;
@@ -33,6 +35,7 @@ export const updateIncidentSchema = z.object({
   status: z.enum(["OPEN", "INVESTIGATING", "RESOLVED", "CLOSED"] as const).optional(),
   rootCause: z.string().max(500).optional().nullable(),
   ticketIds: z.array(z.string().uuid()).optional(),
+  serviceId: z.string().uuid().optional().nullable(),
 });
 
 export type UpdateIncidentInput = z.infer<typeof updateIncidentSchema>;

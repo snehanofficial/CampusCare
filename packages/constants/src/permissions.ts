@@ -234,6 +234,14 @@ export const PERMISSION_REGISTRY: readonly PermissionEntry[] = [
     category: "Service Status",
     groupLabel: "Administration",
   },
+  // ─── Technicians ────────────────────────────────────────────────────────────
+  {
+    code: "technicians:manage",
+    displayName: "Manage Technician Availability",
+    description: "Set or clear any technician's temporary unavailability, and view team workload",
+    category: "Technicians",
+    groupLabel: "Support Operations",
+  },
 ] as const;
 
 // Convenience lookup: code → entry
@@ -273,6 +281,7 @@ export const PERMISSIONS = {
   NOTIFICATIONS_SEND: "notifications:send",
   KNOWLEDGE_BASE_MANAGE: "knowledge-base:manage",
   SERVICE_STATUS_MANAGE: "service_status.manage",
+  TECHNICIANS_MANAGE: "technicians:manage",
 } as const;
 
 export type PermissionCode = typeof PERMISSIONS[keyof typeof PERMISSIONS];

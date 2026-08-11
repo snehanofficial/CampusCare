@@ -3,6 +3,8 @@ import { CreateRuleInput, UpdateRuleInput, RuleCondition, RuleAction } from "./a
 import { NotFoundError, ConflictError } from "../../utils/errors.js";
 import { prisma } from "../../database/prisma.js";
 import { logger } from "../../utils/logger.js";
+import { eventBus } from "../../utils/event-bus.js";
+import { TechniciansService } from "../technicians/technicians.service.js";
 import { Prisma } from "@prisma/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -69,16 +71,36 @@ async function executeAction(
     switch (action.type) {
       case "ASSIGN_TO":
         if (action.value) {
-          await prisma.ticket.update({
+          const updated = await prisma.ticket.update({
             where: { id: ticketId },
             data: {
               assignee: { connect: { id: action.value } },
               status: "ASSIGNED",
             },
           });
+          // AUTO-002: this direct-prisma path bypasses TicketsService.updateTicket
+          // entirely, so it must publish the notification event itself — same
+          // gap as EMAIL-002, just on a second code path for the same action.
+          eventBus.publish("ticket.assigned", {
+            ticketId,
+            ticketNumber: updated.ticketNumber,
+            assigneeId: action.value,
+            title: updated.title,
+          });
           executedActions.push(`ASSIGN_TO:${action.value}`);
         }
         break;
+
+      case "ASSIGN_BEST_TECHNICIAN": {
+        // Reuses TechniciansService.autoAssignTicket — the same race-safe,
+        // workload-aware selection used by the manual "auto-assign" endpoint —
+        // rather than duplicating the eligibility/workload logic here.
+        const result = await TechniciansService.autoAssignTicket(ticketId);
+        executedActions.push(
+          result.assigneeId ? `ASSIGN_BEST_TECHNICIAN:${result.assigneeId}` : `ASSIGN_BEST_TECHNICIAN:no_eligible_technician`,
+        );
+        break;
+      }
 
       case "SET_PRIORITY":
         if (action.value) {
@@ -132,7 +154,17 @@ async function executeAction(
         break;
     }
   } catch (err: any) {
-    logger.debug({ err: err.message, action }, "Automation action execution failed (non-fatal)");
+    logger.error(
+      { err: err.message, ticketId, action },
+      "Automation action execution failed (non-fatal to ticket write)",
+    );
+    // Persisted alongside SUCCEEDED entries in AutomationLog.actionsRun (no dedicated error
+    // column on that model), so keep this to a single line an admin can scan in a log list.
+    const firstLine = String(err.message ?? "unknown error")
+      .split("\n")
+      .find((line) => line.trim().length > 0);
+    const reason = (firstLine ?? "unknown error").trim().slice(0, 200);
+    executedActions.push(`FAILED:${action.type}:${reason}`);
   }
 }
 

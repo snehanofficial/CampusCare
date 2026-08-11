@@ -107,16 +107,20 @@ export class RecipientMapper {
       }
     }
 
-    // 6. Inventory low stock recipient resolution -> send to all IT/Facilities managers
-    if (catUpper === "INVENTORY") {
-      const managers = await prisma.user.findMany({
-        where: {
-          isActive: true,
-          role: { name: { in: ["TECHNICIAN", "DEPT_ADMIN", "SYSTEM_ADMIN"] } },
-        },
+    // 6. Inventory low stock recipient resolution. The caller (InventoryService)
+    // already resolves the full manager audience once and the notification
+    // listener loops per-manager, so this must resolve to just that one target
+    // user — NOT re-resolve "all managers" on every single call. Doing the
+    // latter turns an N-manager alert into an N*N email fan-out (every manager
+    // gets emailed once per manager, including duplicates of themselves).
+    if (catUpper === "INVENTORY" && params.userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: params.userId, isActive: true },
         select: { id: true, email: true },
       });
-      return managers.map((m) => ({ email: m.email, userId: m.id, recipientType: "ROLE" }));
+      if (user) {
+        return [{ email: user.email, userId: user.id, recipientType: "ROLE" }];
+      }
     }
 
     // Fallback if userId is provided

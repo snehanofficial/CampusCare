@@ -30,6 +30,8 @@ const TicketsPage = lazy(() => import("../../features/tickets/pages/TicketsPage.
 const TicketDetailsPage = lazy(() => import("../../features/tickets/pages/TicketDetailsPage.js"));
 const IncidentsPage = lazy(() => import("../../features/incidents/pages/IncidentsPage.js"));
 const IncidentDetailsPage = lazy(() => import("../../features/incidents/pages/IncidentDetailsPage.js"));
+const TechniciansPage = lazy(() => import("../../features/technicians/pages/TechniciansPage.js"));
+const TechnicianDetailPage = lazy(() => import("../../features/technicians/pages/TechnicianDetailPage.js"));
 const AssetsPage = lazy(() => import("../../features/assets/pages/AssetsPage.js"));
 const AssetDetailPage = lazy(() => import("../../features/assets/pages/AssetDetailPage.js"));
 const MaintenancePage = lazy(() => import("../../features/maintenance/pages/MaintenancePage.js"));
@@ -196,6 +198,30 @@ export const router = createBrowserRouter([
               <IncidentDetailsPage />
             </Suspense>
           </PermissionGuard>
+        ),
+      },
+      {
+        path: "technicians",
+        element: (
+          <PermissionGuard requiredPermissions={["technicians:manage", "tickets:assign"]} requireAll={false}>
+            <Suspense fallback={<PageSkeleton />}>
+              <TechniciansPage />
+            </Suspense>
+          </PermissionGuard>
+        ),
+      },
+      {
+        // No PermissionGuard: a technician must be able to reach their own
+        // record (self-service availability) even without technicians:manage
+        // or tickets:assign. Fine-grained self-or-admin authorization is
+        // enforced by the backend on every call this page makes (see
+        // technicians.controller.ts's canManage / getWorkload rules) — the
+        // route itself only requires being logged in, same as /profile.
+        path: "technicians/:id",
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <TechnicianDetailPage />
+          </Suspense>
         ),
       },
       {

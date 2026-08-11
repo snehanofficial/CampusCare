@@ -1,5 +1,6 @@
 import { prisma } from "../../../database/prisma.js";
 import { LifecycleStage, AssignmentStatus } from "@campuscare/shared-types";
+import { eventBus } from "../../../utils/event-bus.js";
 
 export class AssetAssignmentService {
   static async assign(
@@ -100,6 +101,18 @@ export class AssetAssignmentService {
       });
 
       return { assignment, asset: updatedAsset };
+    }).then((result) => {
+      // Published after the transaction commits (not inside it) so a rollback
+      // can never leave a "phantom" assignment notification behind.
+      if (result.assignment.assigneeType === "USER" && result.assignment.userId) {
+        eventBus.publish("asset.assigned", {
+          assetId: result.asset.id,
+          assetName: result.asset.name,
+          tag: result.asset.tag,
+          userId: result.assignment.userId,
+        });
+      }
+      return result;
     });
   }
 

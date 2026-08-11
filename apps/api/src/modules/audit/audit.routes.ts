@@ -1,11 +1,13 @@
 import { Router } from "express";
 import { AuditController } from "./audit.controller.js";
 import { authenticate } from "../../middleware/authenticate.js";
+import { authorize } from "../../middleware/authorize.js";
 
 export const auditRouter = Router();
 
 // Apply authentication to all routes
 auditRouter.use(authenticate);
+auditRouter.use(authorize("audit:read"));
 
 /**
  * @swagger

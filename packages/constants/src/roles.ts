@@ -80,6 +80,7 @@ export const ROLE_SEED_DATA: readonly RoleSeedEntry[] = [
       "notifications:send",
       "knowledge-base:manage",
       "service_status.manage",
+      "technicians:manage",
     ],
   },
   {
@@ -114,6 +115,7 @@ export const ROLE_SEED_DATA: readonly RoleSeedEntry[] = [
       "notifications:send",
       "knowledge-base:manage",
       "service_status.manage",
+      "technicians:manage",
     ],
   },
 ] as const;

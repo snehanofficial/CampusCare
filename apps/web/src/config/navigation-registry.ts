@@ -18,6 +18,7 @@ import {
   Wrench,
   FolderTree,
   TrendingUp,
+  UserCog,
   type LucideIcon,
 } from "lucide-react";
 import type { PermissionCode } from "@campuscare/constants";
@@ -65,6 +66,12 @@ export const NAVIGATION_REGISTRY: readonly NavigationSection[] = [
         href: "/incidents",
         icon: AlertCircle,
         permission: "tickets:read_all",
+      },
+      {
+        label: "Technicians",
+        href: "/technicians",
+        icon: UserCog,
+        permission: "tickets:assign",
       },
     ],
   },

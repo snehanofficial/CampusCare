@@ -2,8 +2,18 @@ import { IncidentsRepository } from "./incidents.repository.js";
 import { CreateIncidentInput, UpdateIncidentInput } from "./incidents.schema.js";
 import { NotFoundError } from "../../utils/errors.js";
 import { logger } from "../../utils/logger.js";
+import { eventBus } from "../../utils/event-bus.js";
+import { TicketsService } from "../tickets/tickets.service.js";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../database/prisma.js";
+
+async function getActiveTechnicianIds(): Promise<string[]> {
+  const technicians = await prisma.user.findMany({
+    where: { isActive: true, role: { name: { in: ["TECHNICIAN", "DEPT_ADMIN"] } } },
+    select: { id: true },
+  });
+  return technicians.map((t) => t.id);
+}
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 function formatIncident(
@@ -101,6 +111,7 @@ export class IncidentsService {
       severity: input.severity,
       status: input.status ?? "OPEN",
       rootCause: input.rootCause ?? null,
+      ...(input.serviceId ? { service: { connect: { id: input.serviceId } } } : {}),
     });
 
     const actorId = await getAdminActorId();
@@ -156,6 +167,15 @@ export class IncidentsService {
 
     // Re-fetch with links
     const fresh = await IncidentsRepository.findById(inc.id);
+
+    const technicianIds = await getActiveTechnicianIds();
+    eventBus.publish("incident.created", {
+      incidentId: inc.id,
+      title: inc.title,
+      technicianIds,
+      serviceId: inc.serviceId ?? null,
+    });
+
     return formatIncident(fresh)!;
   }
 
@@ -171,6 +191,9 @@ export class IncidentsService {
     if (input.description !== undefined) data.description = input.description;
     if (input.severity !== undefined) data.severity = input.severity;
     if (input.rootCause !== undefined) data.rootCause = input.rootCause ?? null;
+    if (input.serviceId !== undefined) {
+      data.service = input.serviceId === null ? { disconnect: true } : { connect: { id: input.serviceId } };
+    }
 
     const actorId = await getAdminActorId();
 
@@ -223,13 +246,11 @@ export class IncidentsService {
 
       for (const it of incidentTickets) {
         if (it.ticket.status !== "RESOLVED" && it.ticket.status !== "CLOSED") {
-          await prisma.ticket.update({
-            where: { id: it.ticketId },
-            data: {
-              status: "RESOLVED",
-              resolvedAt: new Date(),
-            },
-          });
+          // Route through TicketsService (not a raw prisma write) so this bulk
+          // resolution also publishes "ticket.resolved" (notifies the creator,
+          // per EMAIL-002) and runs ON_STATUS_CHANGE automation rules — both of
+          // which a direct prisma.ticket.update bypassed entirely before this fix.
+          await TicketsService.updateTicket(it.ticketId, { status: "RESOLVED" });
 
           if (actorId) {
             // Post an automation comment on resolved ticket
@@ -256,6 +277,11 @@ export class IncidentsService {
           }
         }
       }
+
+      eventBus.publish("incident.resolved", {
+        incidentId: id,
+        serviceId: updated.serviceId ?? null,
+      });
     }
 
     const fresh = await IncidentsRepository.findById(id);

@@ -110,6 +110,14 @@ export class PrivilegeRequestsService {
     if (request.requiredRole === "SYSTEM_ADMIN" && actor.role !== "SYSTEM_ADMIN") {
       throw new ForbiddenError("This request requires a System Administrator approval");
     }
+    // DEPT_ADMIN-tier requests may only be approved by an admin of the same department.
+    if (
+      request.requiredRole === "DEPT_ADMIN" &&
+      actor.role !== "SYSTEM_ADMIN" &&
+      request.departmentId !== actor.departmentId
+    ) {
+      throw new ForbiddenError("You can only approve requests raised within your own department");
+    }
 
     const now = new Date();
     const expiresAt = computeExpiry(request.durationMinutes, now);
@@ -172,6 +180,16 @@ export class PrivilegeRequestsService {
     }
     if (request.requesterId === actor.id) {
       throw new ForbiddenError("You cannot review your own temporary access request");
+    }
+    if (request.requiredRole === "SYSTEM_ADMIN" && actor.role !== "SYSTEM_ADMIN") {
+      throw new ForbiddenError("This request requires a System Administrator to review");
+    }
+    if (
+      request.requiredRole === "DEPT_ADMIN" &&
+      actor.role !== "SYSTEM_ADMIN" &&
+      request.departmentId !== actor.departmentId
+    ) {
+      throw new ForbiddenError("You can only review requests raised within your own department");
     }
 
     const updated = await PrivilegesRepository.updateRequest(requestId, {

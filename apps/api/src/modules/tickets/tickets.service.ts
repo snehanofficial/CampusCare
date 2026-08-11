@@ -6,6 +6,7 @@ import {
 } from "./tickets.schema.js";
 import { NotFoundError, BadRequestError } from "../../utils/errors.js";
 import { logger } from "../../utils/logger.js";
+import { eventBus } from "../../utils/event-bus.js";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../database/prisma.js";
 
@@ -228,6 +229,14 @@ export class TicketsService {
 
     // Re-fetch ticket in case rules updated its state
     const freshTicket = await TicketsRepository.findById(ticket.id);
+
+    eventBus.publish("ticket.created", {
+      ticketId: ticket.id,
+      ticketNumber: ticket.ticketNumber,
+      title: ticket.title,
+      creatorId: ticket.creatorId,
+    });
+
     return formatTicket(freshTicket)!;
   }
 
@@ -316,6 +325,26 @@ export class TicketsService {
 
     // Re-fetch updated ticket in case rules updated its state
     const freshTicket = await TicketsRepository.findById(id);
+
+    // Fire lifecycle events off the *previous vs. new* state, not just the input,
+    // since automation rules (SET_STATUS/ASSIGN_TO) can also drive these transitions.
+    if (updated.assigneeId && updated.assigneeId !== existing.assigneeId) {
+      eventBus.publish("ticket.assigned", {
+        ticketId: updated.id,
+        ticketNumber: updated.ticketNumber,
+        assigneeId: updated.assigneeId,
+        title: updated.title,
+      });
+    }
+    if (updated.status === "RESOLVED" && existing.status !== "RESOLVED") {
+      eventBus.publish("ticket.resolved", {
+        ticketId: updated.id,
+        ticketNumber: updated.ticketNumber,
+        creatorId: updated.creatorId,
+        title: updated.title,
+      });
+    }
+
     return formatTicket(freshTicket)!;
   }
 

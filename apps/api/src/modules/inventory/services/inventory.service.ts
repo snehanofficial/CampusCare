@@ -2,6 +2,7 @@ import { Prisma, InventoryCategory, InventoryStatus, InventoryTransactionType, A
 import { prisma } from "../../../database/prisma.js";
 import { BadRequestError, NotFoundError, ConflictError } from "../../../utils/errors.js";
 import { sharedEventBus } from "@campuscare/shared-utils";
+import { eventBus } from "../../../utils/event-bus.js";
 import { ItemCodeGenerator } from "./item-code-generator.js";
 import { computeAvailableStock, isLowStock, isCriticalStock, isOutOfStock, getStockAlertLevel } from "../utils/inventory-calculations.js";
 import type { 
@@ -703,7 +704,23 @@ export class InventoryService {
   static async detectLowStock() {
     const allActiveItems = await prisma.inventoryItem.findMany({ where: { isActive: true } });
     const lowStockItems = allActiveItems.filter(i => isLowStock(i.currentStock, i.reorderLevel));
-    // Usually would trigger alerts here
+
+    if (lowStockItems.length > 0) {
+      const managers = await prisma.user.findMany({
+        where: { isActive: true, role: { name: { in: ["TECHNICIAN", "DEPT_ADMIN", "SYSTEM_ADMIN"] } } },
+        select: { id: true },
+      });
+      const managerIds = managers.map((m) => m.id);
+      for (const item of lowStockItems) {
+        eventBus.publish("inventory.low-stock", {
+          itemId: item.id,
+          itemName: item.name,
+          quantity: item.currentStock,
+          managerIds,
+        });
+      }
+    }
+
     return { detectedCount: lowStockItems.length, items: lowStockItems };
   }
 

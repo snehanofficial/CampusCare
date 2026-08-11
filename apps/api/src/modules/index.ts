@@ -23,6 +23,7 @@ import { pushRouter } from "./push/push.routes.js";
 import { emailPreferenceRouter } from "./email-preferences/email-preference.routes.js";
 import { emailLogRouter } from "./mail/logs/email-log.routes.js";
 import { serviceStatusRouter } from "./service-status/service-status.routes.js";
+import { techniciansRouter } from "./technicians/technicians.routes.js";
 
 export const apiRouter = Router();
 
@@ -50,3 +51,4 @@ apiRouter.use("/push", pushRouter);
 apiRouter.use("/email-preferences", emailPreferenceRouter);
 apiRouter.use("/mail", emailLogRouter);
 apiRouter.use("/service-status", serviceStatusRouter);
+apiRouter.use("/technicians", techniciansRouter);

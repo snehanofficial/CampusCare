@@ -21,14 +21,18 @@ export type RuleCondition = z.infer<typeof conditionSchema>;
 
 // ─── Action ────────────────────────────────────────────────────────────────────
 // Each action: { type, value? }
-// ASSIGN_TO          → value = userId (UUID)
-// SET_PRIORITY       → value = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
-// SET_STATUS         → value = "OPEN" | "ASSIGNED" | "IN_PROGRESS" | "PENDING" | "RESOLVED" | "CLOSED"
-// ADD_COMMENT        → value = comment text
-// SET_DEPARTMENT     → value = departmentId (UUID)
+// ASSIGN_TO             → value = userId (UUID)
+// ASSIGN_BEST_TECHNICIAN → value = unused; picks the eligible technician in the
+//                          ticket's department with the lowest live workload
+//                          (apps/api/src/modules/technicians/technicians.service.ts)
+// SET_PRIORITY          → value = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
+// SET_STATUS            → value = "OPEN" | "ASSIGNED" | "IN_PROGRESS" | "PENDING" | "RESOLVED" | "CLOSED"
+// ADD_COMMENT           → value = comment text
+// SET_DEPARTMENT        → value = departmentId (UUID)
 const actionSchema = z.object({
   type: z.enum([
     "ASSIGN_TO",
+    "ASSIGN_BEST_TECHNICIAN",
     "SET_PRIORITY",
     "SET_STATUS",
     "ADD_COMMENT",

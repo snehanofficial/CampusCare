@@ -6,6 +6,10 @@ import {
   startPrivilegeScheduler,
   stopPrivilegeScheduler,
 } from "./modules/privileges/privileges.scheduler.js";
+import {
+  startTechnicianAvailabilityScheduler,
+  stopTechnicianAvailabilityScheduler,
+} from "./modules/technicians/technicians.scheduler.js";
 import { initNotificationListeners } from "./modules/notifications/notifications.events.js";
 import { initServiceStatusListeners } from "./modules/service-status/service-status.events.js";
 import { registerKnowledgeBaseEvents } from "./modules/knowledge-base/knowledge-base.events.js";
@@ -21,6 +25,7 @@ const server = app.listen(env.PORT, env.HOST, () => {
   logger.info(`🚀 CampusCare API running on http://${env.HOST}:${env.PORT}`);
   logger.info(`📖 Interactive API reference on http://${env.HOST}:${env.PORT}/reference`);
   startPrivilegeScheduler();
+  startTechnicianAvailabilityScheduler();
 });
 
 // Start real-time Socket.IO server
@@ -29,6 +34,7 @@ initSocketServer(server);
 const gracefulShutdown = () => {
   logger.info("Shutting down API server gracefully...");
   stopPrivilegeScheduler();
+  stopTechnicianAvailabilityScheduler();
   server.close(async () => {
     logger.info("HTTP connections closed successfully.");
     try {

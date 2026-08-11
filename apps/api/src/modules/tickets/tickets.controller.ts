@@ -191,6 +191,19 @@ export class TicketsController {
   ): Promise<void> {
     try {
       const { id } = req.params;
+      const ticket = await TicketsService.getTicketById(id as string);
+
+      const scope = resolveTicketScope(req);
+      if (scope === "ASSIGNED") {
+        if (ticket.assigneeId !== req.user!.id && ticket.creatorId !== req.user!.id) {
+          throw new ForbiddenError("You are not authorized to comment on this ticket");
+        }
+      } else if (scope === "OWN") {
+        if (ticket.creatorId !== req.user!.id) {
+          throw new ForbiddenError("You are not authorized to comment on this ticket");
+        }
+      }
+
       const input = addCommentSchema.parse(req.body);
       const comment = await TicketsService.addComment(
         id as string,

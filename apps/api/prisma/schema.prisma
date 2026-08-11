@@ -54,10 +54,34 @@ model User {
   gtpeReviewedRequests TemporaryPermissionRequest[] @relation("GtpeReviewer")
   gtpeTemplates        PermissionTemplate[]         @relation("GtpeTemplateCreator")
 
+  technicianAvailability   TechnicianAvailability? @relation("TechnicianAvailabilityUser")
+  unavailabilitySetByMe    TechnicianAvailability[] @relation("TechnicianAvailabilitySetBy")
+
   @@index([email])
   @@index([roleId])
   @@index([departmentId])
   @@map("users")
+}
+
+/// Temporary manual unavailability for a TECHNICIAN user. Deliberately separate from
+/// User.isActive: a technician can be an active, logged-in account and still be
+/// temporarily unavailable for new ticket assignment (on leave, at lunch, heads-down
+/// on an existing job, etc). One row per technician (upserted), swept by
+/// technicians.scheduler.ts to auto-clear once `unavailableUntil` passes.
+model TechnicianAvailability {
+  id                    String    @id @default(uuid()) @map("id")
+  technicianId          String    @unique @map("technician_id")
+  isManuallyUnavailable Boolean   @default(false) @map("is_manually_unavailable")
+  unavailableUntil      DateTime? @map("unavailable_until")
+  reason                String?   @map("reason")
+  setById               String?   @map("set_by_id")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  technician User  @relation("TechnicianAvailabilityUser", fields: [technicianId], references: [id], onDelete: Cascade)
+  setBy      User? @relation("TechnicianAvailabilitySetBy", fields: [setById], references: [id])
+
+  @@index([isManuallyUnavailable, unavailableUntil])
+  @@map("technician_availability")
 }
 
 
