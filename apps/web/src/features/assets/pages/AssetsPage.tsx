@@ -1009,7 +1009,7 @@ export function AssetsPage() {
           <div className="flex justify-end gap-1">
             <button
               onClick={() => navigate(`/assets/${row.original.id}`)}
-              className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="min-h-[24px] min-w-[24px] flex items-center justify-center p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               title="Inspect"
               aria-label="Inspect asset"
             >
@@ -1021,7 +1021,7 @@ export function AssetsPage() {
                 loadForm(row.original);
                 setIsEditOpen(true);
               }}
-              className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="min-h-[24px] min-w-[24px] flex items-center justify-center p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               title="Edit Details"
               aria-label="Edit asset details"
             >
@@ -1031,7 +1031,7 @@ export function AssetsPage() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="min-h-[24px] min-w-[24px] flex items-center justify-center p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label="More actions"
                 >
                   <MoreVertical className="size-3.5" />
@@ -1173,7 +1173,7 @@ export function AssetsPage() {
                 loadProcForm(row.original);
                 setIsEditProcOpen(true);
               }}
-              className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="min-h-[24px] min-w-[24px] flex items-center justify-center p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               title="Edit details"
               aria-label="Edit procurement details"
             >
@@ -1188,7 +1188,7 @@ export function AssetsPage() {
                   initializeBatchFields(remaining);
                   setIsRegisterOpen(true);
                 }}
-                className="flex items-center gap-1.5 px-2 py-0.5 rounded border border-primary/20 text-primary hover:bg-primary/5 text-[10px] font-bold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex items-center gap-1.5 px-2 py-0.5 rounded border border-primary/20 text-primary hover:bg-primary/5 text-[10px] font-bold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-[24px]"
               >
                 <Plus className="size-3" />
                 Register
@@ -1202,7 +1202,7 @@ export function AssetsPage() {
                     deleteProcMutation.mutate(row.original.id);
                   }
                 }}
-                className="p-1.5 hover:bg-destructive/5 rounded text-muted-foreground hover:text-destructive cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-h-[24px] min-w-[24px] flex items-center justify-center p-1 hover:bg-destructive/5 rounded text-muted-foreground hover:text-destructive cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 title="Delete"
                 aria-label="Delete procurement request"
               >
