@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
 import { prisma } from "../database/prisma.js";
 import { UnauthorizedError } from "../utils/errors.js";
+import { hydrateTemporaryPermissions } from "../modules/privileges/privileges.middleware.js";
 
 interface DecodedToken {
   userId: string;
@@ -56,6 +57,9 @@ export async function authenticate(
       departmentId: decoded.departmentId,
       sessionId: decoded.sessionId,
     };
+
+    // Hydrate temporary permissions (GTPE) across all API endpoints with 30s cache
+    await hydrateTemporaryPermissions(req, res, () => {});
 
     next();
   } catch (error) {
