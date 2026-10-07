@@ -3,9 +3,31 @@ import { AssetsController } from "./assets.controller.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { authorize } from "../../middleware/authorize.js";
 import { initHealthEventListeners } from "./events/health-listener.js";
+import { BadRequestError } from "../../utils/errors.js";
 import multer from "multer";
 
-const upload = multer({ dest: "uploads/" });
+const upload = multer({
+  dest: "uploads/",
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max
+  fileFilter: (_req, file, cb) => {
+    const allowedMimes = [
+      "text/csv",
+      "text/plain",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/octet-stream",
+    ];
+    if (
+      allowedMimes.includes(file.mimetype) ||
+      file.originalname.endsWith(".csv") ||
+      file.originalname.endsWith(".xlsx")
+    ) {
+      cb(null, true);
+    } else {
+      cb(new BadRequestError("Only CSV and XLSX files are permitted for import"));
+    }
+  },
+});
 
 // Initialize health engine event listeners
 initHealthEventListeners();
