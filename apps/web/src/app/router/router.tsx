@@ -46,6 +46,7 @@ const DepartmentsPage = lazy(() => import("../../features/departments/pages/Depa
 const CategoriesPage = lazy(() => import("../../features/categories/pages/CategoriesPage.js"));
 const AuditPage = lazy(() => import("../../features/audit/pages/AuditPage.js"));
 const SettingsPage = lazy(() => import("../../features/settings/pages/SettingsPage.js"));
+const AutomationPage = lazy(() => import("../../features/automation/pages/AutomationPage.js"));
 const ProfilePage = lazy(() => import("../../features/profile/pages/ProfilePage.js"));
 const ServiceStatusPage = lazy(() => import("../../features/service-status/pages/ServiceStatusPage.js"));
 const NotificationsPage = lazy(() => import("../../features/notifications/pages/NotificationsPage.js"));
@@ -396,6 +397,16 @@ export const router = createBrowserRouter([
           <PermissionGuard requiredPermissions={["settings:manage"]}>
             <Suspense fallback={<PageSkeleton />}>
               <SettingsPage />
+            </Suspense>
+          </PermissionGuard>
+        ),
+      },
+      {
+        path: "automation",
+        element: (
+          <PermissionGuard requiredPermissions={["settings:manage"]}>
+            <Suspense fallback={<PageSkeleton />}>
+              <AutomationPage />
             </Suspense>
           </PermissionGuard>
         ),

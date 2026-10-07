@@ -19,6 +19,7 @@ import {
   FolderTree,
   TrendingUp,
   UserCog,
+  Workflow,
   type LucideIcon,
 } from "lucide-react";
 import type { PermissionCode } from "@campuscare/constants";
@@ -163,6 +164,12 @@ export const NAVIGATION_REGISTRY: readonly NavigationSection[] = [
         label: "Settings",
         href: "/settings",
         icon: Settings,
+        permission: "settings:manage",
+      },
+      {
+        label: "Automation Rules",
+        href: "/automation",
+        icon: Workflow,
         permission: "settings:manage",
       },
     ],
