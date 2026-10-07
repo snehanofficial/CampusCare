@@ -11,8 +11,13 @@ import { logger } from "./utils/logger.js";
 import { apiRouter } from "./modules/index.js";
 import { requestId } from "./middleware/request-id.js";
 import { errorHandler } from "./middleware/error-handler.js";
+import { generalRateLimit } from "./middleware/rate-limit.js";
+import { verifyOrigin } from "./middleware/verify-origin.js";
 
 export const app = express();
+
+// Trust reverse proxy (e.g. Render/Cloudflare/Nginx) in production for accurate req.ip
+app.set("trust proxy", env.NODE_ENV === "production" ? 1 : false);
 
 // 1. Request ID & Logger middleware
 app.use(requestId);
@@ -31,6 +36,11 @@ app.use(helmet({
         "script-src": ["'self'", "https://cdn.jsdelivr.net"],
         "img-src": ["'self'", "data:", "https://cdn.jsdelivr.net"], // Scalar may also load assets/images
       },
+    },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
     },
   }) as any);
 const allowedOrigins = env.CORS_ORIGIN.split(",").map((origin) => origin.trim());
@@ -85,7 +95,9 @@ app.get("/api/v1/health", (req, res) => {
   res.status(200).json({ success: true, status: "ok" });
 });
 
-// 6. Mount API Version v1 Routes
+// 6. Mount API Version v1 Routes with Global Rate Limiting & Origin Verification
+app.use("/api/v1", generalRateLimit);
+app.use("/api/v1", verifyOrigin);
 app.use("/api/v1", apiRouter);
 
 // 7. 404 Route handler
