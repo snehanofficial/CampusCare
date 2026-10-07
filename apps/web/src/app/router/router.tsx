@@ -419,9 +419,11 @@ export const router = createBrowserRouter([
       {
         path: "playground",
         element: (
-          <Suspense fallback={<PageSkeleton />}>
-            <PlaygroundPage />
-          </Suspense>
+          <PermissionGuard requiredPermissions={["settings:manage"]}>
+            <Suspense fallback={<PageSkeleton />}>
+              <PlaygroundPage />
+            </Suspense>
+          </PermissionGuard>
         ),
       },
     ],
