@@ -1,7 +1,8 @@
 // ESLint Flat Configuration File
 import js from "@eslint/js";
+import tseslint from "typescript-eslint";
 
-export default [
+export default tseslint.config(
   {
     ignores: [
       "**/node_modules/**",
@@ -9,15 +10,23 @@ export default [
       "**/build/**",
       "**/pwa/**",
       "**/storage/**",
-      "packages/eslint-config/**"
+      "**/coverage/**",
+      "**/*.generated.*",
+      "**/sw.js",
+      "**/sw.mjs"
     ]
   },
   js.configs.recommended,
+  ...tseslint.configs.recommended,
   {
     rules: {
-      "no-unused-vars": "warn",
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+      ],
       "no-console": "off",
       "no-undef": "off"
     }
   }
-];
+);

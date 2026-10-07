@@ -21,7 +21,9 @@ const getActiveSessionId = (): string | null => {
       const payload = JSON.parse(atob(parts[1]!));
       return payload.sessionId || null;
     }
-  } catch {}
+  } catch {
+    // Return null if token is malformed
+  }
   return null;
 };
 

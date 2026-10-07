@@ -179,7 +179,8 @@ async function generateAssetReport(filters?: ReportFilters): Promise<AssetReport
 
   const categoryDist: Record<string, number> = {};
   const deptDist: Record<string, number> = {};
-  let operational = 0, inMaintenance = 0, broken = 0, retired = 0, lost = 0;
+  let operational = 0, inMaintenance = 0, broken = 0, retired = 0;
+  const lost = 0;
 
   for (const a of assets) {
     if (a.status === "OPERATIONAL") operational++;
@@ -335,7 +336,7 @@ async function generateSlaReport(filters?: ReportFilters): Promise<SlaReportData
   const now = new Date();
   let withinSla = 0, breached = 0;
   const breachedByPriority: Record<string, number> = {};
-  let totalResponseMs = 0, totalResolutionMs = 0, resolvedCount = 0;
+  let totalResolutionMs = 0, resolvedCount = 0;
 
   for (const t of tickets) {
     if (!t.dueAt) continue;

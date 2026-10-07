@@ -8,7 +8,7 @@ export interface EmailPreferenceItem {
 }
 
 // Local mock state for preferences in sandbox mode
-let mockEmailPrefs: EmailPreferenceItem[] = [
+const mockEmailPrefs: EmailPreferenceItem[] = [
   { event: "USER_CREATED", label: "User Registered / Created", enabled: true },
   { event: "USER_UPDATED", label: "User Information Modified", enabled: true },
   { event: "TICKET_CREATED", label: "Ticket Created", enabled: true },

@@ -27,12 +27,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const updateTheme = () => {
       root.classList.remove("light", "dark");
       
-      let resolved: "light" | "dark" = "light";
-      if (theme === "system") {
-        resolved = mediaQuery.matches ? "dark" : "light";
-      } else {
-        resolved = theme;
-      }
+      const resolved: "light" | "dark" =
+        theme === "system" ? (mediaQuery.matches ? "dark" : "light") : theme;
       
       root.classList.add(resolved);
       setResolvedTheme(resolved);

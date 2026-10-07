@@ -67,7 +67,7 @@ export interface CreateArticleInput {
   status?: ArticleStatus;
 }
 
-export interface UpdateArticleInput extends Partial<CreateArticleInput> {}
+export type UpdateArticleInput = Partial<CreateArticleInput>;
 
 export interface FeedbackInput {
   helpful: boolean;

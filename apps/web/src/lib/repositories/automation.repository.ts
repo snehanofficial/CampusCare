@@ -130,7 +130,7 @@ class MockAutomationRepository implements IAutomationRepository {
   }
 
   async listLogs(params?: RepositoryQueryParams): Promise<RepositoryListResponse<MockAutomationLog>> {
-    let logs = [...mockLogs];
+    const logs = [...mockLogs];
     const page = params?.page ?? 1;
     const pageSize = params?.pageSize ?? 10;
     const total = logs.length;

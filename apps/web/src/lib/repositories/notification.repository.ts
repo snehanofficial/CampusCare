@@ -14,7 +14,7 @@ export interface INotificationRepository extends IRepository<MockNotification> {
 }
 
 // Local mock state for preferences in sandbox mode
-let mockPrefs: NotificationPreference[] = [
+const mockPrefs: NotificationPreference[] = [
   { id: "p-1", userId: "u-1", category: "TICKET", email: true, inApp: true, push: true, createdAt: new Date(), updatedAt: new Date() },
   { id: "p-2", userId: "u-1", category: "INCIDENT", email: true, inApp: true, push: true, createdAt: new Date(), updatedAt: new Date() },
   { id: "p-3", userId: "u-1", category: "ASSET", email: true, inApp: true, push: false, createdAt: new Date(), updatedAt: new Date() },
