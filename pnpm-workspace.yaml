@@ -9,3 +9,4 @@ allowBuilds:
   prisma: true
 overrides:
   brace-expansion@<=5.0.7: ^5.0.8
+  proxy-addr: ">=2.0.8"
