@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { ServiceStatusController } from "./service-status.controller.js";
 import { authenticate } from "../../middleware/authenticate.js";
-import { authorize } from "../../middleware/authorize.js";
+import { authorizeAny } from "../../middleware/authorize.js";
 import { validate } from "../../middleware/validate.js";
 import { serviceStatusUpdateSchema, maintenanceCreateSchema } from "./service-status.validator.js";
 
@@ -53,7 +53,7 @@ serviceStatusRouter.get("/:id/history", authenticate, ServiceStatusController.ge
 serviceStatusRouter.patch(
   "/:id",
   authenticate,
-  authorize("service_status.manage"),
+  authorizeAny("service-status:manage", "service_status.manage"),
   validate(serviceStatusUpdateSchema),
   ServiceStatusController.updateStatus
 );
@@ -68,7 +68,7 @@ serviceStatusRouter.patch(
 serviceStatusRouter.post(
   "/:id/maintenance",
   authenticate,
-  authorize("service_status.manage"),
+  authorizeAny("service-status:manage", "service_status.manage"),
   validate(maintenanceCreateSchema),
   ServiceStatusController.createMaintenanceWindow
 );

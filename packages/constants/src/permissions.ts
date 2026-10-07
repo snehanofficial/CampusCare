@@ -234,6 +234,13 @@ export const PERMISSION_REGISTRY: readonly PermissionEntry[] = [
     category: "Service Status",
     groupLabel: "Administration",
   },
+  {
+    code: "service-status:manage",
+    displayName: "Manage Service Status",
+    description: "Update campus service health status and schedule maintenance windows",
+    category: "Service Status",
+    groupLabel: "Administration",
+  },
   // ─── Technicians ────────────────────────────────────────────────────────────
   {
     code: "technicians:manage",
@@ -281,6 +288,7 @@ export const PERMISSIONS = {
   NOTIFICATIONS_SEND: "notifications:send",
   KNOWLEDGE_BASE_MANAGE: "knowledge-base:manage",
   SERVICE_STATUS_MANAGE: "service_status.manage",
+  SERVICE_STATUS_MANAGE_CANONICAL: "service-status:manage",
   TECHNICIANS_MANAGE: "technicians:manage",
 } as const;
 

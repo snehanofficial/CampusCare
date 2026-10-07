@@ -63,7 +63,7 @@ type MaintenanceFormValues = z.infer<typeof maintenanceFormSchema>;
 
 export function ServiceStatusPage() {
   const { hasPermission } = usePermission();
-  const isAdmin = hasPermission("service_status.manage");
+  const isAdmin = hasPermission("service-status:manage") || hasPermission("service_status.manage");
 
   // Fetch queries
   const { data: services, isLoading: servicesLoading, error: servicesError, refetch: refetchServices } = useServices();
