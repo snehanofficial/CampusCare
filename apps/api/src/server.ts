@@ -55,3 +55,13 @@ const gracefulShutdown = () => {
 
 process.on("SIGTERM", gracefulShutdown);
 process.on("SIGINT", gracefulShutdown);
+
+process.on("unhandledRejection", (reason: unknown, promise: Promise<unknown>) => {
+  logger.fatal({ err: reason, promise }, "Unhandled Rejection at Promise");
+  gracefulShutdown();
+});
+
+process.on("uncaughtException", (error: Error) => {
+  logger.fatal({ err: error }, "Uncaught Exception thrown");
+  gracefulShutdown();
+});
