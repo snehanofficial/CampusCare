@@ -10,13 +10,16 @@ export function errorHandler(
   res: Response,
   next: NextFunction
 ): void {
+  const reqId = (req as any).id || (req.headers["x-request-id"] as string) || undefined;
+
   // Log the exception
   logger.error({
     msg: err.message,
     stack: err.stack,
     path: req.path,
     method: req.method,
-    userId: req.user?.id
+    userId: (req as any).user?.id,
+    requestId: reqId
   });
 
   // Handle custom AppError
@@ -26,7 +29,8 @@ export function errorHandler(
       error: {
         code: err.code,
         message: err.message,
-        details: err.details
+        details: err.details,
+        requestId: reqId
       }
     });
     return;
@@ -39,7 +43,8 @@ export function errorHandler(
       error: {
         code: "VALIDATION_ERROR",
         message: "Request validation failed",
-        details: err.flatten().fieldErrors
+        details: err.flatten().fieldErrors,
+        requestId: reqId
       }
     });
     return;
@@ -52,7 +57,8 @@ export function errorHandler(
         success: false,
         error: {
           code: "CONFLICT",
-          message: "A record with these details already exists"
+          message: "A record with these details already exists",
+          requestId: reqId
         }
       });
       return;
@@ -62,7 +68,8 @@ export function errorHandler(
         success: false,
         error: {
           code: "NOT_FOUND",
-          message: "The requested record was not found"
+          message: "The requested record was not found",
+          requestId: reqId
         }
       });
       return;
@@ -74,7 +81,8 @@ export function errorHandler(
     success: false,
     error: {
       code: "INTERNAL_SERVER_ERROR",
-      message: "An unexpected error occurred on the server"
+      message: "An unexpected error occurred on the server",
+      requestId: reqId
     }
   });
 }
