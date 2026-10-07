@@ -2,6 +2,7 @@
   "name": "campuscare-monorepo",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "CampusCare - Campus Help Desk & IT Service Management Platform",
   "scripts": {
     "dev:api": "pnpm --filter api dev",
