@@ -33,8 +33,8 @@ app.use(helmet({
     contentSecurityPolicy: {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        "script-src": ["'self'", "https://cdn.jsdelivr.net"],
-        "img-src": ["'self'", "data:", "https://cdn.jsdelivr.net"], // Scalar may also load assets/images
+        "script-src": ["'self'", "https://cdn.jsdelivr.net/npm/@scalar/"],
+        "img-src": ["'self'", "data:", "https://cdn.jsdelivr.net/npm/@scalar/"],
       },
     },
     hsts: {
