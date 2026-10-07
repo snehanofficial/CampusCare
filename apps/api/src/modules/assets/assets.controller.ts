@@ -18,6 +18,7 @@ import { HealthService } from "./services/health.service.js";
 import fs from "fs";
 import { ImportExportHelper } from "../../utils/import-export.js";
 import { prisma } from "../../database/prisma.js";
+import { BadRequestError } from "../../utils/errors.js";
 
 export class AssetsController {
   static async list(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -365,13 +366,14 @@ export class AssetsController {
   }
 
   static async importValidate(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const file = req.file;
-      if (!file) throw new Error("No file uploaded");
+    const file = req.file;
+    if (!file) {
+      throw new BadRequestError("No file uploaded");
+    }
 
+    try {
       const buffer = fs.readFileSync(file.path);
       const rows = ImportExportHelper.parseBuffer(buffer);
-      fs.unlinkSync(file.path);
 
       const mapping = req.body.mapping ? JSON.parse(req.body.mapping) : undefined;
       const report = ImportExportHelper.validateRows(rows, assetCreateSchema, mapping);
@@ -417,6 +419,14 @@ export class AssetsController {
       sendSuccess(res, report);
     } catch (err) {
       next(err);
+    } finally {
+      if (file?.path && fs.existsSync(file.path)) {
+        try {
+          fs.unlinkSync(file.path);
+        } catch {
+          // ignore cleanup errors in finally
+        }
+      }
     }
   }
 

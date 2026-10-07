@@ -21,6 +21,7 @@ import {
 import fs from "fs";
 import { ImportExportHelper } from "../../../utils/import-export.js";
 import { prisma } from "../../../database/prisma.js";
+import { BadRequestError } from "../../../utils/errors.js";
 
 
 export class InventoryController {
@@ -334,13 +335,14 @@ export class InventoryController {
   }
 
   static async validateCSVImport(req: Request, res: Response, next: NextFunction) {
-    try {
-      const file = req.file;
-      if (!file) throw new Error("No file uploaded");
+    const file = req.file;
+    if (!file) {
+      throw new BadRequestError("No file uploaded");
+    }
 
+    try {
       const buffer = fs.readFileSync(file.path);
       const rows = ImportExportHelper.parseBuffer(buffer);
-      fs.unlinkSync(file.path);
 
       const mapping = req.body.mapping ? JSON.parse(req.body.mapping) : undefined;
       const report = ImportExportHelper.validateRows(rows, inventoryBulkImportRowSchema, mapping);
@@ -378,6 +380,14 @@ export class InventoryController {
       sendSuccess(res, report);
     } catch (err) {
       next(err);
+    } finally {
+      if (file?.path && fs.existsSync(file.path)) {
+        try {
+          fs.unlinkSync(file.path);
+        } catch {
+          // ignore cleanup errors in finally
+        }
+      }
     }
   }
 
