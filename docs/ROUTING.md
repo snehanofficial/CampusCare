@@ -40,7 +40,7 @@ This document defines the routing architecture for CampusCare. It covers route o
 └── /dashboard/*          (AppLayout — requires authentication)
     ├── /dashboard         (DashboardPage)
     ├── /tickets
-    │   ├── /tickets/mine  (MyTicketsPage — requires: tickets:read_own)
+    │   ├── /my-tickets  (MyTicketsPage — requires: tickets:read_own)
     │   ├── /tickets        (AllTicketsPage — requires: tickets:read_all)
     │   ├── /tickets/new    (NewTicketPage — requires: tickets:create)
     │   └── /tickets/:id    (TicketDetailPage — requires: tickets:read_own)
@@ -291,7 +291,7 @@ Breadcrumbs are derived from a route metadata map (not from `useMatches` dynamic
 export const BREADCRUMB_CONFIG: Record<string, BreadcrumbItem[]> = {
   "/dashboard": [{ label: "Dashboard" }],
   "/tickets": [{ label: "All Tickets" }],
-  "/tickets/mine": [{ label: "My Tickets" }],
+  "/my-tickets": [{ label: "My Tickets" }],
   "/tickets/new": [
     { label: "Tickets", href: "/tickets" },
     { label: "New Ticket" }

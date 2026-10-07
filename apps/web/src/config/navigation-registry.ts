@@ -51,7 +51,7 @@ export const NAVIGATION_REGISTRY: readonly NavigationSection[] = [
     items: [
       {
         label: "My Tickets",
-        href: "/tickets/mine",
+        href: "/my-tickets",
         icon: Ticket,
         permission: "tickets:read_own",
       },

@@ -151,7 +151,7 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "tickets/mine",
+        path: "my-tickets",
         element: (
           <PermissionGuard requiredPermissions={["tickets:read_own"]}>
             <Suspense fallback={<PageSkeleton />}>

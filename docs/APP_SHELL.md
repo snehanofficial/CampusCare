@@ -126,7 +126,7 @@ const NAV_SECTIONS = [
   {
     group: "Support",
     items: [
-      { id: "tickets-own", label: "My Tickets", href: "/tickets/mine", icon: TicketIcon, permission: "tickets:read_own" },
+      { id: "tickets-own", label: "My Tickets", href: "/my-tickets", icon: TicketIcon, permission: "tickets:read_own" },
       { id: "tickets-all", label: "All Tickets", href: "/tickets", icon: TicketIcon, permission: "tickets:read_all" },
       { id: "incidents", label: "Incidents", href: "/incidents", icon: AlertTriangle, permission: "tickets:read_all" },
     ]

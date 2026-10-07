@@ -352,7 +352,7 @@ The sidebar navigation items are filtered based on permissions:
 // Navigation items with permission requirements
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "My Tickets", href: "/tickets/mine", icon: Ticket, permission: "tickets:read_own" },
+  { label: "My Tickets", href: "/my-tickets", icon: Ticket, permission: "tickets:read_own" },
   { label: "All Tickets", href: "/tickets", icon: Ticket, permission: "tickets:read_all" },
   { label: "Assets", href: "/assets", icon: Server, permission: "assets:read" },
   { label: "Inventory", href: "/inventory", icon: Package, permission: "inventory:read" },
