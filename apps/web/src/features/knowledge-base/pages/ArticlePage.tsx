@@ -14,6 +14,7 @@ import {
 import { useArticle, useArticles } from "../hooks/useKnowledgeBase.js";
 import { ArticleCard } from "../components/ArticleCard.js";
 import { FeedbackButtons } from "../components/FeedbackButtons.js";
+import DOMPurify from "dompurify";
 
 export function ArticlePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -140,7 +141,7 @@ export function ArticlePage() {
             prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground
             prose-li:text-muted-foreground prose-li:leading-relaxed
             prose-strong:text-foreground prose-hr:border-border"
-          dangerouslySetInnerHTML={{ __html: article.content }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content) }}
         />
       </div>
 
