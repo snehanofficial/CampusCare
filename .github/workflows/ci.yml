@@ -38,6 +38,9 @@ jobs:
         env:
           DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
 
+      - name: Build Packages
+        run: pnpm build:packages
+
       - name: Lint
         run: pnpm lint
 
