@@ -287,6 +287,17 @@
     outline-offset: 2px;
   }
 
+  /* WCAG 2.2 SC 2.4.11 (Focus Not Obscured) - Sticky header clearance */
+  :target,
+  [tabindex]:focus,
+  a:focus,
+  button:focus,
+  input:focus,
+  select:focus,
+  textarea:focus {
+    scroll-margin-top: 4.5rem;
+  }
+
   /* Skip to main content */
   .skip-to-content {
     position: absolute;
