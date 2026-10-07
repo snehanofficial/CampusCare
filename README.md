@@ -135,7 +135,7 @@ Each backend module follows **Route → Controller → Service → Repository �
 
 ```bash
 # 1. Clone and install dependencies
-git clone <repo-url>
+git clone https://github.com/snehanofficial/CampusCare.git
 cd CampusCare
 pnpm install
 
