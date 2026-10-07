@@ -12,7 +12,7 @@ export const authRouter = Router();
  *     summary: Register a new user
  *     tags: [Auth]
  */
-authRouter.post("/register", AuthController.register);
+authRouter.post("/register", authRateLimit, AuthController.register);
 
 /**
  * @swagger
