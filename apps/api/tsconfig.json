@@ -6,7 +6,11 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "declaration": false,
-    "declarationMap": false
+    "declarationMap": false,
+    "paths": {
+      "@prisma/client": ["./node_modules/.prisma/client/default.d.ts"],
+      "@prisma/client/*": ["./node_modules/.prisma/client/*"]
+    }
   },
   "include": ["src/**/*"]
 }
