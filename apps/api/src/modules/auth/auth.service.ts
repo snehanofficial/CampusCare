@@ -5,6 +5,7 @@ import { prisma } from "../../database/prisma.js";
 import { RegisterInput, LoginInput } from "@campuscare/shared-schemas";
 import { BadRequestError, UnauthorizedError, ForbiddenError } from "../../utils/errors.js";
 import { env } from "../../config/env.js";
+import { logger } from "../../utils/logger.js";
 import type { AuthUser } from "@campuscare/shared-types";
 
 // User-Agent parser helper
@@ -119,11 +120,59 @@ export class AuthService {
     });
 
     if (!user || !user.isActive) {
+      logger.warn(
+        {
+          event: "AUTH_LOGIN_FAILED",
+          email: input.email,
+          ipAddress,
+          userAgent,
+          reason: !user ? "USER_NOT_FOUND" : "USER_INACTIVE",
+        },
+        "Failed authentication attempt"
+      );
+      if (user) {
+        await prisma.auditLog
+          .create({
+            data: {
+              action: "AUTH_LOGIN_FAILED",
+              targetTable: "users",
+              targetId: user.id,
+              performedById: user.id,
+              ipAddress,
+              userAgent,
+              newValue: { reason: "USER_INACTIVE" },
+            },
+          })
+          .catch(() => {});
+      }
       throw new UnauthorizedError("Invalid email or password");
     }
 
     const isValid = await bcrypt.compare(input.password, user.passwordHash);
     if (!isValid) {
+      logger.warn(
+        {
+          event: "AUTH_LOGIN_FAILED",
+          email: input.email,
+          ipAddress,
+          userAgent,
+          reason: "INVALID_PASSWORD",
+        },
+        "Failed authentication attempt"
+      );
+      await prisma.auditLog
+        .create({
+          data: {
+            action: "AUTH_LOGIN_FAILED",
+            targetTable: "users",
+            targetId: user.id,
+            performedById: user.id,
+            ipAddress,
+            userAgent,
+            newValue: { reason: "INVALID_PASSWORD" },
+          },
+        })
+        .catch(() => {});
       throw new UnauthorizedError("Invalid email or password");
     }
 
