@@ -104,10 +104,33 @@ export class ImportExportHelper {
   }
 
   /**
+   * Escapes potential spreadsheet formula trigger characters to prevent CSV injection.
+   */
+  static escapeFormula(val: unknown): unknown {
+    if (typeof val === "string") {
+      if (/^[=+\-@\t\r]/.test(val)) {
+        return `'${val}`;
+      }
+    }
+    return val;
+  }
+
+  /**
    * Generates export buffer for list data in CSV or XLSX format.
    */
   static generateExport(data: any[], format: "csv" | "xlsx"): Buffer {
-    const worksheet = XLSX.utils.json_to_sheet(data);
+    const sanitizedData = data.map((row) => {
+      if (typeof row === "object" && row !== null) {
+        const sanitizedRow: Record<string, unknown> = {};
+        for (const [key, val] of Object.entries(row)) {
+          sanitizedRow[key] = ImportExportHelper.escapeFormula(val);
+        }
+        return sanitizedRow;
+      }
+      return row;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(sanitizedData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Export");
 
