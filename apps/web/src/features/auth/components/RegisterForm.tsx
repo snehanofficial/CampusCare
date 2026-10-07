@@ -56,6 +56,7 @@ export function RegisterForm() {
         <FormField label="First Name" error={errors.firstName?.message} required>
           <input
             type="text"
+            autoComplete="given-name"
             placeholder="Jane"
             {...register("firstName")}
             disabled={isPending}
@@ -66,6 +67,7 @@ export function RegisterForm() {
         <FormField label="Last Name" error={errors.lastName?.message} required>
           <input
             type="text"
+            autoComplete="family-name"
             placeholder="Doe"
             {...register("lastName")}
             disabled={isPending}
@@ -77,6 +79,7 @@ export function RegisterForm() {
       <FormField label="Email Address" error={errors.email?.message} required>
         <input
           type="email"
+          autoComplete="email"
           placeholder="jane.doe@campus.edu"
           {...register("email")}
           disabled={isPending}
@@ -92,6 +95,7 @@ export function RegisterForm() {
       >
         <input
           type="password"
+          autoComplete="new-password"
           placeholder="••••••••"
           {...register("password")}
           disabled={isPending}
@@ -102,6 +106,7 @@ export function RegisterForm() {
       <FormField label="Confirm Password" error={errors.confirmPassword?.message} required>
         <input
           type="password"
+          autoComplete="new-password"
           placeholder="••••••••"
           {...register("confirmPassword")}
           disabled={isPending}

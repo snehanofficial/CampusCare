@@ -249,6 +249,7 @@ export function UserFormDialog({ isOpen, onClose, userId, onSuccess }: UserFormD
             >
               <input
                 type="password"
+                autoComplete="new-password"
                 placeholder="••••••••"
                 {...register("password")}
                 disabled={isSaving}

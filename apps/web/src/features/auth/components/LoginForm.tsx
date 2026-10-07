@@ -52,6 +52,7 @@ export function LoginForm() {
       <FormField label="Email Address" error={errors.email?.message} required>
         <input
           type="email"
+          autoComplete="username"
           placeholder="admin@campuscare.edu"
           {...register("email")}
           disabled={isPending}
