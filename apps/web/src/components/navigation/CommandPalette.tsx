@@ -90,18 +90,20 @@ export function CommandPalette() {
                   <Monitor className="size-3.5" />
                   Set Theme to System
                 </Command.Item>
-                <Command.Item
-                  onSelect={() =>
-                    runCommand(() => {
-                      setMockEnabled(!isMock);
-                      toast.success(`Mock adapter layer ${!isMock ? "ENABLED" : "DISABLED"}`);
-                    })
-                  }
-                  className="relative flex cursor-pointer select-none items-center rounded-md px-3 py-2 text-xs text-foreground outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground gap-2"
-                >
-                  <ShieldAlert className="size-3.5" />
-                  {isMock ? "Disable Mock Adapter Layer" : "Enable Mock Adapter Layer"}
-                </Command.Item>
+                {!import.meta.env.PROD && (
+                  <Command.Item
+                    onSelect={() =>
+                      runCommand(() => {
+                        setMockEnabled(!isMock);
+                        toast.success(`Mock adapter layer ${!isMock ? "ENABLED" : "DISABLED"}`);
+                      })
+                    }
+                    className="relative flex cursor-pointer select-none items-center rounded-md px-3 py-2 text-xs text-foreground outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground gap-2"
+                  >
+                    <ShieldAlert className="size-3.5" />
+                    {isMock ? "Disable Mock Adapter Layer" : "Enable Mock Adapter Layer"}
+                  </Command.Item>
+                )}
               </Command.Group>
 
               <Command.Group heading="Account" className="overflow-hidden p-1 text-muted-foreground font-semibold text-[10px] uppercase tracking-wider">

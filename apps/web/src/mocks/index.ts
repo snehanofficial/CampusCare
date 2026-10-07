@@ -21,6 +21,9 @@ export * from "./analytics.js";
 const MOCK_STORAGE_KEY = "campuscare-use-mocks";
 
 export function isMockEnabled(): boolean {
+  if (import.meta.env.PROD) {
+    return false;
+  }
   const envVal = import.meta.env.VITE_USE_MOCKS;
   const localVal = localStorage.getItem(MOCK_STORAGE_KEY);
   if (localVal !== null) {
@@ -30,6 +33,9 @@ export function isMockEnabled(): boolean {
 }
 
 export function setMockEnabled(enabled: boolean): void {
+  if (import.meta.env.PROD) {
+    return;
+  }
   localStorage.setItem(MOCK_STORAGE_KEY, enabled ? "true" : "false");
   window.dispatchEvent(new Event("mocks:state-changed"));
 }

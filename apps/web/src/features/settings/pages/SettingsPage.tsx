@@ -140,32 +140,36 @@ export function SettingsPage() {
       icon: RefreshCw,
       content: <OfflineSyncSettings />,
     },
-    {
-      id: "mocks",
-      label: "Mocking Adapters",
-      icon: Server,
-      content: (
-        <Card className="border border-border bg-card">
-          <CardHeader className="border-b border-border/40 py-4 px-6">
-            <CardTitle className="text-sm font-bold text-foreground">Development Mock Database</CardTitle>
-            <CardDescription className="text-xs text-muted-foreground leading-normal mt-0.5">
-              Force route queries to resolve with simulated local JSON profiles instead of calling backend APIs.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between p-4 rounded-lg bg-muted/20 border border-border/40">
-              <div className="space-y-0.5 pr-4">
-                <h4 className="text-xs font-bold text-foreground">Activate Mock Mode</h4>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Turn on simulated server latency and test mock data tables directly in the UI.
-                </p>
-              </div>
-              <Switch checked={useMocks} onCheckedChange={handleMockToggle} />
-            </div>
-          </CardContent>
-        </Card>
-      ),
-    },
+    ...(import.meta.env.PROD
+      ? []
+      : [
+          {
+            id: "mocks",
+            label: "Mocking Adapters",
+            icon: Server,
+            content: (
+              <Card className="border border-border bg-card">
+                <CardHeader className="border-b border-border/40 py-4 px-6">
+                  <CardTitle className="text-sm font-bold text-foreground">Development Mock Database</CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground leading-normal mt-0.5">
+                    Force route queries to resolve with simulated local JSON profiles instead of calling backend APIs.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-muted/20 border border-border/40">
+                    <div className="space-y-0.5 pr-4">
+                      <h4 className="text-xs font-bold text-foreground">Activate Mock Mode</h4>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        Turn on simulated server latency and test mock data tables directly in the UI.
+                      </p>
+                    </div>
+                    <Switch checked={useMocks} onCheckedChange={handleMockToggle} />
+                  </div>
+                </CardContent>
+              </Card>
+            ),
+          },
+        ]),
   ];
 
   return (
