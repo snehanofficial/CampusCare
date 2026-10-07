@@ -949,7 +949,7 @@ export function AssetsPage() {
       cell: ({ row }) => (
         <button
           onClick={() => navigate(`/assets/${row.original.id}`)}
-          className="font-mono font-bold text-xs text-primary hover:underline cursor-pointer focus:outline-none"
+          className="font-mono font-bold text-xs text-primary hover:underline cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs"
         >
           {row.getValue("assetCode")}
         </button>
@@ -1009,8 +1009,9 @@ export function AssetsPage() {
           <div className="flex justify-end gap-1">
             <button
               onClick={() => navigate(`/assets/${row.original.id}`)}
-              className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none"
+              className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               title="Inspect"
+              aria-label="Inspect asset"
             >
               <Eye className="size-3.5" />
             </button>
@@ -1020,15 +1021,19 @@ export function AssetsPage() {
                 loadForm(row.original);
                 setIsEditOpen(true);
               }}
-              className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none"
+              className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               title="Edit Details"
+              aria-label="Edit asset details"
             >
               <Pencil className="size-3.5" />
             </button>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none">
+                <button
+                  className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label="More actions"
+                >
                   <MoreVertical className="size-3.5" />
                 </button>
               </DropdownMenuTrigger>
@@ -1168,8 +1173,9 @@ export function AssetsPage() {
                 loadProcForm(row.original);
                 setIsEditProcOpen(true);
               }}
-              className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none"
+              className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               title="Edit details"
+              aria-label="Edit procurement details"
             >
               <Pencil className="size-3.5" />
             </button>
@@ -1182,7 +1188,7 @@ export function AssetsPage() {
                   initializeBatchFields(remaining);
                   setIsRegisterOpen(true);
                 }}
-                className="flex items-center gap-1.5 px-2 py-0.5 rounded border border-primary/20 text-primary hover:bg-primary/5 text-[10px] font-bold cursor-pointer focus:outline-none"
+                className="flex items-center gap-1.5 px-2 py-0.5 rounded border border-primary/20 text-primary hover:bg-primary/5 text-[10px] font-bold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <Plus className="size-3" />
                 Register
@@ -1196,8 +1202,9 @@ export function AssetsPage() {
                     deleteProcMutation.mutate(row.original.id);
                   }
                 }}
-                className="p-1 hover:bg-destructive/5 rounded text-muted-foreground hover:text-destructive cursor-pointer focus:outline-none"
+                className="p-1.5 hover:bg-destructive/5 rounded text-muted-foreground hover:text-destructive cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 title="Delete"
+                aria-label="Delete procurement request"
               >
                 <Trash className="size-3.5" />
               </button>
@@ -2316,7 +2323,7 @@ export function AssetsPage() {
                 <select
                   value={printLayout}
                   onChange={(e: any) => setPrintLayout(e.target.value)}
-                  className="bg-zinc-900 border border-zinc-700 rounded p-1.5 text-zinc-300 text-sm focus:outline-none"
+                  className="bg-zinc-900 border border-zinc-700 rounded p-1.5 text-zinc-300 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   <option value="3x10">Avery 3x10 Grid (30 Labels/Sheet)</option>
                   <option value="2x2">2x2 Grid Layout</option>

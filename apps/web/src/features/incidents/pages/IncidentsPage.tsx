@@ -229,29 +229,33 @@ export function IncidentsPage() {
         <div className="flex justify-end gap-1.5">
           <button
             onClick={() => setTimelineTarget(row.original)}
-            className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none"
+            className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title="Incident Timeline"
+            aria-label="Incident Timeline"
           >
             <History className="size-3.5" />
           </button>
           <button
             onClick={() => openEdit(row.original)}
-            className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none"
+            className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title="Edit incident"
+            aria-label="Edit incident"
           >
             <Pencil className="size-3.5" />
           </button>
           <button
             onClick={() => navigate(`/incidents/${row.original.id}`)}
-            className="p-1 hover:bg-primary/10 rounded text-muted-foreground hover:text-primary cursor-pointer focus:outline-none"
+            className="p-1.5 hover:bg-primary/10 rounded text-muted-foreground hover:text-primary cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title="View incident details"
+            aria-label="View incident details"
           >
             <Eye className="size-3.5" />
           </button>
           <button
             onClick={() => void (confirm("Delete this incident record?") && deleteMutation.mutate(row.original.id))}
-            className="p-1 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive cursor-pointer focus:outline-none"
+            className="p-1.5 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title="Delete incident"
+            aria-label="Delete incident"
           >
             <Trash2 className="size-3.5" />
           </button>

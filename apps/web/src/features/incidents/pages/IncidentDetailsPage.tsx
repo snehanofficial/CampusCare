@@ -239,7 +239,7 @@ export function IncidentDetailsPage() {
             <div className="flex border-b border-border text-xs gap-1.5 flex-wrap">
               <button
                 onClick={() => setActiveTab("tickets")}
-                className={`pb-2 px-1 focus:outline-none transition-colors border-b-2 ${
+                className={`pb-2 px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors border-b-2 rounded-xs ${
                   activeTab === "tickets" ? "border-primary text-primary font-bold" : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -247,7 +247,7 @@ export function IncidentDetailsPage() {
               </button>
               <button
                 onClick={() => setActiveTab("timeline")}
-                className={`pb-2 px-1 focus:outline-none transition-colors border-b-2 ${
+                className={`pb-2 px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors border-b-2 rounded-xs ${
                   activeTab === "timeline" ? "border-primary text-primary font-bold" : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >

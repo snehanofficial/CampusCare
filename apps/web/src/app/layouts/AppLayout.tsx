@@ -77,7 +77,7 @@ export function AppLayout() {
         <main
           id="main-content"
           tabIndex={-1}
-          className="flex-1 overflow-y-auto p-4 md:p-5 bg-background focus:outline-none"
+          className="flex-1 overflow-y-auto p-4 md:p-5 bg-background focus-visible:outline-none"
         >
           <div className="mx-auto max-w-7xl">
             <Outlet />

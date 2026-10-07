@@ -90,8 +90,9 @@ export function DepartmentsPage() {
               deleteMutation.mutate(row.original.id);
             }
           }}
-          className="p-1 hover:bg-destructive/5 rounded text-muted-foreground hover:text-destructive cursor-pointer focus:outline-none"
+          className="p-1.5 hover:bg-destructive/5 rounded text-muted-foreground hover:text-destructive cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           title="Delete Department"
+          aria-label="Delete Department"
         >
           <Trash className="size-3.5" />
         </button>

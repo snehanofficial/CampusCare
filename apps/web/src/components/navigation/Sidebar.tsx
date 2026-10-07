@@ -55,7 +55,7 @@ export function Sidebar({
         <Link
           to="/dashboard"
           onClick={onMobileClose}
-          className="flex items-center gap-2.5 font-bold focus:outline-none select-none min-w-0"
+          className="flex items-center gap-2.5 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs select-none min-w-0"
         >
           {/* Brand mark — typographic, not a colored square */}
           <span
@@ -83,7 +83,7 @@ export function Sidebar({
         </Link>
         <button
           onClick={onToggle}
-          className="hidden rounded-sm p-1 hover:bg-muted text-muted-foreground hover:text-foreground lg:block focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
+          className="hidden rounded-sm p-1 hover:bg-muted text-muted-foreground hover:text-foreground lg:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
           title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
           {isCollapsed ? (
@@ -112,7 +112,7 @@ export function Sidebar({
                     <Link
                       to={item.href}
                       onClick={onMobileClose}
-                      className={`flex items-center gap-2.5 rounded-sm px-2.5 py-1.5 text-xs font-medium transition-colors focus:outline-none focus:ring-1 focus:ring-ring ${
+                      className={`flex items-center gap-2.5 rounded-sm px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                         active
                           ? "bg-primary/10 text-primary font-semibold border-l-2 border-primary -ml-0.5"
                           : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"

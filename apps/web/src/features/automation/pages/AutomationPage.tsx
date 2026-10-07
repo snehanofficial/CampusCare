@@ -567,7 +567,7 @@ export function AutomationPage() {
         <div className="flex gap-4">
           <button
             onClick={() => setActiveTab("rules")}
-            className={`flex items-center gap-1.5 pb-2 text-xs font-semibold border-b-2 cursor-pointer focus:outline-none ${
+            className={`flex items-center gap-1.5 pb-2 text-xs font-semibold border-b-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs ${
               activeTab === "rules" ? "border-primary text-primary" : "border-transparent text-muted-foreground"
             }`}
           >
@@ -576,7 +576,7 @@ export function AutomationPage() {
           </button>
           <button
             onClick={() => setActiveTab("logs")}
-            className={`flex items-center gap-1.5 pb-2 text-xs font-semibold border-b-2 cursor-pointer focus:outline-none ${
+            className={`flex items-center gap-1.5 pb-2 text-xs font-semibold border-b-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs ${
               activeTab === "logs" ? "border-primary text-primary" : "border-transparent text-muted-foreground"
             }`}
           >

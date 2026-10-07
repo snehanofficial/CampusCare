@@ -49,7 +49,7 @@ function FilterRow({
           type="date"
           value={filters.startDate ?? ""}
           onChange={(e) => update("startDate", e.target.value)}
-          className="w-28 bg-transparent text-[11px] text-foreground focus:outline-none"
+          className="w-28 bg-transparent text-[11px] text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-xs"
         />
         <span className="text-muted-foreground/40">→</span>
         <input
@@ -57,7 +57,7 @@ function FilterRow({
           type="date"
           value={filters.endDate ?? ""}
           onChange={(e) => update("endDate", e.target.value)}
-          className="w-28 bg-transparent text-[11px] text-foreground focus:outline-none"
+          className="w-28 bg-transparent text-[11px] text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-xs"
         />
       </div>
 
@@ -67,7 +67,7 @@ function FilterRow({
         value={filters.status ?? ""}
         onChange={(e) => update("status", e.target.value)}
         className="rounded-lg border border-border bg-card/60 px-3 py-2 text-[11px] text-foreground
-          focus:border-primary focus:outline-none"
+          focus:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       >
         <option value="">All Statuses</option>
         <option value="OPEN">Open</option>
@@ -82,7 +82,7 @@ function FilterRow({
         value={filters.priority ?? ""}
         onChange={(e) => update("priority", e.target.value)}
         className="rounded-lg border border-border bg-card/60 px-3 py-2 text-[11px] text-foreground
-          focus:border-primary focus:outline-none"
+          focus:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       >
         <option value="">All Priorities</option>
         <option value="LOW">Low</option>

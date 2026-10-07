@@ -499,7 +499,8 @@ export function AssetDetailPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate("/assets")}
-            className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none"
+            className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Back to assets"
           >
             <ChevronLeft className="size-4" />
           </button>
@@ -517,7 +518,7 @@ export function AssetDetailPage() {
                 resetAssignForm();
                 setIsAssignOpen(true);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 text-xs font-bold rounded-sm cursor-pointer focus:outline-none"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 text-xs font-bold rounded-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <CheckSquare className="size-3.5" />
               Assign
@@ -531,7 +532,7 @@ export function AssetDetailPage() {
                   setReturnNotes("");
                   setIsReturnOpen(true);
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-warning/10 hover:bg-warning/20 text-warning border border-warning/20 text-xs font-bold rounded-sm cursor-pointer focus:outline-none"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-warning/10 hover:bg-warning/20 text-warning border border-warning/20 text-xs font-bold rounded-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <Undo className="size-3.5" />
                 Return
@@ -541,7 +542,7 @@ export function AssetDetailPage() {
                   resetTransferForm();
                   setIsTransferOpen(true);
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 text-xs font-bold rounded-sm cursor-pointer focus:outline-none"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 text-xs font-bold rounded-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <ArrowLeftRight className="size-3.5" />
                 Transfer
@@ -556,7 +557,7 @@ export function AssetDetailPage() {
               setLifecycleNotes("");
               setIsLifecycleOpen(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-border hover:bg-muted text-foreground text-xs font-bold rounded-sm cursor-pointer focus:outline-none disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 border border-border hover:bg-muted text-foreground text-xs font-bold rounded-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
           >
             <Clipboard className="size-3.5" />
             Lifecycle
@@ -600,7 +601,7 @@ export function AssetDetailPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-3 py-2 border-b-2 text-xs font-semibold cursor-pointer focus:outline-none transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-2 border-b-2 text-xs font-semibold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs transition-colors ${
                 activeTab === tab.id
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"
@@ -712,7 +713,7 @@ export function AssetDetailPage() {
                       resetScheduleMaintForm();
                       setIsSchedMaintOpen(true);
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-sm cursor-pointer hover:bg-primary/95 focus:outline-none"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-sm cursor-pointer hover:bg-primary/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <Wrench className="size-3.5" />
                     Schedule Service
@@ -757,7 +758,7 @@ export function AssetDetailPage() {
                                   setMaintAssignTechId(activeMaint.technicianId || "");
                                   setIsAssignMaintOpen(true);
                                 }}
-                                className="flex items-center gap-1 px-2.5 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 text-xs font-bold rounded-sm cursor-pointer focus:outline-none"
+                                className="flex items-center gap-1 px-2.5 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 text-xs font-bold rounded-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                               >
                                 <UserCheck className="size-3.5" />
                                 Assign Tech
@@ -769,7 +770,7 @@ export function AssetDetailPage() {
                                     clientUpdatedAt: activeMaint.updatedAt ? new Date(activeMaint.updatedAt).toISOString() : null,
                                   })
                                 }
-                                className="flex items-center gap-1 px-2.5 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-600 border border-green-500/20 text-xs font-bold rounded-sm cursor-pointer focus:outline-none"
+                                className="flex items-center gap-1 px-2.5 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-600 border border-green-500/20 text-xs font-bold rounded-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                               >
                                 <Play className="size-3.5" />
                                 Start Service
@@ -783,7 +784,7 @@ export function AssetDetailPage() {
                                 setMaintCompleteDuration(String(activeMaint.estimatedDuration));
                                 setIsCompleteMaintOpen(true);
                               }}
-                              className="flex items-center gap-1 px-2.5 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-600 border border-green-500/20 text-xs font-bold rounded-sm cursor-pointer focus:outline-none"
+                              className="flex items-center gap-1 px-2.5 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-600 border border-green-500/20 text-xs font-bold rounded-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
                               <CheckCircle className="size-3.5" />
                               Complete Service
@@ -794,7 +795,7 @@ export function AssetDetailPage() {
                               setSelectedMaintRecord(activeMaint);
                               setIsCancelMaintOpen(true);
                             }}
-                            className="flex items-center gap-1 px-2.5 py-1.5 bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/20 text-xs font-bold rounded-sm cursor-pointer focus:outline-none"
+                            className="flex items-center gap-1 px-2.5 py-1.5 bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/20 text-xs font-bold rounded-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           >
                             <XCircle className="size-3.5" />
                             Cancel Service

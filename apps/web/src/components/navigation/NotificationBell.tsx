@@ -68,7 +68,7 @@ export function NotificationBell() {
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className="relative flex items-center justify-center p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-all focus:outline-none cursor-pointer"
+          className="relative flex items-center justify-center p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
           aria-label="View notifications"
         >
           <Bell className="size-5" />

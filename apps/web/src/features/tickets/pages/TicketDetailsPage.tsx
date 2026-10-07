@@ -507,7 +507,7 @@ export function TicketDetailsPage() {
                       <button
                         key={inc.id}
                         onClick={() => navigate(`/incidents/${inc.id}`)}
-                        className="flex items-center gap-2 text-xs text-destructive hover:underline font-semibold w-full text-left focus:outline-none"
+                        className="flex items-center gap-2 text-xs text-destructive hover:underline font-semibold w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs"
                       >
                         <LinkIcon className="size-3 shrink-0" />
                         <span>INC-{inc.id.slice(0, 8).toUpperCase()} — {inc.title}</span>
@@ -527,7 +527,7 @@ export function TicketDetailsPage() {
             <div className="flex border-b border-border text-xs gap-1.5 flex-wrap">
               <button
                 onClick={() => setActiveTab("comments")}
-                className={`pb-2 px-1 focus:outline-none transition-colors border-b-2 ${
+                className={`pb-2 px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors border-b-2 rounded-xs ${
                   activeTab === "comments" ? "border-primary text-primary font-bold" : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -535,7 +535,7 @@ export function TicketDetailsPage() {
               </button>
               <button
                 onClick={() => setActiveTab("timeline")}
-                className={`pb-2 px-1 focus:outline-none transition-colors border-b-2 ${
+                className={`pb-2 px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors border-b-2 rounded-xs ${
                   activeTab === "timeline" ? "border-primary text-primary font-bold" : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -543,7 +543,7 @@ export function TicketDetailsPage() {
               </button>
               <button
                 onClick={() => setActiveTab("rules")}
-                className={`pb-2 px-1 focus:outline-none transition-colors border-b-2 ${
+                className={`pb-2 px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors border-b-2 rounded-xs ${
                   activeTab === "rules" ? "border-primary text-primary font-bold" : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -551,7 +551,7 @@ export function TicketDetailsPage() {
               </button>
               <button
                 onClick={() => setActiveTab("history")}
-                className={`pb-2 px-1 focus:outline-none transition-colors border-b-2 ${
+                className={`pb-2 px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors border-b-2 rounded-xs ${
                   activeTab === "history" ? "border-primary text-primary font-bold" : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -625,8 +625,9 @@ export function TicketDetailsPage() {
                           {(currentUser?.role === "SYSTEM_ADMIN" || c.authorId === currentUser?.id) && (
                             <button
                               onClick={() => void (confirm("Delete comment?") && deleteCommentMutation.mutate(c.id))}
-                              className="absolute top-2.5 right-2.5 text-muted-foreground hover:text-destructive transition-colors focus:outline-none"
+                              className="absolute top-2.5 right-2.5 p-1 text-muted-foreground hover:text-destructive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs"
                               title="Delete comment"
+                              aria-label="Delete comment"
                             >
                               <Trash2 className="size-3" />
                             </button>
@@ -807,7 +808,7 @@ export function TicketDetailsPage() {
                       title="Automatically assign the eligible technician with the lowest current workload"
                       disabled={autoAssignMutation.isPending}
                       onClick={() => ticketId && autoAssignMutation.mutate(ticketId)}
-                      className="inline-flex items-center gap-1 text-[10px] font-bold text-primary hover:underline disabled:opacity-50 focus:outline-none"
+                      className="inline-flex items-center gap-1 text-[10px] font-bold text-primary hover:underline disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs"
                     >
                       <Sparkles className="size-3" />
                       Auto-assign

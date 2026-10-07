@@ -98,7 +98,8 @@ export function FilterToolbar({
               Query: "{searchQuery}"
               <button
                 onClick={() => onSearchChange("")}
-                className="hover:text-destructive cursor-pointer focus:outline-none ml-1"
+                className="hover:text-destructive cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-xs ml-1"
+                aria-label="Clear query filter"
               >
                 <X className="size-3" />
               </button>
@@ -119,7 +120,8 @@ export function FilterToolbar({
                 {filterLabel}: {itemLabel}
                 <button
                   onClick={() => onFilterChange(key, "")}
-                  className="hover:text-destructive cursor-pointer focus:outline-none ml-1"
+                  className="hover:text-destructive cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-xs ml-1"
+                  aria-label={`Clear ${filterLabel} filter`}
                 >
                   <X className="size-3" />
                 </button>

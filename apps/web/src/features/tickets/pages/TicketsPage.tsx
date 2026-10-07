@@ -266,7 +266,7 @@ export function TicketsPage({ mineOnly = false }: { mineOnly?: boolean }) {
     return (
       <button
         onClick={() => handleSort(field)}
-        className="flex items-center gap-1 hover:text-foreground cursor-pointer font-bold focus:outline-none select-none text-[11px]"
+        className="flex items-center gap-1 hover:text-foreground cursor-pointer font-bold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-xs select-none text-[11px]"
       >
         <span>{label}</span>
         {isSorted ? (
@@ -397,15 +397,17 @@ export function TicketsPage({ mineOnly = false }: { mineOnly?: boolean }) {
                 <button
                   onClick={() => verifyMutation.mutate(row.original.id)}
                   disabled={verifyMutation.isPending}
-                  className="p-1 hover:bg-success/15 rounded text-success cursor-pointer focus:outline-none disabled:opacity-50"
+                  className="p-1 hover:bg-success/15 rounded text-success cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                   title="Verify & Close"
+                  aria-label="Verify and Close Ticket"
                 >
                   <Check className="size-3.5" />
                 </button>
                 <button
                   onClick={() => setReopenTarget(row.original)}
-                  className="p-1 hover:bg-destructive/15 rounded text-destructive cursor-pointer focus:outline-none"
+                  className="p-1 hover:bg-destructive/15 rounded text-destructive cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   title="Reopen Ticket"
+                  aria-label="Reopen Ticket"
                 >
                   <RotateCcw className="size-3.5" />
                 </button>
@@ -417,15 +419,17 @@ export function TicketsPage({ mineOnly = false }: { mineOnly?: boolean }) {
                 <button
                   onClick={() => verifyMutation.mutate(row.original.id)}
                   disabled={verifyMutation.isPending}
-                  className="p-1 hover:bg-success/15 rounded text-success cursor-pointer focus:outline-none disabled:opacity-50"
+                  className="p-1 hover:bg-success/15 rounded text-success cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                   title="Verify & Close"
+                  aria-label="Verify and Close Ticket"
                 >
                   <Check className="size-3.5" />
                 </button>
                 <button
                   onClick={() => setReopenTarget(row.original)}
-                  className="p-1 hover:bg-destructive/15 rounded text-destructive cursor-pointer focus:outline-none"
+                  className="p-1 hover:bg-destructive/15 rounded text-destructive cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   title="Reopen Ticket"
+                  aria-label="Reopen Ticket"
                 >
                   <RotateCcw className="size-3.5" />
                 </button>
@@ -435,8 +439,9 @@ export function TicketsPage({ mineOnly = false }: { mineOnly?: boolean }) {
             {canEditTickets && !isResolved && (
               <button
                 onClick={() => openEdit(row.original)}
-                className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none"
+                className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 title="Edit ticket"
+                aria-label="Edit ticket"
               >
                 <Pencil className="size-3.5" />
               </button>
@@ -444,8 +449,9 @@ export function TicketsPage({ mineOnly = false }: { mineOnly?: boolean }) {
             {/* View Details: always visible */}
             <button
               onClick={() => navigate(`/tickets/${row.original.id}`)}
-              className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none"
+              className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               title="View details"
+              aria-label="View ticket details"
             >
               <Eye className="size-3.5" />
             </button>
@@ -453,8 +459,9 @@ export function TicketsPage({ mineOnly = false }: { mineOnly?: boolean }) {
             {canDeleteTickets && (
               <button
                 onClick={() => void (confirm(`Delete ticket ${row.original.ticketNumber}?`) && deleteMutation.mutate(row.original.id))}
-                className="p-1 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive cursor-pointer focus:outline-none"
+                className="p-1 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 title="Delete ticket"
+                aria-label="Delete ticket"
               >
                 <Trash2 className="size-3.5" />
               </button>

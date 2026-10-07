@@ -177,16 +177,18 @@ export function NotificationsPage() {
           {!row.original.isRead && (
             <button
               onClick={() => markReadMutation.mutate(row.original.id)}
-              className="p-1 hover:bg-primary/5 rounded text-muted-foreground hover:text-primary cursor-pointer focus:outline-none"
+              className="p-1.5 hover:bg-primary/5 rounded text-muted-foreground hover:text-primary cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               title="Mark as read"
+              aria-label="Mark as read"
             >
               <Check className="size-3.5" />
             </button>
           )}
           <button
             onClick={() => deleteMutation.mutate(row.original.id)}
-            className="p-1 hover:bg-destructive/5 rounded text-muted-foreground hover:text-destructive cursor-pointer focus:outline-none"
+            className="p-1.5 hover:bg-destructive/5 rounded text-muted-foreground hover:text-destructive cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title="Dismiss Announcement"
+            aria-label="Dismiss Announcement"
           >
             <Trash className="size-3.5" />
           </button>

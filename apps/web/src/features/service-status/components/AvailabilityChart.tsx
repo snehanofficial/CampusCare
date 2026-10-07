@@ -83,7 +83,7 @@ export function AvailabilityChart({ stats }: AvailabilityChartProps) {
           </div>
 
           {/* 24h Hourly Graph */}
-          <TabsContent value="24h" className="focus:outline-none">
+          <TabsContent value="24h" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm">
             <div className="h-60 w-full text-xs">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={selectedStats.hourlyHistory} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
@@ -120,7 +120,7 @@ export function AvailabilityChart({ stats }: AvailabilityChartProps) {
           </TabsContent>
 
           {/* 7d Daily Graph */}
-          <TabsContent value="7d" className="focus:outline-none">
+          <TabsContent value="7d" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm">
             <div className="h-60 w-full text-xs">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={stats7d} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
@@ -157,7 +157,7 @@ export function AvailabilityChart({ stats }: AvailabilityChartProps) {
           </TabsContent>
 
           {/* 30d Daily Graph */}
-          <TabsContent value="30d" className="focus:outline-none">
+          <TabsContent value="30d" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm">
             <div className="h-60 w-full text-xs">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={selectedStats.dailyHistory} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>

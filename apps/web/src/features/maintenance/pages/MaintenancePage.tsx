@@ -560,8 +560,9 @@ export function MaintenancePage() {
                       setAssignTechId(r.technicianId || "");
                       setIsAssignOpen(true);
                     }}
-                    className="p-1 hover:bg-primary/10 text-primary rounded cursor-pointer focus:outline-none"
+                    className="p-1.5 hover:bg-primary/10 text-primary rounded cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     title="Assign Tech"
+                    aria-label="Assign Technician"
                   >
                     <UserCheck className="size-3.5" />
                   </button>
@@ -571,8 +572,9 @@ export function MaintenancePage() {
                     onClick={() =>
                       startMutation.mutate({ id: r.id, clientUpdatedAt: (r as any).updatedAt })
                     }
-                    className="p-1 hover:bg-green-500/10 text-green-500 rounded cursor-pointer focus:outline-none"
+                    className="p-1.5 hover:bg-green-500/10 text-green-500 rounded cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     title="Start Execution"
+                    aria-label="Start Execution"
                   >
                     <Play className="size-3.5" />
                   </button>
@@ -584,8 +586,9 @@ export function MaintenancePage() {
                       setCompleteDuration(String(r.estimatedDuration));
                       setIsCompleteOpen(true);
                     }}
-                    className="p-1 hover:bg-green-500/10 text-green-600 rounded cursor-pointer focus:outline-none"
+                    className="p-1.5 hover:bg-green-500/10 text-green-600 rounded cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     title="Complete Service"
+                    aria-label="Complete Service"
                   >
                     <CheckCircle className="size-3.5" />
                   </button>
@@ -595,8 +598,9 @@ export function MaintenancePage() {
                     setSelectedRecord(r);
                     setIsCancelOpen(true);
                   }}
-                  className="p-1 hover:bg-destructive/10 text-destructive rounded cursor-pointer focus:outline-none"
+                  className="p-1.5 hover:bg-destructive/10 text-destructive rounded cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   title="Cancel Maintenance"
+                  aria-label="Cancel Maintenance"
                 >
                   <XCircle className="size-3.5" />
                 </button>
@@ -679,23 +683,25 @@ export function MaintenancePage() {
         <div className="flex items-center gap-1.5 bg-muted p-0.5 rounded-sm">
           <button
             onClick={() => setViewMode("list")}
-            className={`p-1.5 rounded-sm focus:outline-none cursor-pointer transition-colors ${
+            className={`p-1.5 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer transition-colors ${
               viewMode === "list"
                 ? "bg-card text-foreground font-bold shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
             }`}
             title="List View"
+            aria-label="List View"
           >
             <ListIcon className="size-3.5" />
           </button>
           <button
             onClick={() => setViewMode("calendar")}
-            className={`p-1.5 rounded-sm focus:outline-none cursor-pointer transition-colors ${
+            className={`p-1.5 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer transition-colors ${
               viewMode === "calendar"
                 ? "bg-card text-foreground font-bold shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
             }`}
             title="Calendar View"
+            aria-label="Calendar View"
           >
             <CalendarIcon className="size-3.5" />
           </button>
@@ -705,7 +711,7 @@ export function MaintenancePage() {
           <button
             onClick={() => triggerAutomationMutation.mutate()}
             disabled={triggerAutomationMutation.isPending}
-            className="flex items-center gap-1 px-3 py-1.5 border border-border hover:bg-muted text-foreground text-xs font-bold rounded-sm cursor-pointer focus:outline-none disabled:opacity-50"
+            className="flex items-center gap-1 px-3 py-1.5 border border-border hover:bg-muted text-foreground text-xs font-bold rounded-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
             title="Run recurring calculations"
           >
             <RefreshCw className={`size-3.5 ${triggerAutomationMutation.isPending ? "animate-spin" : ""}`} />
@@ -716,7 +722,7 @@ export function MaintenancePage() {
               resetScheduleForm();
               setIsScheduleOpen(true);
             }}
-            className="flex items-center gap-1 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-sm cursor-pointer hover:bg-primary/95 focus:outline-none"
+            className="flex items-center gap-1 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-sm cursor-pointer hover:bg-primary/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Wrench className="size-3.5" />
             Schedule Service

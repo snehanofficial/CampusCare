@@ -89,7 +89,7 @@ export function EntityListTemplate<TData, TValue>({
             <button
               key={s}
               onClick={() => setDebugState(s)}
-              className={`px-1.5 py-0.5 rounded-xs text-[9px] font-bold uppercase transition-colors cursor-pointer focus:outline-none ${
+              className={`px-1.5 py-0.5 rounded-xs text-[9px] font-bold uppercase transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
                 debugState === s
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground"

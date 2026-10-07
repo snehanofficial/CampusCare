@@ -174,7 +174,7 @@ export function SlaPage() {
         <div className="flex gap-4">
           <button
             onClick={() => setActiveTab("compliance")}
-            className={`flex items-center gap-1.5 pb-2 text-xs font-semibold border-b-2 cursor-pointer focus:outline-none ${
+            className={`flex items-center gap-1.5 pb-2 text-xs font-semibold border-b-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs ${
               activeTab === "compliance"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground"
@@ -185,7 +185,7 @@ export function SlaPage() {
           </button>
           <button
             onClick={() => setActiveTab("policies")}
-            className={`flex items-center gap-1.5 pb-2 text-xs font-semibold border-b-2 cursor-pointer focus:outline-none ${
+            className={`flex items-center gap-1.5 pb-2 text-xs font-semibold border-b-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs ${
               activeTab === "policies"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground"

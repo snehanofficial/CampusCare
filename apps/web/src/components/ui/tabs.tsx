@@ -68,7 +68,7 @@ export function TabsTrigger({ children, className, value }: TabsTriggerProps) {
       onClick={() => context.onValueChange(value)}
       data-state={active ? "active" : "inactive"}
       className={cn(
-        "relative inline-flex items-center gap-1.5 px-3 pb-2.5 pt-0.5 text-xs font-semibold transition-colors duration-100 whitespace-nowrap select-none cursor-pointer focus:outline-none disabled:pointer-events-none disabled:opacity-50",
+        "relative inline-flex items-center gap-1.5 px-3 pb-2.5 pt-0.5 text-xs font-semibold transition-colors duration-100 whitespace-nowrap select-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
         "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:transition-colors after:duration-100",
         active
           ? "text-foreground after:bg-primary"

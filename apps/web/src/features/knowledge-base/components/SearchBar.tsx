@@ -83,7 +83,7 @@ export function SearchBar({ placeholder = "Search articles, topics, tags…", on
             onFocus={() => setIsFocused(true)}
             placeholder={placeholder}
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60
-              focus:outline-none"
+              focus-visible:outline-none"
             autoComplete="off"
           />
           {query && (

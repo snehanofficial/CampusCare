@@ -143,7 +143,7 @@ export function SessionManager() {
                 }
               }}
               disabled={revokeMutation.isPending}
-              className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors focus:outline-none"
+              className="p-1.5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               title="Revoke Session"
               aria-label="Revoke Session"
             >
