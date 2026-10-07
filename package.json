@@ -14,6 +14,9 @@
     "format": "prettier --write .",
     "prepare": "husky",
     "typecheck": "pnpm build:packages && pnpm -r exec tsc --noEmit",
+    "ci:local": "DATABASE_URL=\"${DATABASE_URL:-postgresql://placeholder:placeholder@localhost:5432/placeholder}\" pnpm db:generate && pnpm build:packages && pnpm lint && pnpm typecheck && pnpm build",
+    "validate": "pnpm ci:local",
+    "ci": "pnpm ci:local",
     "db:generate": "pnpm --filter api db:generate",
     "db:migrate": "pnpm --filter api db:migrate",
     "db:seed": "pnpm --filter api db:seed"
