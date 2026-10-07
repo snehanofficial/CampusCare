@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { UsersRepository } from "./users.repository.js";
 import { CreateUserInput, UpdateUserInput } from "./users.schema.js";
@@ -123,7 +124,9 @@ export class UsersService {
       throw new ConflictError("Email is already registered");
     }
 
-    const password = input.password || "CampusCare123!";
+    const password =
+      input.password ||
+      `${crypto.randomBytes(16).toString("base64url")}A1!`;
     const passwordHash = await bcrypt.hash(password, 12);
 
     const user = await UsersRepository.create({
@@ -196,9 +199,9 @@ export class UsersService {
 
     const updated = await UsersRepository.update(id, updateData);
 
-    // Security: If user deactivation occurred, terminate active sessions
-    if (input.isActive === false) {
-      logger.info(`Deactivating user ${id}: revoking all active sessions.`);
+    // Security: If deactivation, role update, or password change occurred, terminate all active sessions
+    if (input.isActive === false || input.roleId !== undefined || input.password !== undefined) {
+      logger.info(`Security policy update for user ${id}: revoking all active sessions.`);
       await prisma.session.updateMany({
         where: { userId: id, revoked: false },
         data: {
