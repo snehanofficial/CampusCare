@@ -38,6 +38,18 @@ export function AppLayout() {
     setIsMobileOpen(false);
   }, [location.pathname]);
 
+  // Dismiss mobile drawer on Escape key (WCAG 2.2 SC 2.1.1)
+  useEffect(() => {
+    if (!isMobileOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsMobileOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isMobileOpen]);
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background">
       {/* Keyboard Accessibility Skip Link */}
