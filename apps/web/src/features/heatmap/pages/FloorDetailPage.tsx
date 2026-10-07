@@ -192,7 +192,20 @@ export function FloorDetailPage() {
               <TableBody>
                 {floorAssets.length > 0 ? (
                   floorAssets.map((asset: any) => (
-                    <TableRow key={asset.id} className="hover:bg-muted/10 h-10 cursor-pointer" onClick={() => navigate(`/assets/${asset.id}`)}>
+                    <TableRow
+                      key={asset.id}
+                      className="hover:bg-muted/10 h-10 cursor-pointer"
+                      tabIndex={0}
+                      role="link"
+                      aria-label={`View asset ${asset.name}`}
+                      onClick={() => navigate(`/assets/${asset.id}`)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          navigate(`/assets/${asset.id}`);
+                        }
+                      }}
+                    >
                       <TableCell className="text-xs font-semibold py-1.5">{asset.name}</TableCell>
                       <TableCell className="text-xs text-muted-foreground py-1.5">{asset.tag}</TableCell>
                       <TableCell className="text-xs py-1.5">{asset.room || "Unassigned"}</TableCell>
